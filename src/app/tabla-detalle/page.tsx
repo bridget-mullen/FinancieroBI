@@ -261,12 +261,6 @@ export default function TablaDetallePage() {
   // Alert count: líneas with % dif ppto <= threshold
   const alertCount = filteredLineas.filter(l => l.presupuesto > 0 && l.pctDifPpto <= ALERT_THRESHOLD).length
 
-  const drillTabs: { level: DrillLevel; label: string }[] = [
-    { level: "linea", label: "Línea" },
-    { level: "gerencia", label: "Gerencia" },
-    { level: "vendedor", label: "Vendedor" },
-  ]
-
   const filteredRows = filterSearch(rows, "name")
   const filteredPolizas = filterSearch(polizas, "documento")
   const rowTotal = filteredRows.reduce((s, r) => s + r.primaNeta, 0)
@@ -319,52 +313,10 @@ export default function TablaDetallePage() {
     <div>
       <PageTabs alertCount={alertCount} />
 
-      {/* Title + drill tabs */}
+      {/* Title + export buttons */}
       <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
         <h1 className="text-base font-bold text-[#111] font-lato">Prima neta cobrada</h1>
         <div className="flex items-center gap-1.5">
-          {drillTabs.map(b => {
-            // Determine if this tab should be active (current level or child of it)
-            const levelOrder: DrillLevel[] = ["linea", "gerencia", "vendedor", "grupo", "cliente", "poliza"]
-            const currentIdx = levelOrder.indexOf(drillLevel)
-            const tabIdx = levelOrder.indexOf(b.level)
-            const isActive = drillLevel === b.level || (tabIdx <= currentIdx && crumbs.some(c => c.level === b.level || (b.level === "linea" && true)))
-            const isExactLevel = drillLevel === b.level
-
-            return (
-              <button
-                key={b.level}
-                onClick={() => {
-                  if (b.level === "linea") {
-                    setDrillLevel("linea"); setCrumbs([]); setSel({})
-                  } else if (b.level === "gerencia" && drillLevel === "linea") {
-                    // Can't drill to gerencia without selecting a linea first
-                    // Do nothing — user must click a row
-                  } else if (b.level === "vendedor" && (drillLevel === "linea" || drillLevel === "gerencia")) {
-                    // Can't jump directly
-                  } else {
-                    // Navigate back to this level if we're deeper
-                    const targetIdx = levelOrder.indexOf(b.level)
-                    if (targetIdx < currentIdx) {
-                      // Go back to this level
-                      const crumbIdx = crumbs.findIndex(c => c.level === levelOrder[targetIdx - 1])
-                      if (crumbIdx >= 0) goToCrumb(crumbIdx)
-                    }
-                  }
-                }}
-                className={`px-3.5 py-1.5 rounded-md text-[11px] font-semibold transition-all duration-200 ${
-                  isExactLevel
-                    ? "bg-[#041224] text-white shadow-sm"
-                    : isActive && tabIdx < currentIdx
-                    ? "bg-[#041224]/10 text-[#041224] hover:bg-[#041224]/20"
-                    : "bg-[#FDECEA] text-[#041224] hover:bg-[#FEE2E2]"
-                }`}
-              >
-                {b.label}
-              </button>
-            )
-          })}
-          <span className="w-px h-5 bg-[#E5E7E9] mx-1" />
           <button onClick={handleExcelExport} className="flex items-center gap-1 px-2.5 py-1.5 rounded text-[11px] font-medium border border-[#041224] text-[#041224] hover:bg-[#F5F5F5] transition-colors">
             <Download className="w-3 h-3" /> Excel
           </button>
