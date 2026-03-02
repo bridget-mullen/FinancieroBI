@@ -113,9 +113,9 @@ export default function Home() {
       <div className="flex gap-2 justify-between flex-1 overflow-hidden">
         {/* Left side: Gauge + KPIs + Tipo de Cambio */}
         <div className="w-[calc(50%-6px)] flex flex-col">
-          {/* Tacómetro — large, no wasted space */}
-          <div className="flex items-center justify-center mb-1">
-            <div className="w-full max-w-[380px]">
+          {/* Tacómetro — fills available space */}
+          <div className="flex items-center justify-center flex-1">
+            <div className="w-full max-w-[460px]">
               <Gauge value={total / 1e6} prevYear={totalAA / 1e6} budget={totalPpto / 1e6} />
             </div>
           </div>
