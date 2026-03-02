@@ -113,9 +113,9 @@ export default function Home() {
       <div className="flex gap-2 justify-between flex-1 overflow-hidden">
         {/* Left side: Gauge + KPIs + Tipo de Cambio */}
         <div className="w-[calc(50%-6px)] flex flex-col">
-          {/* Tacómetro — large, prominent */}
-          <div className="flex items-center justify-center flex-1">
-            <div className="w-full max-w-[440px]">
+          {/* Tacómetro — large, no wasted space */}
+          <div className="flex items-center justify-center mb-1">
+            <div className="w-full max-w-[380px]">
               <Gauge value={total / 1e6} prevYear={totalAA / 1e6} budget={totalPpto / 1e6} />
             </div>
           </div>
@@ -185,8 +185,8 @@ export default function Home() {
             </table>
           </div>
 
-          {/* Chart — constrained width */}
-          <div className="flex-1 bg-white border border-gray-200 rounded-lg shadow-sm px-2 py-1.5 flex flex-col min-h-0">
+          {/* Chart — fixed height, no stretch */}
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm px-2 py-1.5 flex flex-col h-[260px]">
             <div className="flex gap-3 text-[10px] mb-1">
               <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-[#1e3a5f] rounded-sm"/><span className="text-gray-700 font-medium">PN Efectuada</span></div>
               <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-[#94a3b8] rounded-sm"/><span className="text-gray-700 font-medium">Presupuesto</span></div>
