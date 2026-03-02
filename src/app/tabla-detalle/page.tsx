@@ -391,8 +391,16 @@ export default function TablaDetallePage() {
         })()}
       </div>
 
-      {/* Table */}
-      <div ref={tableRef} className="bi-card overflow-hidden overflow-x-auto">
+      {/* Row count indicator for large datasets */}
+      {drillLevel !== "linea" && filteredRows.length >= 30 && (
+        <div className="text-[10px] text-[#888] mb-1">{filteredRows.length} registros encontrados — desplazar para ver más</div>
+      )}
+      {drillLevel === "poliza" && filteredPolizas.length >= 30 && (
+        <div className="text-[10px] text-[#888] mb-1">{filteredPolizas.length} pólizas encontradas — desplazar para ver más</div>
+      )}
+
+      {/* Table — scrollable for large datasets */}
+      <div ref={tableRef} className="bi-card overflow-hidden overflow-x-auto max-h-[70vh] overflow-y-auto">
         <table className="w-full text-[10px]">
           <thead>
             {drillLevel === "linea" ? (
