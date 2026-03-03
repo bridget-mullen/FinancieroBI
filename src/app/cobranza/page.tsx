@@ -144,7 +144,8 @@ export default function CobranzaPage() {
   }), { primaNeta: 0, convenio: 0, pnAA: 0, pendiente: 0, pnCia: 0, difCia: 0 })
 
   return (
-    <div>
+    <div className="min-h-screen bg-[#FAFAFA] px-3 py-4 flex flex-col">
+      <div className="max-w-[1200px] mx-auto w-full flex flex-col flex-1">
       <PageTabs />
 
       {/* Title + simplified filters */}
@@ -345,6 +346,7 @@ export default function CobranzaPage() {
       <p className="text-[10px] text-[#CCD1D3] mb-4 cursor-pointer hover:underline">Personalizar columnas</p>
 
       <PageFooter />
+      </div>
     </div>
   )
 }

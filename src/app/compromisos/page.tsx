@@ -53,7 +53,8 @@ export default function CompromisosPage() {
   const totalPct = totalMeta > 0 ? Math.round((totalActual / totalMeta) * 1000) / 10 : 0
 
   return (
-    <div>
+    <div className="min-h-screen bg-[#FAFAFA] px-3 py-4 flex flex-col">
+      <div className="max-w-[1200px] mx-auto w-full flex flex-col flex-1">
       <PageTabs />
 
       <div className="flex items-center justify-between mb-3 flex-wrap gap-1">
@@ -100,6 +101,7 @@ export default function CompromisosPage() {
       </div>
 
       <PageFooter />
+      </div>
     </div>
   )
 }
