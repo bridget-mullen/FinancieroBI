@@ -85,20 +85,19 @@ export function PeriodFilter({ onFilterChange, defaultYear = "2026", defaultMont
       </div>
 
       {periodoType === "mes" && (
-        <div className="flex items-center gap-0.5 flex-wrap">
-          {MESES_LABELS.map((m, i) => (
-            <button
-              key={m}
-              onClick={() => toggleMonth(i + 1)}
-              className={`px-1.5 py-0.5 text-[10px] rounded border transition-colors ${
-                selectedMonths.includes(i + 1)
-                  ? "bg-[#041224] text-white border-[#041224]"
-                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
-              }`}
-            >
-              {m.slice(0, 3)}
-            </button>
-          ))}
+        <div className="flex items-center gap-1 text-xs">
+          <label htmlFor="pf-mes" className="text-gray-500 font-medium">Mes</label>
+          <select
+            id="pf-mes"
+            name="pf-mes"
+            value={selectedMonths[0]}
+            onChange={e => setSelectedMonths([Number(e.target.value)])}
+            className="border border-[#E5E7EB] rounded px-1.5 py-0.5 text-xs bg-white"
+          >
+            {MESES_LABELS.map((m, i) => (
+              <option key={m} value={i + 1}>{m}</option>
+            ))}
+          </select>
         </div>
       )}
 

@@ -16,7 +16,7 @@ function fmt(v: number) {
 const TABS = [
   { href: "/", label: "Tacómetro" },
   { href: "/tabla-detalle", label: "Tabla detalle" },
-  { href: "/compromisos", label: "Compromisos 2024" },
+  { href: "/compromisos", label: "Vendedores" },
   { href: "/internacional", label: "Internacional" },
   { href: "/corporate", label: "Corporate." },
   { href: "/cobranza", label: "Convenios." },
@@ -100,21 +100,21 @@ export default function Home() {
   }))
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] px-3 py-2">
-      <div className="max-w-[1200px] mx-auto">
+    <div className="min-h-screen bg-[#FAFAFA] px-3 py-4 flex flex-col">
+      <div className="max-w-[1200px] mx-auto w-full flex flex-col flex-1">
         {/* Header */}
-        <div className="flex justify-between items-center border-b pb-1 mb-1">
+        <div className="flex justify-between items-center border-b pb-2 mb-4 w-full">
           <Tabs />
           <PeriodFilter onFilterChange={handleFilterChange} defaultYear="2025" defaultMonth={2} />
         </div>
 
         {/* Title */}
-        <h1 className="text-lg font-bold text-gray-800 mb-1">Prima neta cobrada por línea de negocio</h1>
+        <h1 className="text-lg font-bold text-gray-800 mb-4">PRIMA NETA COBRADA</h1>
 
         {/* Main Grid — compact two-column */}
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-1">
           {/* Left column ~45%: Pastel indicator + Gauge in flex row */}
-          <div className="w-[45%] flex items-center gap-3">
+          <div className="w-[45%] flex items-center justify-center gap-3">
             {/* Pastel pink indicator box */}
             <div className="bg-[#FDECEA] rounded-lg px-3 py-3 w-[120px] shrink-0">
               <div className="text-center">
@@ -139,7 +139,7 @@ export default function Home() {
           </div>
 
           {/* Right column ~55%: Table + Chart */}
-          <div className="w-[55%] flex flex-col gap-1.5">
+          <div className="w-[55%] flex flex-col gap-4 justify-between">
             <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
               <table className="w-full text-[13px]">
                 <thead className="bg-[#041224] text-white">
