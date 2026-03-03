@@ -8,7 +8,7 @@ const TABS = [
   { href: "/", label: "Tacómetro" },
   { href: "/tabla-detalle", label: "Tabla detalle" },
   { href: "/compromisos", label: "Vendedores" },
-  { href: "/internacional", label: "Internacional" },
+  { href: "/internacional", label: "Aseguradoras" },
   { href: "/corporate", label: "Corporate" },
   { href: "/cobranza", label: "Convenios" },
 ]
