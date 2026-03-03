@@ -9,7 +9,9 @@ export default function InternacionalPage() {
   return (
     <div className="min-h-screen bg-[#FAFAFA] px-3 py-4 flex flex-col">
       <div className="max-w-[1200px] mx-auto w-full flex flex-col flex-1">
-      <PageTabs />
+      <div className="flex justify-between items-center border-b pb-2 pt-5 w-full">
+        <PageTabs />
+      </div>
       <div className="bg-white rounded-lg shadow flex flex-col items-center justify-center py-24 text-center">
         <div className="mb-6 text-[#041224] font-bold text-xl tracking-wide font-lato">
           Click<span className="text-[#E62800]">SEGUROS</span>

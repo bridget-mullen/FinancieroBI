@@ -55,11 +55,13 @@ export default function CompromisosPage() {
   return (
     <div className="min-h-screen bg-[#FAFAFA] px-3 py-4 flex flex-col">
       <div className="max-w-[1200px] mx-auto w-full flex flex-col flex-1">
-      <PageTabs />
+      <div className="flex justify-between items-center border-b pb-2 pt-5 w-full">
+        <PageTabs />
+        <PeriodFilter onFilterChange={handleFilterChange} />
+      </div>
 
       <div className="flex items-center justify-between mb-3 flex-wrap gap-1">
         <h1 className="text-sm font-bold text-[#111] font-lato">Compromisos de Venta</h1>
-        <PeriodFilter onFilterChange={handleFilterChange} />
       </div>
 
       <div className="bi-card overflow-hidden overflow-x-auto">

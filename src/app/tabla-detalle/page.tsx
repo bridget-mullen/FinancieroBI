@@ -323,7 +323,10 @@ export default function TablaDetallePage() {
   return (
     <div className="min-h-screen bg-[#FAFAFA] px-3 py-4 flex flex-col">
       <div className="max-w-[1200px] mx-auto w-full flex flex-col flex-1">
-      <PageTabs alertCount={alertCount} />
+      <div className="flex justify-between items-center border-b pb-2 pt-5 w-full">
+        <PageTabs alertCount={alertCount} />
+        <PeriodFilter onFilterChange={handleFilterChange} />
+      </div>
 
       {/* Title + export buttons */}
       <div className="flex items-center justify-between mb-2 flex-wrap gap-1">
@@ -360,7 +363,6 @@ export default function TablaDetallePage() {
 
       {/* Filter bar */}
       <div className="flex items-center gap-2 mb-2 flex-wrap">
-        <PeriodFilter onFilterChange={handleFilterChange} />
         <div className="relative ml-auto">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
           <input

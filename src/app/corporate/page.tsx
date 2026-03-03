@@ -134,7 +134,10 @@ export default function CorporatePage() {
   return (
     <div className="min-h-screen bg-[#FAFAFA] px-3 py-4 flex flex-col">
       <div className="max-w-[1200px] mx-auto w-full flex flex-col flex-1">
-      <PageTabs />
+      <div className="flex justify-between items-center border-b pb-2 pt-5 w-full">
+        <PageTabs />
+        <PeriodFilter onFilterChange={handleFilterChange} />
+      </div>
       <div className="flex items-center justify-between mb-2 flex-wrap gap-1">
         <h1 className="text-sm font-bold text-[#111] font-lato">Corporate — Prima neta cobrada</h1>
         <div className="flex items-center gap-1.5">
@@ -164,7 +167,6 @@ export default function CorporatePage() {
 
       {/* Filters */}
       <div className="flex items-center gap-2 mb-2 flex-wrap">
-        <PeriodFilter onFilterChange={handleFilterChange} />
         <div className="relative ml-auto">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
           <input id="corp-search" name="corp-search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..." className="pl-7 pr-3 py-1 border border-[#E5E7EB] rounded text-xs w-44 bg-white" />

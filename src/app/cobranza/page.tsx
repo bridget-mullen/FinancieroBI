@@ -146,15 +146,15 @@ export default function CobranzaPage() {
   return (
     <div className="min-h-screen bg-[#FAFAFA] px-3 py-4 flex flex-col">
       <div className="max-w-[1200px] mx-auto w-full flex flex-col flex-1">
-      <PageTabs />
+      <div className="flex justify-between items-center border-b pb-2 pt-5 w-full">
+        <PageTabs />
+        <PeriodFilter onFilterChange={handleFilterChange} />
+      </div>
 
       {/* Title + simplified filters */}
       <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
         <h1 className="text-base font-bold text-[#041224]">Aseguradoras</h1>
-        <div className="flex items-center gap-2 text-xs flex-wrap">
-          <PeriodFilter onFilterChange={handleFilterChange} />
-          <span className="text-xs text-[#CCD1D3] ml-2">Actualizado: 27/02/2026</span>
-        </div>
+        <span className="text-xs text-[#CCD1D3]">Actualizado: 27/02/2026</span>
       </div>
 
       {/* 3 Metric cards — equal height */}
