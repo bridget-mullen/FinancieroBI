@@ -321,7 +321,8 @@ export default function TablaDetallePage() {
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-[#FAFAFA] px-3 py-4 flex flex-col">
+      <div className="max-w-[1200px] mx-auto w-full flex flex-col flex-1">
       <PageTabs alertCount={alertCount} />
 
       {/* Title + export buttons */}
@@ -661,6 +662,7 @@ export default function TablaDetallePage() {
       <NLQuery periodo={periodo} year={year} />
 
       <PageFooter showFootnote={drillLevel === "linea"} />
+      </div>
     </div>
   )
 }

@@ -132,7 +132,8 @@ export default function CorporatePage() {
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-[#FAFAFA] px-3 py-4 flex flex-col">
+      <div className="max-w-[1200px] mx-auto w-full flex flex-col flex-1">
       <PageTabs />
       <div className="flex items-center justify-between mb-2 flex-wrap gap-1">
         <h1 className="text-sm font-bold text-[#111] font-lato">Corporate — Prima neta cobrada</h1>
@@ -241,6 +242,7 @@ export default function CorporatePage() {
         </table>
       </div>
       <PageFooter />
+      </div>
     </div>
   )
 }
