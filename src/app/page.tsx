@@ -113,31 +113,27 @@ export default function Home() {
 
         {/* Main Grid — compact two-column */}
         <div className="flex gap-3">
-          {/* Left column ~45%: Gauge + KPI cards */}
-          <div className="w-[45%] flex flex-col">
-            {/* Tacómetro — 70% width, centered */}
-            <div className="flex justify-center">
-              <div className="w-[70%]">
-                <Gauge value={total / 1e6} prevYear={totalAA / 1e6} budget={totalPpto / 1e6} />
+          {/* Left column ~45%: Pastel indicator + Gauge in flex row */}
+          <div className="w-[45%] flex items-center gap-3">
+            {/* Pastel pink indicator box */}
+            <div className="bg-[#FDECEA] rounded-lg px-3 py-3 w-[120px] shrink-0">
+              <div className="text-center">
+                <p className="text-[11px] text-gray-500 leading-tight">Cumplimiento</p>
+                <p className="text-[22px] font-bold text-[#16a34a] leading-tight mt-0.5">{cumpl}%</p>
+              </div>
+              <div className="border-t border-gray-300 my-2" />
+              <div className="text-center">
+                <p className="text-[11px] text-gray-500 leading-tight">Crecimiento</p>
+                <p className={`text-[22px] font-bold leading-tight mt-0.5 ${crec < 0 ? "text-[#e11d48]" : "text-[#16a34a]"}`}>
+                  {crec < 0 ? "↓" : "↑"} {crec}%
+                </p>
               </div>
             </div>
 
-            {/* KPI Cards — two compact tiles side by side */}
-            <div className="grid grid-cols-2 gap-2 mt-1">
-              <div className="bg-[#22c55e] rounded-lg px-3 py-2.5 text-center">
-                <p className="text-[12px] text-white/90 leading-tight">Cumplimiento del presupuesto</p>
-                <p className="text-[28px] font-bold text-white leading-tight mt-1">{cumpl}%</p>
-              </div>
-              <div className={`${crec < 0 ? "bg-[#e11d48]" : "bg-[#22c55e]"} rounded-lg px-3 py-2.5 text-center`}>
-                <p className="text-[12px] text-white/90 leading-tight">Crecimiento vs año anterior</p>
-                <p className="text-[28px] font-bold text-white leading-tight mt-1 flex items-center justify-center gap-1">
-                  {crec < 0 ? (
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L10 13.586l3.293-3.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg>
-                  ) : (
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L10 6.414l-3.293 3.293a1 1 0 01-1.414 0z" clipRule="evenodd"/></svg>
-                  )}
-                  {crec}%
-                </p>
+            {/* Gauge — scaled to 75% */}
+            <div className="flex-1 flex justify-center">
+              <div className="w-[75%]">
+                <Gauge value={total / 1e6} prevYear={totalAA / 1e6} budget={totalPpto / 1e6} />
               </div>
             </div>
           </div>
@@ -211,17 +207,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="flex justify-between items-center mt-1.5 pt-1 border-t">
-          <div className="flex items-center gap-2">
-            <div className="bg-orange-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded leading-tight">INTRA<br/>CLICK</div>
-            <span className="text-[11px] text-gray-500">* El total de la prima neta del año anterior está al corte del día: 23/febrero/2025</span>
-          </div>
-          <div className="text-right text-[11px] text-gray-600">
-            <div className="font-semibold">Fecha de actualización.</div>
-            <div>23/02/2026 08:10:20 a.m.</div>
-          </div>
-        </div>
       </div>
     </div>
   )
