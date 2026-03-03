@@ -109,46 +109,43 @@ export default function Home() {
         </div>
 
         {/* Title */}
-        <h1 className="text-xl font-bold tracking-wide text-gray-800 mt-4 mb-3 pb-1 border-b border-gray-200">PRIMA NETA COBRADA</h1>
+        <h1 className="text-xl font-bold tracking-wide text-gray-800 mt-6 mb-3 pb-1 border-b border-gray-200">PRIMA NETA COBRADA</h1>
 
         {/* Main Grid — compact two-column */}
-        <div className="flex gap-3 flex-1">
+        <div className="flex gap-3 flex-1 mt-2">
           {/* Left column ~45%: Pastel indicator + Gauge in flex row */}
           <div className="w-[45%] flex items-center justify-center gap-3">
-            {/* Pastel pink indicator box */}
-            <div className="bg-[#FDECEA] rounded-lg px-3 py-3 w-[120px] shrink-0">
-              <div className="text-center">
-                <p className="text-[11px] text-gray-500 leading-tight">Cumplimiento</p>
-                <p className="text-[22px] font-bold text-[#16a34a] leading-tight mt-0.5">{cumpl}%</p>
+            {/* KPI indicator box — two stacked colored sections */}
+            <div className="w-[130px] shrink-0 rounded-lg shadow-sm overflow-hidden">
+              <div className="bg-[#ECFDF5] px-3 py-2.5 text-center">
+                <p className="text-[11px] text-[#065F46] leading-tight">Cumplimiento</p>
+                <p className="text-xl font-bold text-[#059669] leading-tight mt-0.5">{cumpl}%</p>
               </div>
-              <div className="border-t border-gray-300 my-2" />
-              <div className="text-center">
-                <p className="text-[11px] text-gray-500 leading-tight">Crecimiento</p>
-                <p className={`text-[22px] font-bold leading-tight mt-0.5 ${crec < 0 ? "text-[#e11d48]" : "text-[#16a34a]"}`}>
+              <div className="bg-[#FEF2F2] px-3 py-2.5 text-center">
+                <p className="text-[11px] text-[#991B1B] leading-tight">Crecimiento</p>
+                <p className="text-xl font-bold text-[#DC2626] leading-tight mt-0.5">
                   {crec < 0 ? "↓" : "↑"} {crec}%
                 </p>
               </div>
             </div>
 
-            {/* Gauge — scaled to 75% */}
+            {/* Gauge — hero element, fills available space */}
             <div className="flex-1 flex justify-center">
-              <div className="w-[75%]">
-                <Gauge value={total / 1e6} prevYear={totalAA / 1e6} budget={totalPpto / 1e6} />
-              </div>
+              <Gauge value={total / 1e6} prevYear={totalAA / 1e6} budget={totalPpto / 1e6} />
             </div>
           </div>
 
           {/* Right column ~55%: Table + Chart */}
           <div className="w-[55%] flex flex-col gap-1 justify-center">
             <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
-              <table className="w-full text-[13px]">
+              <table className="w-full text-[11px]">
                 <thead className="bg-[#041224] text-white">
                   <tr>
-                    <th className="text-left px-2.5 py-1.5 text-[14px] font-bold">Línea</th>
-                    <th className="text-right px-2.5 py-1.5 text-[14px] font-bold">Prima Neta</th>
-                    <th className="text-right px-2.5 py-1.5 text-[14px] font-bold">Año Ant. *</th>
-                    <th className="text-right px-2.5 py-1.5 text-[14px] font-bold">Presupuesto</th>
-                    <th className="text-right px-2.5 py-1.5 text-[14px] font-bold">Diferencia</th>
+                    <th className="text-left px-1.5 py-1 text-[11px] font-bold">Línea</th>
+                    <th className="text-right px-1.5 py-1 text-[11px] font-bold">Prima Neta</th>
+                    <th className="text-right px-1.5 py-1 text-[11px] font-bold">Año Ant. *</th>
+                    <th className="text-right px-1.5 py-1 text-[11px] font-bold">Presupuesto</th>
+                    <th className="text-right px-1.5 py-1 text-[11px] font-bold">Diferencia</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -156,22 +153,22 @@ export default function Home() {
                     const diff = l.primaNeta - l.presupuesto
                     return (
                       <tr key={l.nombre} className={`cursor-pointer transition-colors hover:bg-blue-50 ${i % 2 === 0 ? "bg-white" : "bg-gray-50/70"}`}>
-                        <td className="px-2.5 py-1 font-medium text-gray-800">{l.nombre}</td>
-                        <td className="px-2.5 py-1 text-right font-semibold text-gray-900">{fmt(l.primaNeta)}</td>
-                        <td className="px-2.5 py-1 text-right text-gray-500">{fmt(l.anioAnterior)}</td>
-                        <td className="px-2.5 py-1 text-right text-gray-500">{fmt(l.presupuesto)}</td>
-                        <td className={`px-2.5 py-1 text-right font-semibold ${diff < 0 ? "text-red-600" : "text-emerald-600"}`}>
+                        <td className="px-1.5 py-1 font-medium text-gray-800">{l.nombre}</td>
+                        <td className="px-1.5 py-1 text-right font-semibold text-gray-900">{fmt(l.primaNeta)}</td>
+                        <td className="px-1.5 py-1 text-right text-gray-500">{fmt(l.anioAnterior)}</td>
+                        <td className="px-1.5 py-1 text-right text-gray-500">{fmt(l.presupuesto)}</td>
+                        <td className={`px-1.5 py-1 text-right font-semibold ${diff < 0 ? "text-red-600" : "text-emerald-600"}`}>
                           {diff < 0 ? `(${fmt(Math.abs(diff))})` : fmt(diff)}
                         </td>
                       </tr>
                     )
                   })}
                   <tr className="bg-gray-100 font-bold border-t-2 border-gray-300">
-                    <td className="px-2.5 py-1.5 text-gray-900">Total</td>
-                    <td className="px-2.5 py-1.5 text-right text-gray-900">{fmt(total)}</td>
-                    <td className="px-2.5 py-1.5 text-right text-gray-700">{fmt(totalAA)}</td>
-                    <td className="px-2.5 py-1.5 text-right text-gray-700">{fmt(totalPpto)}</td>
-                    <td className={`px-2.5 py-1.5 text-right font-bold ${(total - totalPpto) < 0 ? "text-red-600" : "text-emerald-600"}`}>
+                    <td className="px-1.5 py-1 text-gray-900">Total</td>
+                    <td className="px-1.5 py-1 text-right text-gray-900">{fmt(total)}</td>
+                    <td className="px-1.5 py-1 text-right text-gray-700">{fmt(totalAA)}</td>
+                    <td className="px-1.5 py-1 text-right text-gray-700">{fmt(totalPpto)}</td>
+                    <td className={`px-1.5 py-1 text-right font-bold ${(total - totalPpto) < 0 ? "text-red-600" : "text-emerald-600"}`}>
                       {(total - totalPpto) < 0 ? `(${fmt(Math.abs(total - totalPpto))})` : fmt(total - totalPpto)}
                     </td>
                   </tr>
