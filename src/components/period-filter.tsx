@@ -60,22 +60,22 @@ export function PeriodFilter({ onFilterChange, defaultYear = "2026", defaultMont
   }
 
   return (
-    <div className="flex items-center gap-2 flex-wrap">
-      <div className="flex items-center gap-1 text-xs">
+    <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex items-center gap-1.5 text-sm">
         <label htmlFor="pf-year" className="text-gray-500 font-medium">Año</label>
-        <select id="pf-year" name="pf-year" value={year} onChange={e => setYear(e.target.value)} className="border border-[#E5E7EB] rounded px-1.5 py-0.5 text-xs bg-white">
+        <select id="pf-year" name="pf-year" value={year} onChange={e => setYear(e.target.value)} className="border border-gray-300 rounded-md px-2 py-0.5 text-sm font-medium bg-white">
           <option>2026</option><option>2025</option><option>2024</option>
         </select>
       </div>
 
-      <div className="flex items-center gap-1 text-xs">
+      <div className="flex items-center gap-1.5 text-sm">
         <label htmlFor="pf-tipo" className="text-gray-500 font-medium">Periodo</label>
         <select
           id="pf-tipo"
           name="pf-tipo"
           value={periodoType}
           onChange={e => setPeriodoType(e.target.value as PeriodoType)}
-          className="border border-[#E5E7EB] rounded px-1.5 py-0.5 text-xs bg-white"
+          className="border border-gray-300 rounded-md px-2 py-0.5 text-sm font-medium bg-white"
         >
           <option value="mes">Mes</option>
           <option value="trimestre">Trimestre</option>
@@ -85,14 +85,14 @@ export function PeriodFilter({ onFilterChange, defaultYear = "2026", defaultMont
       </div>
 
       {periodoType === "mes" && (
-        <div className="flex items-center gap-1 text-xs">
+        <div className="flex items-center gap-1.5 text-sm">
           <label htmlFor="pf-mes" className="text-gray-500 font-medium">Mes</label>
           <select
             id="pf-mes"
             name="pf-mes"
             value={selectedMonths[0]}
             onChange={e => setSelectedMonths([Number(e.target.value)])}
-            className="border border-[#E5E7EB] rounded px-1.5 py-0.5 text-xs bg-white"
+            className="border border-gray-300 rounded-md px-2 py-0.5 text-sm font-medium bg-white"
           >
             {MESES_LABELS.map((m, i) => (
               <option key={m} value={i + 1}>{m}</option>

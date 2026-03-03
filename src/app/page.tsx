@@ -18,8 +18,8 @@ const TABS = [
   { href: "/tabla-detalle", label: "Tabla detalle" },
   { href: "/compromisos", label: "Vendedores" },
   { href: "/internacional", label: "Internacional" },
-  { href: "/corporate", label: "Corporate." },
-  { href: "/cobranza", label: "Convenios." },
+  { href: "/corporate", label: "Corporate" },
+  { href: "/cobranza", label: "Convenios" },
 ]
 
 function Tabs() {
@@ -29,7 +29,7 @@ function Tabs() {
       {TABS.map((tab, i) => (
         <React.Fragment key={tab.href}>
           {i > 0 && <span className="text-gray-300 mx-2">|</span>}
-          <Link href={tab.href} className={`text-[14px] ${pathname === tab.href ? "text-gray-900 font-bold" : "text-gray-500 hover:text-gray-700"}`}>
+          <Link href={tab.href} className={`text-sm tracking-wide font-medium ${pathname === tab.href ? "text-gray-900 font-bold" : "text-gray-500 hover:text-gray-700"}`}>
             {tab.label}
           </Link>
         </React.Fragment>
@@ -103,13 +103,13 @@ export default function Home() {
     <div className="min-h-screen bg-[#FAFAFA] px-3 py-4 flex flex-col">
       <div className="max-w-[1200px] mx-auto w-full flex flex-col flex-1">
         {/* Header */}
-        <div className="flex justify-between items-center border-b pb-2 mb-4 w-full">
+        <div className="flex justify-between items-center border-b pb-2 pt-5 w-full">
           <Tabs />
           <PeriodFilter onFilterChange={handleFilterChange} defaultYear="2025" defaultMonth={2} />
         </div>
 
         {/* Title */}
-        <h1 className="text-lg font-bold text-gray-800 mb-4">PRIMA NETA COBRADA</h1>
+        <h1 className="text-xl font-bold tracking-wide text-gray-800 mt-4 mb-3 pb-1 border-b border-gray-200">PRIMA NETA COBRADA</h1>
 
         {/* Main Grid — compact two-column */}
         <div className="flex gap-3 flex-1">
@@ -139,7 +139,7 @@ export default function Home() {
           </div>
 
           {/* Right column ~55%: Table + Chart */}
-          <div className="w-[55%] flex flex-col gap-4 justify-between">
+          <div className="w-[55%] flex flex-col gap-1 justify-center">
             <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
               <table className="w-full text-[13px]">
                 <thead className="bg-[#041224] text-white">
