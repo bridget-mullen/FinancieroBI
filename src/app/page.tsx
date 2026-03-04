@@ -163,7 +163,7 @@ export default function Home() {
             <div className="bg-white border border-gray-200 rounded-lg shadow-sm px-2 py-1.5 flex flex-col h-[280px] overflow-hidden">
               <div className="flex gap-3 text-[12px] mb-1 self-start">
                 <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-[#1a1a1a] rounded-sm"/><span className="text-gray-700 font-medium">Prima neta efectuada</span></div>
-                <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-[#00C853] rounded-sm"/><span className="text-gray-700 font-medium">Presupuesto</span></div>
+                <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-[#2E7D32] rounded-sm"/><span className="text-gray-700 font-medium">Presupuesto</span></div>
               </div>
               <div className="w-full flex-1 flex justify-center overflow-hidden">
                 {ready && chartData.length > 0 && (
@@ -174,8 +174,8 @@ export default function Home() {
                           <stop offset="100%" stopColor="#0d0d0d" stopOpacity={1}/>
                         </linearGradient>
                         <linearGradient id="gradGreen" x1="0" y1="0" x2="1" y2="1">
-                          <stop offset="0%" stopColor="#00C853" stopOpacity={1}/>
-                          <stop offset="100%" stopColor="#00A844" stopOpacity={1}/>
+                          <stop offset="0%" stopColor="#2E7D32" stopOpacity={1}/>
+                          <stop offset="100%" stopColor="#256B28" stopOpacity={1}/>
                         </linearGradient>
                       </defs>
                       <XAxis type="number" domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickFormatter={v => `$${v}M`} tick={{ fontSize: 11 }} axisLine={{ stroke: '#E5E7EB' }}/>
@@ -188,7 +188,7 @@ export default function Home() {
                         <LabelList dataKey="pn" position="right" formatter={(v: unknown) => v != null ? `$${v}M` : ''} style={{ fontSize: 11, fill: '#1a1a1a', fontWeight: 600 }}/>
                       </Bar>
                       <Bar dataKey="pp" fill="url(#gradGreen)" radius={[0, 3, 3, 0]} barSize={14} isAnimationActive={true} animationDuration={800}>
-                        <LabelList dataKey="pp" position="right" formatter={(v: unknown) => v != null ? `$${v}M` : ''} style={{ fontSize: 11, fill: '#00A844', fontWeight: 600 }}/>
+                        <LabelList dataKey="pp" position="right" formatter={(v: unknown) => v != null ? `$${v}M` : ''} style={{ fontSize: 11, fill: '#2E7D32', fontWeight: 600 }}/>
                       </Bar>
                     </BarChart>
                 )}
