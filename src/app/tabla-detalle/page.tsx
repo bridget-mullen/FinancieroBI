@@ -383,21 +383,21 @@ export default function TablaDetallePage() {
           const parts = lastDataDate.split("/")
           const dataDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
           const daysDiff = Math.floor((Date.now() - dataDate.getTime()) / (1000 * 60 * 60 * 24))
-          return daysDiff > 7 ? <span className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium ml-1">⚠ Datos pendientes de actualización</span> : null
+          return daysDiff > 7 ? <span className="text-[12px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium ml-1">⚠ Datos pendientes de actualización</span> : null
         })()}
       </div>
 
       {/* Row count indicator for large datasets */}
       {drillLevel !== "linea" && filteredRows.length >= 30 && (
-        <div className="text-[10px] text-[#888] mb-1">{filteredRows.length} registros encontrados — desplazar para ver más</div>
+        <div className="text-[12px] text-[#888] mb-1">{filteredRows.length} registros encontrados — desplazar para ver más</div>
       )}
       {drillLevel === "poliza" && filteredPolizas.length >= 30 && (
-        <div className="text-[10px] text-[#888] mb-1">{filteredPolizas.length} pólizas encontradas — desplazar para ver más</div>
+        <div className="text-[12px] text-[#888] mb-1">{filteredPolizas.length} pólizas encontradas — desplazar para ver más</div>
       )}
 
       {/* Table — scrollable for large datasets */}
       <div ref={tableRef} className="bi-card overflow-hidden overflow-x-auto max-h-[70vh] overflow-y-auto">
-        <table className="w-full text-[10px]">
+        <table className="w-full text-[12px]">
           <thead className="sticky top-0 z-10">
             {drillLevel === "linea" ? (
               <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
