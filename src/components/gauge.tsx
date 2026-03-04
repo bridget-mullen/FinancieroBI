@@ -16,11 +16,11 @@ const COLORS = [
 
 export function Gauge({ value, clickable = true }: GaugeProps) {
   const W = 500
-  const H = 310
+  const H = 350
   const cx = W / 2
-  const cy = 240
+  const cy = 260
 
-  const outerR = 200
+  const outerR = 220
   const innerR = outerR * 0.75 // 150
   const borderR = outerR + 10   // 210 — grey frame outside
   const borderInnerR = innerR - 6
