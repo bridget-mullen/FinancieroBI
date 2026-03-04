@@ -81,7 +81,7 @@ export default function AseguradorasPage() {
                         className="h-full rounded-full transition-all duration-500"
                         style={{
                           width: `${maxAseguradora > 0 ? (a.primaNeta / maxAseguradora) * 100 : 0}%`,
-                          backgroundColor: ["#006B3F", "#1B8A5A", "#35A575", "#4DBF8E", "#66BB6A"][topAseguradoras.indexOf(a)] || "#66BB6A"
+                          backgroundColor: ["#1B5E20", "#2E7D32", "#388E3C", "#43A047", "#4CAF50"][topAseguradoras.indexOf(a)] || "#4CAF50"
                         }}
                       />
                     </div>

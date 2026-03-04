@@ -181,8 +181,11 @@ export default function Home() {
                       <XAxis type="number" domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickFormatter={v => `$${v}M`} tick={{ fontSize: 11 }} axisLine={{ stroke: '#E5E7EB' }}/>
                       <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} axisLine={false} tickLine={false}/>
                       <Tooltip
-                        contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '6px', boxShadow: '0 2px 4px rgba(0,0,0,0.08)', fontSize: 11 }}
-                        formatter={(value?: number) => [`$${value ?? 0}M`, '']}
+                        contentStyle={{ backgroundColor: '#041224', border: 'none', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.25)', fontSize: 12, padding: '8px 12px', color: '#fff' }}
+                        itemStyle={{ color: '#fff' }}
+                        labelStyle={{ color: '#ccc', fontWeight: 600, marginBottom: 4 }}
+                        formatter={(value?: number, name?: string) => [`$${value ?? 0}M`, name === 'pn' ? 'Prima Neta' : 'Presupuesto']}
+                        cursor={{ fill: 'rgba(59,130,246,0.08)' }}
                       />
                       <Bar dataKey="pn" fill="url(#gradBlack)" radius={[0, 3, 3, 0]} barSize={14} isAnimationActive={true} animationDuration={800}>
                         <LabelList dataKey="pn" position="right" formatter={(v: unknown) => v != null ? `$${v}M` : ''} style={{ fontSize: 11, fill: '#1a1a1a', fontWeight: 600 }}/>

@@ -114,7 +114,7 @@ export default function CompromisosPage() {
                   {loading ? (
                     <tr><td colSpan={5} className="px-2 py-2 text-center text-gray-400">Cargando...</td></tr>
                   ) : data.slice(0, 10).map((r, idx) => (
-                    <tr key={r.vendedor} className={`border-b border-[#F0F0F0] ${idx % 2 === 1 ? "bg-[#FAFAFA]" : ""}`}>
+                    <tr key={r.vendedor} className="border-b border-[#F0F0F0]" style={{ backgroundColor: r.pctAvance >= 80 ? 'rgba(46,125,50,0.08)' : r.pctAvance >= 60 ? 'rgba(245,197,24,0.10)' : 'rgba(230,40,0,0.06)' }}>
                       <td className="px-2 py-[2px] font-medium text-[#111]">{r.vendedor}</td>
                       <td className="px-2 py-[2px] text-right text-gray-500">{fmt(r.meta)}</td>
                       <td className="px-2 py-[2px] text-right font-medium">{fmt(r.primaActual)}</td>
@@ -143,7 +143,7 @@ export default function CompromisosPage() {
           {/* Row 2: Top 5 table + chart */}
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2">
-              <p className="text-sm font-bold text-[#041224] mb-1">🏆 Top 5 Vendedores</p>
+              <p className="text-sm font-bold text-[#041224] mb-1">Top 5 Vendedores</p>
               <table className="w-full border-collapse" style={{ fontSize: 14, lineHeight: 1.4 }}>
                 <thead>
                   <tr className="bg-[#041224] text-white border-b-2 border-b-[#2E7D32]">
@@ -164,7 +164,7 @@ export default function CompromisosPage() {
               </table>
             </div>
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2">
-              <p className="text-sm font-bold text-[#2E7D32] mb-1">🏆 Top 5</p>
+              <p className="text-sm font-bold text-[#2E7D32] mb-1">Top 5</p>
               <HBarChart data={topBarData} colorFn={(_pct, i) => {
                 const blues = ["#1E3A5F", "#2A5082", "#3668A5", "#4A90D9", "#6BA8E8"]
                 return blues[i ?? 0] || "#4A90D9"
@@ -175,7 +175,7 @@ export default function CompromisosPage() {
           {/* Row 3: Bottom 5 table + chart */}
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2">
-              <p className="text-sm font-bold text-[#041224] mb-1">⬇️ Bottom 5 Vendedores</p>
+              <p className="text-sm font-bold text-[#041224] mb-1">Bottom 5 Vendedores</p>
               <table className="w-full border-collapse" style={{ fontSize: 14, lineHeight: 1.4 }}>
                 <thead>
                   <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
@@ -196,7 +196,7 @@ export default function CompromisosPage() {
               </table>
             </div>
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2">
-              <p className="text-sm font-bold text-[#E62800] mb-1">⬇️ Bottom 5</p>
+              <p className="text-sm font-bold text-[#E62800] mb-1">Bottom 5</p>
               <HBarChart data={bottomBarData} colorFn={(_pct, i) => {
                 const blues = ["#1E3A5F", "#2A5082", "#3668A5", "#4A90D9", "#6BA8E8"]
                 return blues[i ?? 0] || "#4A90D9"
