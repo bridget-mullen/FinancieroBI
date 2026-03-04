@@ -54,26 +54,13 @@ export default function TablaDetallePage() {
 function TablaDetalleContent() {
   const searchParams = useSearchParams()
   const lineaParam = searchParams.get("linea")
-  const [highlightId, setHighlightId] = useState<string | null>(null)
-
   const [year, setYear] = useState("2026")
   const [periodos, setPeriodos] = useState<number[]>([2])
   const [search, setSearch] = useState("")
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
+  const [didAutoDrill, setDidAutoDrill] = useState(false)
   useEffect(() => { setMounted(true) }, [])
-
-  // Scroll to and highlight the row matching the ?linea= param
-  useEffect(() => {
-    if (!lineaParam || loading) return
-    const el = document.getElementById(lineaParam)
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" })
-      setHighlightId(lineaParam)
-      const timer = setTimeout(() => setHighlightId(null), 3000)
-      return () => clearTimeout(timer)
-    }
-  }, [lineaParam, loading])
 
   const handleFilterChange = useCallback((newYear: string, newPeriodos: number[]) => {
     setYear(newYear)
@@ -218,6 +205,17 @@ function TablaDetalleContent() {
     setDrillLevel(level)
     setLoading(false)
   }
+
+  // Auto-drill into the category matching the ?linea= param
+  useEffect(() => {
+    if (!lineaParam || loading || didAutoDrill) return
+    const match = lineas.find(l => toSlug(l.linea) === lineaParam)
+    if (match) {
+      setDidAutoDrill(true)
+      drill("gerencia", match.linea, { linea: match.linea })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lineaParam, loading, lineas, didAutoDrill])
 
   const goBack = () => {
     if (crumbs.length === 0) return
@@ -485,7 +483,7 @@ function TablaDetalleContent() {
                   const isAlert = l.presupuesto > 0 && l.pctDifPpto <= ALERT_THRESHOLD
                   const isCritical = l.presupuesto > 0 && l.pctDifPpto < -15
                   return (
-                    <tr key={l.linea} id={toSlug(l.linea)} className={`group border-b border-[#F0F0F0] cursor-pointer transition-all duration-150 hover:bg-[#FFF5F5] hover:border-l-[3px] hover:border-l-[#E62800] ${highlightId === toSlug(l.linea) ? "bg-[#FEFCE8] ring-2 ring-[#3B82F6]" : isAlert ? "bg-[#FFF3F3]" : isCritical ? "bg-[#FFF2F2]" : idx % 2 === 1 ? "bg-[#FAFAFA]" : "bg-white"}`}
+                    <tr key={l.linea} id={toSlug(l.linea)} className={`group border-b border-[#F0F0F0] cursor-pointer transition-all duration-150 hover:bg-[#FFF5F5] hover:border-l-[3px] hover:border-l-[#E62800] ${isAlert ? "bg-[#FFF3F3]" : isCritical ? "bg-[#FFF2F2]" : idx % 2 === 1 ? "bg-[#FAFAFA]" : "bg-white"}`}
                       onClick={() => drill("gerencia", l.linea, { linea: l.linea })}>
                       <td className="px-1 py-1.5 text-center">
                         {/* Alert icons hidden for SEED data presentation */}

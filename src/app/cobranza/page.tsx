@@ -54,7 +54,7 @@ const RAMOS = [
   { nombre: "Vida", pnEfectuada: 59636744, polizas: 4202 },
   { nombre: "Otros", pnEfectuada: 8013999, polizas: 545 },
 ]
-const RAMO_COLORS = ["#052F5F", "#041224", "#0EA5E9", "#3B82F6", "#0EA5E9"]
+const RAMO_COLORS = ["#052F5F", "#041224", "#E62800", "#3B82F6", "#0EA5E9"]
 
 const COMPANIES = [
   { nombre: "AFIRME", primaNeta: 15109066, convenio: 15000000, pnAA: 9836221, pendiente: 44534, pnCia: 5677131, difCia: 9430936 },
@@ -234,7 +234,7 @@ export default function CobranzaPage() {
               <span>{fmtM(compTotals.convenio)}</span>
             </div>
             <div className="h-8 w-full bg-[#F3F4F6] rounded-full overflow-hidden shadow-inner">
-              <div className="h-8 bg-gradient-to-r from-[#3983F6] to-[#052F5F] rounded-full transition-all duration-1000 flex items-center justify-end pr-2"
+              <div className="h-8 bg-[#1a1a1a] rounded-full transition-all duration-1000 flex items-center justify-end pr-2"
                 style={{ width: `${Math.min(metaPct, 100)}%` }}>
                 <span className="text-white text-xs font-bold drop-shadow">{metaPct}%</span>
               </div>
