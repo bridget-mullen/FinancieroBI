@@ -40,11 +40,8 @@ export interface LineaRow {
 
 // Seed data — fallback when Supabase fails
 export const SEED_LINEAS: LineaRow[] = [
-  { nombre: "Click Franquicias", primaNeta: 52577939, anioAnterior: 45038829, presupuesto: 68989976 },
-  { nombre: "Click Promotoras", primaNeta: 20017383, anioAnterior: 19422359, presupuesto: 25534211 },
-  { nombre: "Corporate", primaNeta: 12708705, anioAnterior: 13539625, presupuesto: 16242717 },
-  { nombre: "Cartera Tradicional", primaNeta: 10632028, anioAnterior: 10057425, presupuesto: 12322087 },
-  { nombre: "Call Center", primaNeta: 2602364, anioAnterior: 853685, presupuesto: 6398081 },
+  { nombre: "Vendedores", primaNeta: 72595322, anioAnterior: 64461188, presupuesto: 94524187 },
+  { nombre: "Aseguradoras", primaNeta: 25943097, anioAnterior: 24450735, presupuesto: 34962885 },
 ]
 
 export const SEED_PRESUPUESTO = 129487071
