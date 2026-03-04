@@ -105,7 +105,7 @@ export default function Home() {
             </div>
 
             {/* Gauge — hero element, fills available space */}
-            <div className="flex-1 flex justify-center">
+            <div className="flex-1 min-w-0">
               <Gauge value={total / 1e6} prevYear={totalAA / 1e6} budget={totalPpto / 1e6} />
             </div>
           </div>
