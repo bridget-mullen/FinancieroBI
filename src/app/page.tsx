@@ -134,24 +134,24 @@ export default function Home() {
                     const link = LINEA_LINKS[l.nombre]
                     return (
                       <tr key={l.nombre} className={`cursor-pointer transition-colors hover:bg-blue-50 ${i % 2 === 0 ? "bg-white" : "bg-gray-50/70"}`}>
-                        <td className="px-1.5 py-0.5 font-medium text-gray-800">
-                          {link ? <Link href={link} className="text-blue-700 hover:underline">{l.nombre}</Link> : l.nombre}
+                        <td className="px-1.5 py-0.5 font-medium" style={{ backgroundColor: '#000', color: '#fff' }}>
+                          {link ? <Link href={link} className="hover:underline" style={{ color: '#fff' }}>{l.nombre}</Link> : l.nombre}
                         </td>
                         <td className="px-1.5 py-0.5 text-right font-semibold text-gray-900">{fmt(l.primaNeta)}</td>
                         <td className="px-1.5 py-0.5 text-right text-gray-500">{fmt(l.anioAnterior)}</td>
-                        <td className="px-1.5 py-0.5 text-right text-gray-500">{fmt(l.presupuesto)}</td>
+                        <td className="px-1.5 py-0.5 text-right font-semibold" style={{ color: '#2E7D32' }}>{fmt(l.presupuesto)}</td>
                         <td className={`px-1.5 py-1 text-right font-semibold ${diff < 0 ? "text-red-600" : "text-emerald-600"}`}>
                           {diff < 0 ? `(${fmt(Math.abs(diff))})` : fmt(diff)}
                         </td>
                       </tr>
                     )
                   })}
-                  <tr className="bg-gray-100 font-bold border-t-2 border-gray-300">
-                    <td className="px-1.5 py-0.5 text-gray-900">Total</td>
-                    <td className="px-1.5 py-0.5 text-right text-gray-900">{fmt(total)}</td>
-                    <td className="px-1.5 py-0.5 text-right text-gray-700">{fmt(totalAA)}</td>
-                    <td className="px-1.5 py-0.5 text-right text-gray-700">{fmt(totalPpto)}</td>
-                    <td className={`px-1.5 py-1 text-right font-bold ${(total - totalPpto) < 0 ? "text-red-600" : "text-emerald-600"}`}>
+                  <tr className="font-bold border-t-2 border-gray-300" style={{ backgroundColor: '#000', color: '#fff' }}>
+                    <td className="px-1.5 py-0.5" style={{ color: '#fff' }}>Total</td>
+                    <td className="px-1.5 py-0.5 text-right" style={{ color: '#fff' }}>{fmt(total)}</td>
+                    <td className="px-1.5 py-0.5 text-right" style={{ color: '#fff' }}>{fmt(totalAA)}</td>
+                    <td className="px-1.5 py-0.5 text-right" style={{ color: '#2E7D32' }}>{fmt(totalPpto)}</td>
+                    <td className={`px-1.5 py-1 text-right font-bold`} style={{ color: (total - totalPpto) < 0 ? '#ff6b6b' : '#4ade80' }}>
                       {(total - totalPpto) < 0 ? `(${fmt(Math.abs(total - totalPpto))})` : fmt(total - totalPpto)}
                     </td>
                   </tr>
@@ -162,20 +162,20 @@ export default function Home() {
             {/* Chart */}
             <div className="bg-white border border-gray-200 rounded-lg shadow-sm px-2 py-1.5 flex flex-col h-[280px] overflow-hidden">
               <div className="flex gap-3 text-[12px] mb-1 self-start">
-                <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-[#2E7D32] rounded-sm"/><span className="text-gray-700 font-medium">Prima neta efectuada</span></div>
-                <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-[#CC0000] rounded-sm"/><span className="text-gray-700 font-medium">Presupuesto</span></div>
+                <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-[#CC0000] rounded-sm"/><span className="text-gray-700 font-medium">Prima neta efectuada</span></div>
+                <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-[#FFD700] rounded-sm"/><span className="text-gray-700 font-medium">Presupuesto</span></div>
               </div>
               <div className="w-full flex-1 flex justify-center overflow-hidden">
                 {ready && chartData.length > 0 && (
                     <BarChart width={520} height={240} layout="vertical" data={chartData} margin={{ top: 2, right: 50, left: 10, bottom: 2 }} barGap={8}>
                       <defs>
-                        <linearGradient id="gradGreen" x1="0" y1="0" x2="1" y2="1">
-                          <stop offset="0%" stopColor="#2E7D32" stopOpacity={1}/>
-                          <stop offset="100%" stopColor="#1B5E20" stopOpacity={1}/>
-                        </linearGradient>
                         <linearGradient id="gradRed" x1="0" y1="0" x2="1" y2="1">
                           <stop offset="0%" stopColor="#CC0000" stopOpacity={1}/>
                           <stop offset="100%" stopColor="#990000" stopOpacity={1}/>
+                        </linearGradient>
+                        <linearGradient id="gradYellow" x1="0" y1="0" x2="1" y2="1">
+                          <stop offset="0%" stopColor="#FFD700" stopOpacity={1}/>
+                          <stop offset="100%" stopColor="#E6C200" stopOpacity={1}/>
                         </linearGradient>
                       </defs>
                       <XAxis type="number" domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickFormatter={v => `$${v}M`} tick={{ fontSize: 11 }} axisLine={{ stroke: '#E5E7EB' }}/>
@@ -184,11 +184,11 @@ export default function Home() {
                         contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '6px', boxShadow: '0 2px 4px rgba(0,0,0,0.08)', fontSize: 11 }}
                         formatter={(value?: number) => [`$${value ?? 0}M`, '']}
                       />
-                      <Bar dataKey="pn" fill="url(#gradGreen)" radius={[0, 3, 3, 0]} barSize={14} isAnimationActive={true} animationDuration={800}>
-                        <LabelList dataKey="pn" position="right" formatter={(v: unknown) => v != null ? `$${v}M` : ''} style={{ fontSize: 11, fill: '#1B5E20', fontWeight: 600 }}/>
+                      <Bar dataKey="pn" fill="url(#gradRed)" radius={[0, 3, 3, 0]} barSize={14} isAnimationActive={true} animationDuration={800}>
+                        <LabelList dataKey="pn" position="right" formatter={(v: unknown) => v != null ? `$${v}M` : ''} style={{ fontSize: 11, fill: '#990000', fontWeight: 600 }}/>
                       </Bar>
-                      <Bar dataKey="pp" fill="url(#gradRed)" radius={[0, 3, 3, 0]} barSize={14} isAnimationActive={true} animationDuration={800}>
-                        <LabelList dataKey="pp" position="right" formatter={(v: unknown) => v != null ? `$${v}M` : ''} style={{ fontSize: 11, fill: '#990000' }}/>
+                      <Bar dataKey="pp" fill="url(#gradYellow)" radius={[0, 3, 3, 0]} barSize={14} isAnimationActive={true} animationDuration={800}>
+                        <LabelList dataKey="pp" position="right" formatter={(v: unknown) => v != null ? `$${v}M` : ''} style={{ fontSize: 11, fill: '#B8960F' }}/>
                       </Bar>
                     </BarChart>
                 )}

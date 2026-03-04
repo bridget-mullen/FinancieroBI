@@ -10,10 +10,10 @@ interface GaugeProps {
 }
 
 const COLOR_STOPS = [
-  { pos: 0,    r: 0x00, g: 0x6B, b: 0x3F }, // #006B3F deep green
-  { pos: 0.33, r: 0xFF, g: 0xD7, b: 0x00 }, // #FFD700 vivid gold
-  { pos: 0.66, r: 0xFF, g: 0x6B, b: 0x00 }, // #FF6B00 vivid orange
-  { pos: 1,    r: 0xCC, g: 0x00, b: 0x00 }, // #CC0000 deep red
+  { pos: 0,    r: 0xCC, g: 0x00, b: 0x00 }, // #CC0000 deep red
+  { pos: 0.33, r: 0xFF, g: 0x6B, b: 0x00 }, // #FF6B00 vivid orange
+  { pos: 0.66, r: 0xFF, g: 0xD7, b: 0x00 }, // #FFD700 vivid gold
+  { pos: 1,    r: 0x00, g: 0x6B, b: 0x3F }, // #006B3F deep green
 ]
 
 function interpolateColor(t: number): string {
@@ -125,42 +125,42 @@ export function Gauge({ value, clickable = true }: GaugeProps) {
           fill="#1a1a1a"
         />
 
-        {/* Pivot center — diamond */}
-        <rect x={cx - 14} y={cy - 14} width={28} height={28} rx={2} fill="#333" transform={`rotate(45 ${cx} ${cy})`} />
-        <rect x={cx - 8} y={cy - 8} width={16} height={16} rx={1} fill="white" transform={`rotate(45 ${cx} ${cy})`} />
+        {/* Pivot center — circular */}
+        <circle cx={cx} cy={cy} r={18} fill="#333" />
+        <circle cx={cx} cy={cy} r={11} fill="white" />
+        <circle cx={cx} cy={cy} r={5} fill="#555" />
 
-        {/* LOW label */}
+        {/* CRITICAL label (left, red side) */}
         <text
           x={lowX} y={lowY}
-          fontSize="14" fill="#006B3F" textAnchor="middle"
-          fontWeight="bold" fontFamily="Calibri, Arial, sans-serif"
-        >
-          LOW
-        </text>
-
-        {/* CRITICAL label */}
-        <text
-          x={critX} y={critY}
           fontSize="14" fill="#CC0000" textAnchor="middle"
           fontWeight="bold" fontFamily="Calibri, Arial, sans-serif"
         >
           CRITICAL
         </text>
 
-        {/* KPI Value Badge */}
-        <rect x={cx - 110} y={cy + 55} width={220} height={52} rx={8} fill="#041224" />
+        {/* LOW label (right, green side) */}
         <text
-          x={cx} y={cy + 90}
-          fontSize="48" fontWeight="900" fill="white"
+          x={critX} y={critY}
+          fontSize="14" fill="#006B3F" textAnchor="middle"
+          fontWeight="bold" fontFamily="Calibri, Arial, sans-serif"
+        >
+          LOW
+        </text>
+
+        {/* KPI Value — no background */}
+        <text
+          x={cx} y={cy + 80}
+          fontSize="58" fontWeight="900" fill="#1a1a1a"
           textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
         >
           ${value.toFixed(1)}M
         </text>
         <text
-          x={cx} y={cy + 122}
-          fontSize="13" fill="#666"
+          x={cx} y={cy + 115}
+          fontSize="18" fill="#555"
           textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
-          fontWeight="500"
+          fontWeight="600"
         >
           Prima neta cobrada
         </text>
