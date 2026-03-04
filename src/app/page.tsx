@@ -76,7 +76,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] px-3 py-4 flex flex-col">
-      <div className="max-w-[1200px] mx-auto w-full flex flex-col flex-1">
+      <div className="max-w-[1400px] mx-auto w-full flex flex-col flex-1">
         {/* Header */}
         <div className="flex justify-between items-center border-b pb-2 pt-5 w-full">
           <PageTabs />
@@ -88,8 +88,8 @@ export default function Home() {
 
         {/* Main Grid — compact two-column */}
         <div className="flex gap-3 flex-1 mt-2">
-          {/* Left column ~45%: Pastel indicator + Gauge in flex row */}
-          <div className="w-[45%] flex items-center justify-center gap-3">
+          {/* Left column ~55%: Pastel indicator + Gauge in flex row */}
+          <div className="w-[55%] flex items-center justify-center gap-3">
             {/* KPI indicator box — two stacked colored sections */}
             <div className="w-[130px] shrink-0 rounded-lg shadow-sm overflow-hidden">
               <div className="bg-[#ECFDF5] px-3 py-2.5 text-center">
@@ -110,8 +110,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Right column ~55%: Table + Chart */}
-          <div className="w-[55%] flex flex-col gap-1 justify-center">
+          {/* Right column ~45%: Table + Chart */}
+          <div className="w-[45%] flex flex-col gap-1 justify-center">
             <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
               <table className="w-full text-[11px]">
                 <thead className="bg-[#041224] text-white">
