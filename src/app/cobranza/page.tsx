@@ -10,6 +10,11 @@ function fmt(v: number) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(v)
 }
 
+function fmtM(v: number) {
+  const m = v / 1_000_000
+  return `$${new Intl.NumberFormat("es-MX", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(m)}M`
+}
+
 // ── Donut Chart ──
 function DonutChart({ value, objetivo, color, size = 120 }: { value: number; objetivo: number; color: string; size?: number }) {
   const radius = size * 0.38
@@ -157,18 +162,22 @@ export default function CobranzaPage() {
       </div>
 
       {/* 3 Metric cards — equal height */}
+      {(() => {
+        const metaPct = compTotals.convenio > 0 ? Number(((compTotals.primaNeta / compTotals.convenio) * 100).toFixed(1)) : 0
+        const growthPct = compTotals.pnAA > 0 ? ((compTotals.primaNeta - compTotals.pnAA) / compTotals.pnAA) * 100 : 0
+        return (
       <div className="grid grid-cols-3 gap-2 mb-3">
         {/* Card 1 — Meta convenio */}
         <div className="bg-white rounded-lg shadow-sm p-2 border border-[#E5E7E9] flex flex-col">
           <p className="text-[#CCD1D3] text-[11px] font-bold uppercase tracking-wider mb-2">Meta convenio</p>
-          <DonutChart value={94.5} objetivo={90} color="#E62800" size={90} />
+          <DonutChart value={metaPct} objetivo={90} color="#E62800" size={90} />
           <div className="mt-2 space-y-1">
-            <p className="text-[#E62800] text-sm font-bold">+6.40% vs 2025</p>
+            <p className="text-[#E62800] text-sm font-bold">{growthPct >= 0 ? "+" : ""}{growthPct.toFixed(2)}% vs {Number(year) - 1}</p>
             <div className="flex justify-between text-xs text-[#041224]">
-              <span>PN efectuada mensual</span><strong>$1,300M</strong>
+              <span>PN efectuada mensual</span><strong>{fmtM(compTotals.primaNeta)}</strong>
             </div>
             <div className="flex justify-between text-xs text-[#041224]">
-              <span>Convenio mensual</span><strong>$1,400M</strong>
+              <span>Convenio mensual</span><strong>{fmtM(compTotals.convenio)}</strong>
             </div>
           </div>
         </div>
@@ -176,14 +185,14 @@ export default function CobranzaPage() {
         {/* Card 2 — Acumulado */}
         <div className="bg-white rounded-lg shadow-sm p-2 border border-[#E5E7E9] flex flex-col">
           <p className="text-[#CCD1D3] text-[11px] font-bold uppercase tracking-wider mb-2">Acumulado</p>
-          <DonutChart value={94.5} objetivo={90} color="#041224" size={90} />
+          <DonutChart value={metaPct} objetivo={90} color="#041224" size={90} />
           <div className="mt-2 space-y-1">
-            <p className="text-[#E62800] text-sm font-bold">+5.05% vs 2025</p>
+            <p className="text-[#E62800] text-sm font-bold">{growthPct >= 0 ? "+" : ""}{growthPct.toFixed(2)}% vs {Number(year) - 1}</p>
             <div className="flex justify-between text-xs text-[#041224]">
-              <span>Acumulado PN</span><strong>1,276.4 M</strong>
+              <span>Acumulado PN</span><strong>{fmtM(compTotals.primaNeta)}</strong>
             </div>
             <div className="flex justify-between text-xs text-[#041224]">
-              <span>Convenio acumulado</span><strong>$1,400M</strong>
+              <span>Convenio acumulado</span><strong>{fmtM(compTotals.convenio)}</strong>
             </div>
           </div>
         </div>
@@ -191,20 +200,22 @@ export default function CobranzaPage() {
         {/* Card 3 — Meta anual con cilindro */}
         <div className="bg-white rounded-lg shadow-sm p-2 border border-[#E5E7E9] flex flex-col items-center">
           <p className="text-[#CCD1D3] text-[11px] font-bold uppercase tracking-wider mb-1 self-start">Meta anual</p>
-          <p className="text-3xl font-black text-[#041224] mb-2">94.7%</p>
-          <div className="w-full"><div className="h-5 w-full bg-[#E5E7E9] rounded overflow-hidden"><div className="h-5 bg-[#041224] rounded-l" style={{width:'94.7%'}} /></div></div>
+          <p className="text-3xl font-black text-[#041224] mb-2">{metaPct}%</p>
+          <div className="w-full"><div className="h-5 w-full bg-[#E5E7E9] rounded overflow-hidden"><div className="h-5 bg-[#041224] rounded-l" style={{width:`${Math.min(metaPct, 100)}%`}} /></div></div>
           <div className="mt-3 grid grid-cols-2 gap-x-4 text-center w-full">
             <div>
               <div className="text-[11px] text-[#CCD1D3] uppercase font-bold">PN efectuada anual</div>
-              <div className="text-xs font-bold text-[#041224]">1,276.4 M</div>
+              <div className="text-xs font-bold text-[#041224]">{fmtM(compTotals.primaNeta)}</div>
             </div>
             <div>
               <div className="text-[11px] text-[#CCD1D3] uppercase font-bold">Convenio anual</div>
-              <div className="text-xs font-bold text-[#041224]">$1,348.0 M</div>
+              <div className="text-xs font-bold text-[#041224]">{fmtM(compTotals.convenio)}</div>
             </div>
           </div>
         </div>
       </div>
+        )
+      })()}
 
       {/* Resumen por ramo */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-3">
