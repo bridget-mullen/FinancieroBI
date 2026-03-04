@@ -10,8 +10,8 @@ interface GaugeProps {
 }
 
 const COLORS = [
-  "#1B8A2D", "#2DA83E", "#6BBF1A", "#C5D900", "#F5D000",
-  "#F5A623", "#F57C00", "#E64A19", "#D32F2F", "#B71C1C",
+  "#2E7D32", "#4E9A2E", "#8AB82A", "#C8D519", "#F5C518",
+  "#F0A31A", "#E67E22", "#E4601A", "#E54412", "#E62800",
 ]
 
 export function Gauge({ value, clickable = true }: GaugeProps) {
@@ -131,7 +131,7 @@ export function Gauge({ value, clickable = true }: GaugeProps) {
           x={cx - outerR - 10}
           y={cy + 20}
           fontSize="15"
-          fill="#1B8A2D"
+          fill="#2E7D32"
           textAnchor="middle"
           fontWeight="900"
           fontFamily="Calibri, Arial, sans-serif"
@@ -145,7 +145,7 @@ export function Gauge({ value, clickable = true }: GaugeProps) {
           x={cx + outerR + 10}
           y={cy + 20}
           fontSize="15"
-          fill="#B71C1C"
+          fill="#E62800"
           textAnchor="middle"
           fontWeight="900"
           fontFamily="Calibri, Arial, sans-serif"
