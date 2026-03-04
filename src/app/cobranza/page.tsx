@@ -29,7 +29,7 @@ function DonutChart({ value, objetivo, color, size = 120, tooltipLines }: { valu
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#E5E7EB" strokeWidth={strokeW} />
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={color}
           strokeWidth={strokeW} strokeDasharray={`${filled} ${circ}`}
-          strokeLinecap="round" transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          strokeLinecap="butt" transform={`rotate(-90 ${size / 2} ${size / 2})`}
           className="transition-all duration-1000" />
       </svg>
       <div className="absolute flex flex-col items-center">
@@ -54,7 +54,14 @@ const RAMOS = [
   { nombre: "Vida", pnEfectuada: 59636744, polizas: 4202 },
   { nombre: "Otros", pnEfectuada: 8013999, polizas: 545 },
 ]
-const RAMO_COLORS = ["#052F5F", "#041224", "#E62800", "#3B82F6", "#0EA5E9"]
+function ramoColor(nombre: string): string {
+  const n = nombre.toLowerCase()
+  if (n.includes("dano") || n.includes("daño")) return "#E62800"
+  if (n.includes("acc") || n.includes("enf")) return "#1a1a1a"
+  if (n.includes("vida")) return "#9CA3AF"
+  if (n.includes("vehic") || n.includes("vehíc") || n.includes("auto")) return "#D1D5DB"
+  return "#0EA5E9" // Asistencias, Descuentos, Otros
+}
 
 const COMPANIES = [
   { nombre: "AFIRME", primaNeta: 15109066, convenio: 15000000, pnAA: 9836221, pendiente: 44534, pnCia: 5677131, difCia: 9430936 },
@@ -304,7 +311,7 @@ export default function CobranzaPage() {
           <div className="h-8 w-full rounded-lg overflow-hidden flex gap-[2px]">
             {ramos.map((r,i) => (
               <div key={r.nombre} className="h-full first:rounded-l-lg last:rounded-r-lg transition-all duration-500 relative group/bar"
-                style={{width:`${totalPN>0?(r.pnEfectuada/totalPN)*100:0}%`,background:RAMO_COLORS[i % RAMO_COLORS.length]}}>
+                style={{width:`${totalPN>0?(r.pnEfectuada/totalPN)*100:0}%`,background:ramoColor(r.nombre)}}>
                 <div className="hidden group-hover/bar:block absolute z-50 bg-white rounded-lg shadow-lg border border-[#E5E7EB] px-3 py-2 text-xs text-[#041224] whitespace-nowrap"
                   style={{ bottom: "100%", left: "50%", transform: "translateX(-50%)", marginBottom: 4 }}>
                   <div className="font-bold">{r.nombre}</div>
@@ -317,7 +324,7 @@ export default function CobranzaPage() {
           <div className="flex flex-wrap gap-4 mt-3">
             {ramos.map((r,i) => (
               <div key={r.nombre} className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-sm" style={{backgroundColor:RAMO_COLORS[i % RAMO_COLORS.length]}} />
+                <div className="w-3 h-3 rounded-sm" style={{backgroundColor:ramoColor(r.nombre)}} />
                 <span className="text-sm text-[#041224] font-medium">{r.nombre}</span>
                 <span className="text-sm text-[#6B7280] font-semibold">{totalPN>0?((r.pnEfectuada/totalPN)*100).toFixed(1):0}%</span>
               </div>
