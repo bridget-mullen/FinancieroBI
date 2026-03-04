@@ -34,25 +34,54 @@ function Semaforo({ pct }: { pct: number }) {
   )
 }
 
-/* Horizontal bar chart as pure divs */
-function HBarChart({ data, color, colorFn, maxH }: { data: { name: string; value: number; pct?: number }[]; color?: string; colorFn?: (pct: number, idx?: number) => string; maxH?: number }) {
+/* Premium horizontal bar chart */
+function PremiumBarChart({ data, colorFn, barHeight = 18, showGrid = true }: {
+  data: { name: string; value: number; pct?: number }[];
+  colorFn: (idx: number, pct?: number) => { from: string; to: string };
+  barHeight?: number;
+  showGrid?: boolean;
+}) {
   if (!data.length) return null
   const max = Math.max(...data.map(d => d.value), 1)
+  const gridLines = showGrid ? [25, 50, 75, 100] : []
   return (
-    <div className="flex flex-col justify-center gap-[3px] w-full" style={{ maxHeight: maxH }}>
-      {data.map((d, i) => {
-        const pct = Math.max((d.value / max) * 100, 3)
-        const fill = colorFn ? colorFn(d.pct ?? 0, i) : color || "#333"
-        return (
-          <div key={i} className="flex items-center gap-1" style={{ height: 14 }}>
-            <span style={{ fontSize: 9, color: '#666', width: 55, textAlign: 'right', flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
-            <div className="flex-1 h-full flex items-center">
-              <div style={{ width: `${pct}%`, height: 10, background: fill, borderRadius: '0 3px 3px 0', minWidth: 3 }} />
-              <span style={{ fontSize: 8, color: '#555', fontWeight: 600, marginLeft: 3, whiteSpace: 'nowrap' }}>{fmtShort(d.value)}</span>
+    <div className="flex flex-col justify-center w-full h-full relative">
+      {/* Grid lines */}
+      {showGrid && (
+        <div className="absolute inset-0 pointer-events-none" style={{ left: 70, right: 55 }}>
+          {gridLines.map(g => (
+            <div key={g} className="absolute top-0 bottom-0" style={{ left: `${g}%`, width: 1, background: 'rgba(0,0,0,0.06)' }} />
+          ))}
+        </div>
+      )}
+      <div className="flex flex-col justify-center gap-[5px] w-full">
+        {data.map((d, i) => {
+          const pct = Math.max((d.value / max) * 100, 4)
+          const colors = colorFn(i, d.pct)
+          return (
+            <div key={i} className="flex items-center gap-2" style={{ height: barHeight }}>
+              <span style={{
+                fontSize: 11, color: '#374151', width: 65, textAlign: 'right', flexShrink: 0,
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                fontWeight: 500, letterSpacing: '-0.01em'
+              }}>{d.name}</span>
+              <div className="flex-1 h-full flex items-center">
+                <div style={{
+                  width: `${pct}%`, height: barHeight - 4,
+                  background: `linear-gradient(90deg, ${colors.from}, ${colors.to})`,
+                  borderRadius: 6, minWidth: 6,
+                  boxShadow: `0 1px 3px ${colors.from}33`,
+                  transition: 'width 0.5s ease'
+                }} />
+                <span style={{
+                  fontSize: 10, color: '#374151', fontWeight: 700,
+                  marginLeft: 6, whiteSpace: 'nowrap', letterSpacing: '-0.02em'
+                }}>{fmtShort(d.value)}</span>
+              </div>
             </div>
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -99,7 +128,7 @@ export default function CompromisosPage() {
 
           {/* Row 1: Compromisos table + chart */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2">
+            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-3">
               <table className="w-full border-collapse" style={{ fontSize: 14, lineHeight: 1.4 }}>
                 <thead>
                   <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
@@ -134,15 +163,22 @@ export default function CompromisosPage() {
                 </tbody>
               </table>
             </div>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2">
-              <p className="text-sm font-bold text-[#041224] mb-1">Prima Neta por Vendedor</p>
-              <HBarChart data={barData} colorFn={semaforoColor} />
+            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-3 flex flex-col" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+              <p className="text-sm font-bold text-[#041224] mb-2 tracking-tight">Prima Neta por Vendedor</p>
+              <div className="flex-1">
+                <PremiumBarChart data={barData} barHeight={20} colorFn={(idx, pct) => {
+                  const p = pct ?? 0
+                  if (p >= 90) return { from: '#1B5E20', to: '#43A047' }
+                  if (p >= 70) return { from: '#E6A800', to: '#FFD54F' }
+                  return { from: '#C62828', to: '#EF5350' }
+                }} />
+              </div>
             </div>
           </div>
 
           {/* Row 2: Top 5 table + chart */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2">
+            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-3">
               <p className="text-sm font-bold text-[#041224] mb-1">Top 5 Vendedores</p>
               <table className="w-full border-collapse" style={{ fontSize: 14, lineHeight: 1.4 }}>
                 <thead>
@@ -163,18 +199,26 @@ export default function CompromisosPage() {
                 </tbody>
               </table>
             </div>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2">
-              <p className="text-sm font-bold text-[#2E7D32] mb-1">Top 5</p>
-              <HBarChart data={topBarData} colorFn={(_pct, i) => {
-                const blues = ["#1E3A5F", "#2A5082", "#3668A5", "#4A90D9", "#6BA8E8"]
-                return blues[i ?? 0] || "#4A90D9"
-              }} />
+            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-3 flex flex-col" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+              <p className="text-sm font-bold text-[#1E3A5F] mb-2 tracking-tight">Top 5</p>
+              <div className="flex-1">
+                <PremiumBarChart data={topBarData} barHeight={22} showGrid={false} colorFn={(idx) => {
+                  const shades = [
+                    { from: '#0D2137', to: '#1E3A5F' },
+                    { from: '#14325A', to: '#2A5082' },
+                    { from: '#1E4A7A', to: '#3B72B0' },
+                    { from: '#2A6099', to: '#4A90D9' },
+                    { from: '#3A78B8', to: '#6BA8E8' },
+                  ]
+                  return shades[idx] || shades[4]
+                }} />
+              </div>
             </div>
           </div>
 
           {/* Row 3: Bottom 5 table + chart */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2">
+            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-3">
               <p className="text-sm font-bold text-[#041224] mb-1">Bottom 5 Vendedores</p>
               <table className="w-full border-collapse" style={{ fontSize: 14, lineHeight: 1.4 }}>
                 <thead>
@@ -195,12 +239,20 @@ export default function CompromisosPage() {
                 </tbody>
               </table>
             </div>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2">
-              <p className="text-sm font-bold text-[#E62800] mb-1">Bottom 5</p>
-              <HBarChart data={bottomBarData} colorFn={(_pct, i) => {
-                const blues = ["#1E3A5F", "#2A5082", "#3668A5", "#4A90D9", "#6BA8E8"]
-                return blues[i ?? 0] || "#4A90D9"
-              }} />
+            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-3 flex flex-col" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+              <p className="text-sm font-bold text-[#C62828] mb-2 tracking-tight">Bottom 5</p>
+              <div className="flex-1">
+                <PremiumBarChart data={bottomBarData} barHeight={22} showGrid={false} colorFn={(idx) => {
+                  const shades = [
+                    { from: '#8B0000', to: '#CC0000' },
+                    { from: '#A52020', to: '#D84040' },
+                    { from: '#BF3030', to: '#E56060' },
+                    { from: '#D04A4A', to: '#EF8080' },
+                    { from: '#E06565', to: '#F5A0A0' },
+                  ]
+                  return shades[idx] || shades[4]
+                }} />
+              </div>
             </div>
           </div>
 
