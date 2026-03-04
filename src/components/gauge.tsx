@@ -9,10 +9,33 @@ interface GaugeProps {
   clickable?: boolean
 }
 
-const COLORS = [
-  "#1B8A2D", "#2DA83E", "#6BBF1A", "#C5D900", "#F5D000",
-  "#F5A623", "#F57C00", "#E64A19", "#D32F2F", "#B71C1C",
+const COLOR_STOPS = [
+  { pos: 0,    r: 0x1B, g: 0x8A, b: 0x2D },
+  { pos: 0.11, r: 0x2D, g: 0xA8, b: 0x3E },
+  { pos: 0.22, r: 0x6B, g: 0xBF, b: 0x1A },
+  { pos: 0.33, r: 0xC5, g: 0xD9, b: 0x00 },
+  { pos: 0.44, r: 0xF5, g: 0xD0, b: 0x00 },
+  { pos: 0.55, r: 0xF5, g: 0xA6, b: 0x23 },
+  { pos: 0.66, r: 0xF5, g: 0x7C, b: 0x00 },
+  { pos: 0.77, r: 0xE6, g: 0x4A, b: 0x19 },
+  { pos: 0.88, r: 0xD3, g: 0x2F, b: 0x2F },
+  { pos: 1,    r: 0xB7, g: 0x1C, b: 0x1C },
 ]
+
+function interpolateColor(t: number): string {
+  const c = Math.max(0, Math.min(1, t))
+  let i = 0
+  for (let j = 0; j < COLOR_STOPS.length - 1; j++) {
+    if (c >= COLOR_STOPS[j].pos) i = j
+  }
+  const a = COLOR_STOPS[i]
+  const b = COLOR_STOPS[Math.min(i + 1, COLOR_STOPS.length - 1)]
+  const f = b.pos === a.pos ? 0 : (c - a.pos) / (b.pos - a.pos)
+  const r = Math.round(a.r + (b.r - a.r) * f)
+  const g = Math.round(a.g + (b.g - a.g) * f)
+  const bl = Math.round(a.b + (b.b - a.b) * f)
+  return `rgb(${r},${g},${bl})`
+}
 
 export function Gauge({ value, clickable = true }: GaugeProps) {
   const W = 580
@@ -25,11 +48,8 @@ export function Gauge({ value, clickable = true }: GaugeProps) {
   const borderR = outerR + 10   // 210 — grey frame outside
   const borderInnerR = innerR - 6
 
-  const segCount = 10
-  const gapAngle = 1.8 // degrees gap between segments
-  const totalGap = gapAngle * (segCount - 1)
-  const totalArc = 180 - totalGap
-  const segAngle = totalArc / segCount
+  const segCount = 200
+  const segAngle = 180 / segCount
 
   // Needle at 75%
   const NEEDLE_PCT = 0.75
@@ -42,7 +62,7 @@ export function Gauge({ value, clickable = true }: GaugeProps) {
   // Build segment paths
   const segments: string[] = []
   for (let i = 0; i < segCount; i++) {
-    const startDeg = 180 - i * (segAngle + gapAngle)
+    const startDeg = 180 - i * segAngle
     const endDeg = startDeg - segAngle
 
     const [ox1, oy1] = polarToXY(startDeg, outerR)
@@ -110,7 +130,7 @@ export function Gauge({ value, clickable = true }: GaugeProps) {
 
         {/* Color segments */}
         {segments.map((d, i) => (
-          <path key={i} d={d} fill={COLORS[i]} />
+          <path key={i} d={d} fill={interpolateColor(i / (segments.length - 1))} />
         ))}
 
         {/* Needle */}
