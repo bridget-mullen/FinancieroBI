@@ -23,7 +23,7 @@ const LINEA_LINKS: Record<string, string> = {
 
 export default function Home() {
   const [ready, setReady] = useState(false)
-  const [year, setYear] = useState("2025")
+  const [year, setYear] = useState("2026")
   const [periodos, setPeriodos] = useState<number[]>([2])
   const [lineas, setLineas] = useState<LineaRow[]>(SEED_LINEAS)
 
@@ -85,7 +85,7 @@ export default function Home() {
         {/* Header */}
         <div className="flex justify-between items-center border-b pb-2 pt-5 w-full">
           <PageTabs />
-          <PeriodFilter onFilterChange={handleFilterChange} defaultYear="2025" defaultMonth={2} />
+          <PeriodFilter onFilterChange={handleFilterChange} defaultYear="2026" defaultMonth={2} />
         </div>
 
         {/* Title */}
