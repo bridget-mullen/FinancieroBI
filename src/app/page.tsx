@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
-import { SEED_LINEAS, SEED_PRESUPUESTO, getLineasNegocio } from "@/lib/queries"
+import { SEED_LINEAS, SEED_PRESUPUESTO } from "@/lib/queries"
+// import { getLineasNegocio } from "@/lib/queries" // TODO: Re-enable when Supabase has correct data
 import type { LineaRow } from "@/lib/queries"
 import { Gauge } from "@/components/gauge"
 import { PageTabs } from "@/components/page-tabs"
@@ -40,32 +41,33 @@ export default function Home() {
     return () => clearTimeout(timer)
   }, [])
 
-  useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      try {
-        const result = await getLineasNegocio(periodo, year)
-        if (cancelled || !result || result.length === 0) return
-        const merged: LineaRow[] = SEED_LINEAS.map(seed => {
-          const real = result.find(r => r.linea === seed.nombre)
-          return {
-            ...seed,
-            primaNeta: real ? real.primaNeta : seed.primaNeta,
-          }
-        })
-        result.forEach(r => {
-          if (!merged.find(m => m.nombre === r.linea)) {
-            merged.push({ nombre: r.linea, primaNeta: r.primaNeta, anioAnterior: 0, presupuesto: 0 })
-          }
-        })
-        setLineas(merged)
-      } catch {
-        // Keep current lineas
-      }
-    }
-    load()
-    return () => { cancelled = true }
-  }, [periodo, year])
+  // TODO: Re-enable when Supabase has correct data
+  // useEffect(() => {
+  //   let cancelled = false
+  //   const load = async () => {
+  //     try {
+  //       const result = await getLineasNegocio(periodo, year)
+  //       if (cancelled || !result || result.length === 0) return
+  //       const merged: LineaRow[] = SEED_LINEAS.map(seed => {
+  //         const real = result.find(r => r.linea === seed.nombre)
+  //         return {
+  //           ...seed,
+  //           primaNeta: real ? real.primaNeta : seed.primaNeta,
+  //         }
+  //       })
+  //       result.forEach(r => {
+  //         if (!merged.find(m => m.nombre === r.linea)) {
+  //           merged.push({ nombre: r.linea, primaNeta: r.primaNeta, anioAnterior: 0, presupuesto: 0 })
+  //         }
+  //       })
+  //       setLineas(merged)
+  //     } catch {
+  //       // Keep current lineas
+  //     }
+  //   }
+  //   load()
+  //   return () => { cancelled = true }
+  // }, [periodo, year])
 
   const total = lineas.reduce((s, l) => s + l.primaNeta, 0)
   const totalPpto = lineas.reduce((s, l) => s + l.presupuesto, 0) || SEED_PRESUPUESTO

@@ -11,7 +11,7 @@ interface GaugeProps {
   crecimiento?: number
 }
 
-export function Gauge({ value, clickable = true, cumplimiento = 0, crecimiento = 0 }: GaugeProps) {
+export function Gauge({ value, budget = 129.5, clickable = true, cumplimiento = 0, crecimiento = 0 }: GaugeProps) {
   const W = 820
   const H = 720
   const cx = W / 2
@@ -20,8 +20,19 @@ export function Gauge({ value, clickable = true, cumplimiento = 0, crecimiento =
   const outerR = 340
   const innerR = outerR * 0.75
   const outerGrayR = outerR + 5
+  const labelR = outerR + 28
 
   const NEEDLE_PCT = 0.75
+
+  // Arc labels: generate tick values from $0M to budget
+  const tickCount = 7
+  const arcLabels: { pct: number; label: string }[] = []
+  for (let i = 0; i <= tickCount; i++) {
+    const val = Math.round((budget / tickCount) * i)
+    arcLabels.push({ pct: i / tickCount, label: `$${val}M` })
+  }
+  // Add the exact budget as the last label
+  arcLabels[tickCount] = { pct: 1, label: `$${Math.round(budget * 10) / 10}M` }
 
   function polarToXY(angleDeg: number, r: number): [number, number] {
     const rad = (angleDeg * Math.PI) / 180
@@ -80,6 +91,24 @@ export function Gauge({ value, clickable = true, cumplimiento = 0, crecimiento =
         {/* Outer gray arc */}
         <path d={grayArc} fill="none" stroke="#D0D0D0" strokeWidth={2} />
 
+        {/* Arc labels */}
+        {arcLabels.map((tick, i) => {
+          const angleDeg = 180 - tick.pct * 180
+          const [lx, ly] = polarToXY(angleDeg, labelR)
+          const anchor = tick.pct < 0.3 ? "start" : tick.pct > 0.7 ? "end" : "middle"
+          return (
+            <text
+              key={i}
+              x={lx} y={ly}
+              fontSize="14" fontWeight="600" fill="#374151"
+              textAnchor={anchor}
+              fontFamily="Calibri, Arial, sans-serif"
+            >
+              {tick.label}
+            </text>
+          )
+        })}
+
         {/* Smooth color arc */}
         <path d={smoothArc} fill="url(#gaugeGradient)" />
 
@@ -112,7 +141,7 @@ export function Gauge({ value, clickable = true, cumplimiento = 0, crecimiento =
         </text>
 
         {/* Cumplimiento circle (left) */}
-        <circle cx={circleLX} cy={circleY} r={circleR} fill="#3983F6" />
+        <circle cx={circleLX} cy={circleY} r={circleR} fill="#60A63A" />
         <text
           x={circleLX} y={circleY + 8}
           fontSize="32" fontWeight="900" fill="white"
