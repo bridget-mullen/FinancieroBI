@@ -110,63 +110,63 @@ export default function CompromisosPage() {
           <PeriodFilter onFilterChange={handleFilterChange} />
         </div>
 
-        <h1 className="text-sm font-bold text-[#111] font-lato mt-3 mb-2">Vendedores — Compromisos</h1>
+        <h1 className="text-[8px] font-bold text-[#111] font-lato mt-1 mb-0.5">Vendedores — Compromisos</h1>
 
         {/* 3-row layout, each row = table + chart side by side */}
-        <div className="flex flex-col gap-2 max-h-[calc(100vh-80px)] flex-1">
+        <div className="flex flex-col gap-1 max-h-[calc(100vh-90px)] flex-1 overflow-hidden">
 
           {/* ROW 1: Compromisos table + chart */}
-          <div className="grid grid-cols-2 gap-2 flex-[5] min-h-0">
+          <div className="grid grid-cols-2 gap-1 flex-[5] min-h-0">
             {/* Table */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 overflow-hidden flex flex-col">
-              <table className="w-full text-[8px]">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1.5 overflow-hidden flex flex-col">
+              <table className="w-full" style={{ fontSize: '7px', lineHeight: '1.1' }}>
                 <thead>
                   <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
-                    <th className="text-left px-1.5 py-[2px] text-[9px] font-semibold">Vendedor</th>
-                    <th className="text-right px-1.5 py-[2px] text-[9px] font-semibold">Meta</th>
-                    <th className="text-right px-1.5 py-[2px] text-[9px] font-semibold">Prima Neta</th>
-                    <th className="text-right px-1.5 py-[2px] text-[9px] font-semibold">% Avance</th>
-                    <th className="text-center px-1.5 py-[2px] text-[9px] font-semibold">Semáforo</th>
+                    <th className="text-left px-1 py-0" style={{ fontSize: '8px' }}>Vendedor</th>
+                    <th className="text-right px-1 py-0" style={{ fontSize: '8px' }}>Meta</th>
+                    <th className="text-right px-1 py-0" style={{ fontSize: '8px' }}>Prima Neta</th>
+                    <th className="text-right px-1 py-0" style={{ fontSize: '8px' }}>% Avance</th>
+                    <th className="text-center px-1 py-0" style={{ fontSize: '8px' }}>Semáforo</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td colSpan={5} className="px-1.5 py-4 text-center text-gray-400 text-[8px]">Cargando...</td></tr>
+                    <tr><td colSpan={5} className="px-1 py-0 text-center text-gray-400" style={{ fontSize: '7px' }}>Cargando...</td></tr>
                   ) : data.length === 0 ? (
-                    <tr><td colSpan={5} className="px-1.5 py-4 text-center text-[#888] text-[8px]">Sin compromisos para este periodo</td></tr>
+                    <tr><td colSpan={5} className="px-1 py-0 text-center text-[#888]" style={{ fontSize: '7px' }}>Sin compromisos para este periodo</td></tr>
                   ) : data.slice(0, 10).map((r, idx) => (
-                    <tr key={r.vendedor} className={`border-b border-[#F0F0F0] hover:bg-[#FFF5F5] ${idx % 2 === 1 ? "bg-[#FAFAFA]" : "bg-white"}`}>
-                      <td className="px-1.5 py-[2px] font-medium text-[#111]">{r.vendedor}</td>
-                      <td className="px-1.5 py-[2px] text-right text-gray-500">{fmt(r.meta)}</td>
-                      <td className="px-1.5 py-[2px] text-right font-medium">{fmt(r.primaActual)}</td>
-                      <td className={`px-1.5 py-[2px] text-right font-medium ${r.pctAvance >= 90 ? "text-[#2E7D32]" : r.pctAvance >= 70 ? "text-[#F5C518]" : "text-[#E62800]"}`}>{r.pctAvance}%</td>
-                      <td className="px-1.5 py-[2px] text-center"><Semaforo pct={r.pctAvance} /></td>
+                    <tr key={r.vendedor} className={`border-b border-[#F0F0F0] hover:bg-[#FFF5F5] ${idx % 2 === 1 ? "bg-[#FAFAFA]" : "bg-white"}`} style={{ lineHeight: '1.1' }}>
+                      <td className="px-1 py-0 font-medium text-[#111]">{r.vendedor}</td>
+                      <td className="px-1 py-0 text-right text-gray-500">{fmt(r.meta)}</td>
+                      <td className="px-1 py-0 text-right font-medium">{fmt(r.primaActual)}</td>
+                      <td className={`px-1 py-0 text-right font-medium ${r.pctAvance >= 90 ? "text-[#2E7D32]" : r.pctAvance >= 70 ? "text-[#F5C518]" : "text-[#E62800]"}`}>{r.pctAvance}%</td>
+                      <td className="px-1 py-0 text-center"><Semaforo pct={r.pctAvance} /></td>
                     </tr>
                   ))}
                   {!loading && data.length > 0 && (
-                    <tr className="bg-[#041224] text-white">
-                      <td className="px-1.5 py-[2px] font-bold">Total</td>
-                      <td className="px-1.5 py-[2px] text-right font-bold">{fmt(totalMeta)}</td>
-                      <td className="px-1.5 py-[2px] text-right font-bold">{fmt(totalActual)}</td>
-                      <td className="px-1.5 py-[2px] text-right font-bold">{totalPct}%</td>
-                      <td className="px-1.5 py-[2px] text-center"><Semaforo pct={totalPct} /></td>
+                    <tr className="bg-[#041224] text-white" style={{ lineHeight: '1.1' }}>
+                      <td className="px-1 py-0 font-bold">Total</td>
+                      <td className="px-1 py-0 text-right font-bold">{fmt(totalMeta)}</td>
+                      <td className="px-1 py-0 text-right font-bold">{fmt(totalActual)}</td>
+                      <td className="px-1 py-0 text-right font-bold">{totalPct}%</td>
+                      <td className="px-1 py-0 text-center"><Semaforo pct={totalPct} /></td>
                     </tr>
                   )}
                 </tbody>
               </table>
             </div>
-            {/* Chart */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 overflow-hidden">
+            {/* Chart - vertical bars with semáforo colors */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1.5 overflow-hidden">
               {ready && barData.length > 0 && (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart layout="vertical" data={barData} margin={{ top: 2, right: 30, bottom: 2, left: 0 }}>
-                    <XAxis type="number" hide />
-                    <YAxis type="category" dataKey="name" width={60} tick={{ fontSize: 7 }} axisLine={false} tickLine={false} />
-                    <Bar dataKey="value" radius={[0, 2, 2, 0]} barSize={8}>
+                  <BarChart data={barData} margin={{ top: 10, right: 20, bottom: 20, left: 0 }}>
+                    <XAxis dataKey="name" tick={{ fontSize: 6 }} angle={-35} textAnchor="end" axisLine={false} tickLine={false} />
+                    <YAxis hide />
+                    <Bar dataKey="value" radius={[2, 2, 0, 0]} barSize={12}>
                       {barData.map((entry, idx) => (
                         <Cell key={idx} fill={entry.color} />
                       ))}
-                      <LabelList dataKey="value" position="right" formatter={(v: unknown) => fmtShort(Number(v))} style={{ fontSize: 7, fill: '#333', fontWeight: 600 }} />
+                      <LabelList dataKey="value" position="top" formatter={(v: unknown) => fmtShort(Number(v))} style={{ fontSize: 6, fill: '#333', fontWeight: 600 }} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -175,38 +175,38 @@ export default function CompromisosPage() {
           </div>
 
           {/* ROW 2: Top 5 table + chart */}
-          <div className="grid grid-cols-2 gap-2 flex-[2.5] min-h-0">
+          <div className="grid grid-cols-2 gap-1 flex-[3] min-h-0">
             {/* Table */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 overflow-hidden flex flex-col">
-              <p className="text-[9px] font-bold text-[#041224] mb-1">Top 5 Vendedores</p>
-              <table className="w-full text-[8px]">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1.5 overflow-hidden flex flex-col">
+              <p className="text-[8px] font-bold text-[#041224] mb-0.5">Top 5 Vendedores</p>
+              <table className="w-full" style={{ fontSize: '7px', lineHeight: '1.1' }}>
                 <thead>
                   <tr className="bg-[#041224] text-white border-b-2 border-b-[#2E7D32]">
-                    <th className="px-1.5 py-[2px] text-left text-[9px] font-semibold w-5">#</th>
-                    <th className="px-1.5 py-[2px] text-left text-[9px] font-semibold">Vendedor</th>
-                    <th className="px-1.5 py-[2px] text-right text-[9px] font-semibold">Prima Neta</th>
+                    <th className="px-1 py-0 text-left w-5" style={{ fontSize: '8px' }}>#</th>
+                    <th className="px-1 py-0 text-left" style={{ fontSize: '8px' }}>Vendedor</th>
+                    <th className="px-1 py-0 text-right" style={{ fontSize: '8px' }}>Prima Neta</th>
                   </tr>
                 </thead>
                 <tbody>
                   {topVendedores.map((v, i) => (
-                    <tr key={v.vendedor} className={`border-b border-[#E5E7E9] ${i % 2 === 1 ? "bg-[#FAFAFA]" : "bg-[#F1F8F1]"}`}>
-                      <td className="px-1.5 py-[2px] font-bold text-[#2E7D32]">{i + 1}</td>
-                      <td className="px-1.5 py-[2px]">{v.vendedor}</td>
-                      <td className="px-1.5 py-[2px] text-right font-medium">{fmt(v.primaNeta)}</td>
+                    <tr key={v.vendedor} className={`border-b border-[#E5E7E9] ${i % 2 === 1 ? "bg-[#FAFAFA]" : "bg-[#F1F8F1]"}`} style={{ lineHeight: '1.1' }}>
+                      <td className="px-1 py-0 font-bold text-[#2E7D32]">{i + 1}</td>
+                      <td className="px-1 py-0">{v.vendedor}</td>
+                      <td className="px-1 py-0 text-right font-medium">{fmt(v.primaNeta)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            {/* Chart */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 overflow-hidden">
+            {/* Chart - vertical bars, green */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1.5 overflow-hidden">
               {ready && topBarData.length > 0 && (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart layout="vertical" data={topBarData} margin={{ top: 2, right: 30, bottom: 2, left: 0 }}>
-                    <XAxis type="number" hide />
-                    <YAxis type="category" dataKey="name" width={60} tick={{ fontSize: 7 }} axisLine={false} tickLine={false} />
-                    <Bar dataKey="value" fill="#2E7D32" radius={[0, 2, 2, 0]} barSize={8}>
-                      <LabelList dataKey="value" position="right" formatter={(v: unknown) => fmtShort(Number(v))} style={{ fontSize: 7, fill: '#2E7D32', fontWeight: 600 }} />
+                  <BarChart data={topBarData} margin={{ top: 10, right: 20, bottom: 20, left: 0 }}>
+                    <XAxis dataKey="name" tick={{ fontSize: 6 }} angle={-35} textAnchor="end" axisLine={false} tickLine={false} />
+                    <YAxis hide />
+                    <Bar dataKey="value" fill="#2E7D32" radius={[2, 2, 0, 0]} barSize={16}>
+                      <LabelList dataKey="value" position="top" formatter={(v: unknown) => fmtShort(Number(v))} style={{ fontSize: 6, fill: '#2E7D32', fontWeight: 600 }} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -215,38 +215,38 @@ export default function CompromisosPage() {
           </div>
 
           {/* ROW 3: Bottom 5 table + chart */}
-          <div className="grid grid-cols-2 gap-2 flex-[2.5] min-h-0">
+          <div className="grid grid-cols-2 gap-1 flex-[3] min-h-0">
             {/* Table */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 overflow-hidden flex flex-col">
-              <p className="text-[9px] font-bold text-[#041224] mb-1">Bottom 5 Vendedores</p>
-              <table className="w-full text-[8px]">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1.5 overflow-hidden flex flex-col">
+              <p className="text-[8px] font-bold text-[#041224] mb-0.5">Bottom 5 Vendedores</p>
+              <table className="w-full" style={{ fontSize: '7px', lineHeight: '1.1' }}>
                 <thead>
                   <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
-                    <th className="px-1.5 py-[2px] text-left text-[9px] font-semibold w-5">#</th>
-                    <th className="px-1.5 py-[2px] text-left text-[9px] font-semibold">Vendedor</th>
-                    <th className="px-1.5 py-[2px] text-right text-[9px] font-semibold">Prima Neta</th>
+                    <th className="px-1 py-0 text-left w-5" style={{ fontSize: '8px' }}>#</th>
+                    <th className="px-1 py-0 text-left" style={{ fontSize: '8px' }}>Vendedor</th>
+                    <th className="px-1 py-0 text-right" style={{ fontSize: '8px' }}>Prima Neta</th>
                   </tr>
                 </thead>
                 <tbody>
                   {bottomVendedores.map((v, i) => (
-                    <tr key={v.vendedor} className={`border-b border-[#E5E7E9] ${i % 2 === 1 ? "bg-[#FAFAFA]" : "bg-[#FFF3F3]"}`}>
-                      <td className="px-1.5 py-[2px] font-bold text-[#E62800]">{i + 1}</td>
-                      <td className="px-1.5 py-[2px]">{v.vendedor}</td>
-                      <td className="px-1.5 py-[2px] text-right font-medium">{fmt(v.primaNeta)}</td>
+                    <tr key={v.vendedor} className={`border-b border-[#E5E7E9] ${i % 2 === 1 ? "bg-[#FAFAFA]" : "bg-[#FFF3F3]"}`} style={{ lineHeight: '1.1' }}>
+                      <td className="px-1 py-0 font-bold text-[#E62800]">{i + 1}</td>
+                      <td className="px-1 py-0">{v.vendedor}</td>
+                      <td className="px-1 py-0 text-right font-medium">{fmt(v.primaNeta)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            {/* Chart */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 overflow-hidden">
+            {/* Chart - vertical bars, red */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1.5 overflow-hidden">
               {ready && bottomBarData.length > 0 && (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart layout="vertical" data={bottomBarData} margin={{ top: 2, right: 30, bottom: 2, left: 0 }}>
-                    <XAxis type="number" hide />
-                    <YAxis type="category" dataKey="name" width={60} tick={{ fontSize: 7 }} axisLine={false} tickLine={false} />
-                    <Bar dataKey="value" fill="#E62800" radius={[0, 2, 2, 0]} barSize={8}>
-                      <LabelList dataKey="value" position="right" formatter={(v: unknown) => fmtShort(Number(v))} style={{ fontSize: 7, fill: '#E62800', fontWeight: 600 }} />
+                  <BarChart data={bottomBarData} margin={{ top: 10, right: 20, bottom: 20, left: 0 }}>
+                    <XAxis dataKey="name" tick={{ fontSize: 6 }} angle={-35} textAnchor="end" axisLine={false} tickLine={false} />
+                    <YAxis hide />
+                    <Bar dataKey="value" fill="#E62800" radius={[2, 2, 0, 0]} barSize={16}>
+                      <LabelList dataKey="value" position="top" formatter={(v: unknown) => fmtShort(Number(v))} style={{ fontSize: 6, fill: '#E62800', fontWeight: 600 }} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
