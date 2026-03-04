@@ -16,28 +16,32 @@ function fmtM(v: number) {
 }
 
 // ── Donut Chart ──
-function DonutChart({ value, objetivo, color, size = 120 }: { value: number; objetivo: number; color: string; size?: number }) {
+function DonutChart({ value, objetivo, color, size = 120, tooltipLines }: { value: number; objetivo: number; color: string; size?: number; tooltipLines?: string[] }) {
+  const [hover, setHover] = useState(false)
   const radius = size * 0.35
   const strokeW = size * 0.16
   const circ = 2 * Math.PI * radius
   const filled = (value / 100) * circ
-  const objAngle = (objetivo / 100) * 360 - 90
   return (
-    <div className="relative flex items-center justify-center" style={{ width: size, height: size, margin: "0 auto" }}>
+    <div className="relative flex items-center justify-center" style={{ width: size, height: size, margin: "0 auto" }}
+      onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#E5E7EB" strokeWidth={strokeW} />
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={color}
           strokeWidth={strokeW} strokeDasharray={`${filled} ${circ}`}
           strokeLinecap="round" transform={`rotate(-90 ${size / 2} ${size / 2})`}
-          className="transition-all duration-1000" style={{ filter: `drop-shadow(0 0 4px ${color}55)` }} />
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#E62800"
-          strokeWidth={2.5} strokeDasharray={`4 ${circ - 4}`}
-          transform={`rotate(${objAngle} ${size / 2} ${size / 2})`} />
+          className="transition-all duration-1000" />
       </svg>
       <div className="absolute flex flex-col items-center">
         <span className="font-black text-[#041224]" style={{ fontSize: size * 0.19 }}>{value}%</span>
         <span className="text-[#9CA3AF] font-semibold" style={{ fontSize: size * 0.1 }}>Obj: {objetivo}%</span>
       </div>
+      {hover && tooltipLines && (
+        <div className="absolute z-50 bg-white rounded-lg shadow-lg border border-[#E5E7EB] px-3 py-2 text-xs text-[#041224] whitespace-nowrap"
+          style={{ top: size + 4, left: "50%", transform: "translateX(-50%)" }}>
+          {tooltipLines.map((l, i) => <div key={i} className="py-0.5">{l}</div>)}
+        </div>
+      )}
     </div>
   )
 }
@@ -193,7 +197,7 @@ export default function CobranzaPage() {
         {/* Card 1 — Meta convenio */}
         <div className="bg-white rounded-xl shadow-md p-3 flex flex-col">
           <p className="text-[#9CA3AF] text-sm font-bold uppercase tracking-wider mb-2">Meta convenio</p>
-          <DonutChart value={metaPct} objetivo={90} color="#E62800" size={140} />
+          <DonutChart value={metaPct} objetivo={90} color="#E62800" size={140} tooltipLines={[`Avance: ${metaPct}%`, `Objetivo: 90%`, `PN: ${fmtM(compTotals.primaNeta)}`, `Convenio: ${fmtM(compTotals.convenio)}`]} />
           <div className="mt-3 space-y-1.5">
             <p className="text-[#E62800] text-sm font-bold">{growthPct >= 0 ? "+" : ""}{growthPct.toFixed(2)}% vs {Number(year) - 1}</p>
             <div className="flex justify-between text-xs text-[#041224]">
@@ -208,7 +212,7 @@ export default function CobranzaPage() {
         {/* Card 2 — Acumulado */}
         <div className="bg-white rounded-xl shadow-md p-3 flex flex-col">
           <p className="text-[#9CA3AF] text-sm font-bold uppercase tracking-wider mb-2">Acumulado</p>
-          <DonutChart value={metaPct} objetivo={90} color="#041224" size={140} />
+          <DonutChart value={metaPct} objetivo={90} color="#041224" size={140} tooltipLines={[`Acumulado: ${metaPct}%`, `Objetivo: 90%`, `Acum. PN: ${fmtM(compTotals.primaNeta)}`, `Conv. acum: ${fmtM(compTotals.convenio)}`]} />
           <div className="mt-3 space-y-1.5">
             <p className="text-[#E62800] text-sm font-bold">{growthPct >= 0 ? "+" : ""}{growthPct.toFixed(2)}% vs {Number(year) - 1}</p>
             <div className="flex justify-between text-xs text-[#041224]">
@@ -224,9 +228,22 @@ export default function CobranzaPage() {
         <div className="bg-white rounded-xl shadow-md p-3 flex flex-col items-center">
           <p className="text-[#9CA3AF] text-sm font-bold uppercase tracking-wider mb-1 self-start">Meta anual</p>
           <p className="text-3xl font-black text-[#041224] mb-3">{metaPct}%</p>
-          <div className="w-full">
-            <div className="h-7 w-full bg-[#E5E7EB] rounded-lg overflow-hidden">
-              <div className="h-7 bg-gradient-to-r from-[#041224] to-[#0a2a4a] rounded-lg transition-all duration-1000" style={{width:`${Math.min(metaPct, 100)}%`}} />
+          <div className="w-full group relative">
+            <div className="flex justify-between text-xs text-[#9CA3AF] mb-1">
+              <span>{fmtM(compTotals.primaNeta)}</span>
+              <span>{fmtM(compTotals.convenio)}</span>
+            </div>
+            <div className="h-8 w-full bg-[#F3F4F6] rounded-full overflow-hidden shadow-inner">
+              <div className="h-8 bg-gradient-to-r from-[#3983F6] to-[#052F5F] rounded-full transition-all duration-1000 flex items-center justify-end pr-2"
+                style={{ width: `${Math.min(metaPct, 100)}%` }}>
+                <span className="text-white text-xs font-bold drop-shadow">{metaPct}%</span>
+              </div>
+            </div>
+            <div className="hidden group-hover:block absolute z-50 bg-white rounded-lg shadow-lg border border-[#E5E7EB] px-3 py-2 text-xs text-[#041224] whitespace-nowrap"
+              style={{ top: "100%", left: "50%", transform: "translateX(-50%)", marginTop: 4 }}>
+              <div className="py-0.5">Avance: {metaPct}% de meta</div>
+              <div className="py-0.5">PN efectuada: {fmtM(compTotals.primaNeta)}</div>
+              <div className="py-0.5">Convenio anual: {fmtM(compTotals.convenio)}</div>
             </div>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-x-4 text-center w-full">
@@ -248,7 +265,7 @@ export default function CobranzaPage() {
       <div className="bg-white rounded-xl shadow-md overflow-hidden mb-4">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-[#3983F6]">
+            <tr className="bg-[#E62800]">
               <th className="text-left px-3 py-2.5 font-semibold text-white text-base">Resumen por ramo</th>
               {ramos.map(r => <th key={r.nombre} className="text-center px-3 py-2.5 font-semibold text-white text-base">{r.nombre}</th>)}
               <th className="text-center px-3 py-2.5 font-semibold text-white text-base">Total</th>
@@ -271,7 +288,7 @@ export default function CobranzaPage() {
               <td className="px-3 py-2.5 text-center text-base font-bold">{new Intl.NumberFormat("es-MX").format(totalPOL)}</td>
             </tr>
             {/* TOTAL row */}
-            <tr className="bg-[#6B7280] text-white">
+            <tr className="bg-[#E62800] text-white">
               <td className="px-3 py-3 text-base font-bold">Total</td>
               {ramos.map(r => <td key={r.nombre} className="px-3 py-3 text-center text-base font-bold">{fmt(r.pnEfectuada)}</td>)}
               <td className="px-3 py-3 text-center text-base font-bold">{fmt(totalPN)}</td>
@@ -286,9 +303,15 @@ export default function CobranzaPage() {
         <div>
           <div className="h-8 w-full rounded-lg overflow-hidden flex gap-[2px]">
             {ramos.map((r,i) => (
-              <div key={r.nombre}
-                style={{width:`${totalPN>0?(r.pnEfectuada/totalPN)*100:0}%`,background:RAMO_COLORS[i % RAMO_COLORS.length]}}
-                className="h-full first:rounded-l-lg last:rounded-r-lg transition-all duration-500" />
+              <div key={r.nombre} className="h-full first:rounded-l-lg last:rounded-r-lg transition-all duration-500 relative group/bar"
+                style={{width:`${totalPN>0?(r.pnEfectuada/totalPN)*100:0}%`,background:RAMO_COLORS[i % RAMO_COLORS.length]}}>
+                <div className="hidden group-hover/bar:block absolute z-50 bg-white rounded-lg shadow-lg border border-[#E5E7EB] px-3 py-2 text-xs text-[#041224] whitespace-nowrap"
+                  style={{ bottom: "100%", left: "50%", transform: "translateX(-50%)", marginBottom: 4 }}>
+                  <div className="font-bold">{r.nombre}</div>
+                  <div>{fmt(r.pnEfectuada)}</div>
+                  <div>{totalPN > 0 ? ((r.pnEfectuada / totalPN) * 100).toFixed(1) : 0}%</div>
+                </div>
+              </div>
             ))}
           </div>
           <div className="flex flex-wrap gap-4 mt-3">
@@ -308,8 +331,8 @@ export default function CobranzaPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm border-separate border-spacing-0">
             <thead>
-              <tr className="bg-[#3983F6]">
-                <th className="text-left px-3 py-3 font-semibold text-white min-w-[120px] sticky left-0 bg-[#3983F6] z-10 cursor-pointer select-none" onClick={() => handleSort('nombre')}>Compania {sortKey === 'nombre' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+              <tr className="bg-[#E62800]">
+                <th className="text-left px-3 py-3 font-semibold text-white min-w-[120px] sticky left-0 bg-[#E62800] z-10 cursor-pointer select-none" onClick={() => handleSort('nombre')}>Compania {sortKey === 'nombre' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
                 <th className="text-center px-3 py-3 font-semibold text-white cursor-pointer select-none" onClick={() => handleSort('primaNeta')}>Prima neta {sortKey === 'primaNeta' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
                 <th className="text-center px-3 py-3 font-semibold text-white cursor-pointer select-none" onClick={() => handleSort('convenio')}>Convenio {sortKey === 'convenio' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
                 <th className="text-center px-3 py-3 font-semibold text-white">Diferencia</th>
@@ -349,8 +372,8 @@ export default function CobranzaPage() {
                 )
               })}
               {/* TOTAL */}
-              <tr className="bg-[#6B7280] text-white">
-                <td className="px-3 py-3.5 font-bold sticky left-0 bg-[#6B7280] z-10">TOTAL</td>
+              <tr className="bg-[#E62800] text-white">
+                <td className="px-3 py-3.5 font-bold sticky left-0 bg-[#E62800] z-10">TOTAL</td>
                 <td className="px-3 py-3.5 text-center font-bold tabular-nums">{fmt(compTotals.primaNeta)}</td>
                 <td className="px-3 py-3.5 text-center font-bold tabular-nums">{fmt(compTotals.convenio)}</td>
                 <td className="px-3 py-3.5 text-center font-bold tabular-nums">{fmt(compTotals.primaNeta - compTotals.convenio)}</td>
