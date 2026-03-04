@@ -5,7 +5,7 @@ import { PageTabs } from "@/components/page-tabs"
 import { PeriodFilter } from "@/components/period-filter"
 import { getCompromisos, getRankedVendedores } from "@/lib/queries"
 import type { CompromisoRow } from "@/lib/queries"
-import { BarChart, Bar, XAxis, YAxis, LabelList, Cell } from "recharts"
+import { BarChart, Bar, XAxis, YAxis, LabelList, Cell, ResponsiveContainer } from "recharts"
 
 function fmt(v: number) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v)
@@ -34,9 +34,9 @@ function Semaforo({ pct }: { pct: number }) {
   const isRed = pct < 70
   return (
     <span className="inline-flex items-center gap-0.5">
-      <span className={`w-2.5 h-2.5 rounded-full inline-block border ${isRed ? "bg-[#E62800] border-[#B91C00] shadow-[0_0_3px_#E62800]" : "bg-[#E62800]/15 border-[#E5E7E9]"}`} />
-      <span className={`w-2.5 h-2.5 rounded-full inline-block border ${isYellow ? "bg-[#F5C518] border-[#D4A800] shadow-[0_0_3px_#F5C518]" : "bg-[#F5C518]/15 border-[#E5E7E9]"}`} />
-      <span className={`w-2.5 h-2.5 rounded-full inline-block border ${isGreen ? "bg-[#2E7D32] border-[#1B5E20] shadow-[0_0_3px_#2E7D32]" : "bg-[#2E7D32]/15 border-[#E5E7E9]"}`} />
+      <span className={`w-2 h-2 rounded-full inline-block border ${isRed ? "bg-[#E62800] border-[#B91C00] shadow-[0_0_3px_#E62800]" : "bg-[#E62800]/15 border-[#E5E7E9]"}`} />
+      <span className={`w-2 h-2 rounded-full inline-block border ${isYellow ? "bg-[#F5C518] border-[#D4A800] shadow-[0_0_3px_#F5C518]" : "bg-[#F5C518]/15 border-[#E5E7E9]"}`} />
+      <span className={`w-2 h-2 rounded-full inline-block border ${isGreen ? "bg-[#2E7D32] border-[#1B5E20] shadow-[0_0_3px_#2E7D32]" : "bg-[#2E7D32]/15 border-[#E5E7E9]"}`} />
     </span>
   )
 }
@@ -101,8 +101,6 @@ export default function CompromisosPage() {
     value: v.primaNeta,
   })).reverse()
 
-  const barChartWidth = 1160
-
   return (
     <div className="min-h-screen bg-[#FAFAFA] px-3 py-4 flex flex-col">
       <div className="max-w-[1200px] mx-auto w-full flex flex-col flex-1">
@@ -112,134 +110,151 @@ export default function CompromisosPage() {
           <PeriodFilter onFilterChange={handleFilterChange} />
         </div>
 
-        <h1 className="text-sm font-bold text-[#111] font-lato mt-3 mb-3">Vendedores — Compromisos</h1>
+        <h1 className="text-sm font-bold text-[#111] font-lato mt-3 mb-2">Vendedores — Compromisos</h1>
 
-        {/* SECTION 1: Compromisos Table + sparkline bar chart */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-          <table className="w-full text-[9px]">
-            <thead>
-              <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
-                <th className="text-left px-2 py-1 text-[10px] font-semibold">Vendedor</th>
-                <th className="text-right px-2 py-1 text-[10px] font-semibold">Meta</th>
-                <th className="text-right px-2 py-1 text-[10px] font-semibold">Prima Neta</th>
-                <th className="text-right px-2 py-1 text-[10px] font-semibold">% Avance</th>
-                <th className="text-center px-2 py-1 text-[10px] font-semibold">Semáforo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={5} className="px-2 py-4 text-center text-gray-400 text-[9px]">Cargando...</td></tr>
-              ) : data.length === 0 ? (
-                <tr><td colSpan={5} className="px-2 py-4 text-center text-[#888] text-[9px]">Sin compromisos para este periodo</td></tr>
-              ) : data.slice(0, 10).map((r, idx) => (
-                <tr key={r.vendedor} className={`border-b border-[#F0F0F0] hover:bg-[#FFF5F5] ${idx % 2 === 1 ? "bg-[#FAFAFA]" : "bg-white"}`}>
-                  <td className="px-2 py-1 font-medium text-[#111]">{r.vendedor}</td>
-                  <td className="px-2 py-1 text-right text-gray-500">{fmt(r.meta)}</td>
-                  <td className="px-2 py-1 text-right font-medium">{fmt(r.primaActual)}</td>
-                  <td className={`px-2 py-1 text-right font-medium ${r.pctAvance >= 90 ? "text-[#2E7D32]" : r.pctAvance >= 70 ? "text-[#F5C518]" : "text-[#E62800]"}`}>{r.pctAvance}%</td>
-                  <td className="px-2 py-1 text-center"><Semaforo pct={r.pctAvance} /></td>
-                </tr>
-              ))}
-              {!loading && data.length > 0 && (
-                <tr className="bg-[#041224] text-white">
-                  <td className="px-2 py-1 font-bold">Total</td>
-                  <td className="px-2 py-1 text-right font-bold">{fmt(totalMeta)}</td>
-                  <td className="px-2 py-1 text-right font-bold">{fmt(totalActual)}</td>
-                  <td className="px-2 py-1 text-right font-bold">{totalPct}%</td>
-                  <td className="px-2 py-1 text-center"><Semaforo pct={totalPct} /></td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        {/* 3-row layout, each row = table + chart side by side */}
+        <div className="flex flex-col gap-2 max-h-[calc(100vh-80px)] flex-1">
 
-          {/* Sparkline bar chart below table */}
-          {ready && barData.length > 0 && (
-            <div className="mt-2 w-full overflow-hidden">
-              <BarChart width={barChartWidth} height={60} layout="vertical" data={barData} margin={{ top: 2, right: 50, bottom: 2, left: 5 }}>
-                <XAxis type="number" hide />
-                <YAxis type="category" dataKey="name" width={60} tick={{ fontSize: 8 }} axisLine={false} tickLine={false} />
-                <Bar dataKey="value" radius={[0, 2, 2, 0]} barSize={6}>
-                  {barData.map((entry, idx) => (
-                    <Cell key={idx} fill={entry.color} />
+          {/* ROW 1: Compromisos table + chart */}
+          <div className="grid grid-cols-2 gap-2 flex-[5] min-h-0">
+            {/* Table */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 overflow-hidden flex flex-col">
+              <table className="w-full text-[8px]">
+                <thead>
+                  <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
+                    <th className="text-left px-1.5 py-[2px] text-[9px] font-semibold">Vendedor</th>
+                    <th className="text-right px-1.5 py-[2px] text-[9px] font-semibold">Meta</th>
+                    <th className="text-right px-1.5 py-[2px] text-[9px] font-semibold">Prima Neta</th>
+                    <th className="text-right px-1.5 py-[2px] text-[9px] font-semibold">% Avance</th>
+                    <th className="text-center px-1.5 py-[2px] text-[9px] font-semibold">Semáforo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr><td colSpan={5} className="px-1.5 py-4 text-center text-gray-400 text-[8px]">Cargando...</td></tr>
+                  ) : data.length === 0 ? (
+                    <tr><td colSpan={5} className="px-1.5 py-4 text-center text-[#888] text-[8px]">Sin compromisos para este periodo</td></tr>
+                  ) : data.slice(0, 10).map((r, idx) => (
+                    <tr key={r.vendedor} className={`border-b border-[#F0F0F0] hover:bg-[#FFF5F5] ${idx % 2 === 1 ? "bg-[#FAFAFA]" : "bg-white"}`}>
+                      <td className="px-1.5 py-[2px] font-medium text-[#111]">{r.vendedor}</td>
+                      <td className="px-1.5 py-[2px] text-right text-gray-500">{fmt(r.meta)}</td>
+                      <td className="px-1.5 py-[2px] text-right font-medium">{fmt(r.primaActual)}</td>
+                      <td className={`px-1.5 py-[2px] text-right font-medium ${r.pctAvance >= 90 ? "text-[#2E7D32]" : r.pctAvance >= 70 ? "text-[#F5C518]" : "text-[#E62800]"}`}>{r.pctAvance}%</td>
+                      <td className="px-1.5 py-[2px] text-center"><Semaforo pct={r.pctAvance} /></td>
+                    </tr>
                   ))}
-                  <LabelList dataKey="value" position="right" formatter={(v: unknown) => fmtShort(Number(v))} style={{ fontSize: 7, fill: '#333', fontWeight: 600 }} />
-                </Bar>
-              </BarChart>
+                  {!loading && data.length > 0 && (
+                    <tr className="bg-[#041224] text-white">
+                      <td className="px-1.5 py-[2px] font-bold">Total</td>
+                      <td className="px-1.5 py-[2px] text-right font-bold">{fmt(totalMeta)}</td>
+                      <td className="px-1.5 py-[2px] text-right font-bold">{fmt(totalActual)}</td>
+                      <td className="px-1.5 py-[2px] text-right font-bold">{totalPct}%</td>
+                      <td className="px-1.5 py-[2px] text-center"><Semaforo pct={totalPct} /></td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
-          )}
-        </div>
-
-        {/* SECTION 2: Top 5 + Bottom 5 side by side */}
-        <div className="grid grid-cols-2 gap-3 mt-3">
-          {/* Left card: Top 5 */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-            <p className="text-[10px] font-bold text-[#041224] mb-1">Top 5 Vendedores</p>
-            <table className="w-full text-[9px]">
-              <thead>
-                <tr className="bg-[#041224] text-white border-b-2 border-b-[#2E7D32]">
-                  <th className="px-2 py-1 text-left text-[10px] font-semibold w-6">#</th>
-                  <th className="px-2 py-1 text-left text-[10px] font-semibold">Vendedor</th>
-                  <th className="px-2 py-1 text-right text-[10px] font-semibold">Prima Neta</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topVendedores.map((v, i) => (
-                  <tr key={v.vendedor} className={`border-b border-[#E5E7E9] ${i % 2 === 1 ? "bg-[#FAFAFA]" : "bg-[#F1F8F1]"}`}>
-                    <td className="px-2 py-1 font-bold text-[#2E7D32]">{i + 1}</td>
-                    <td className="px-2 py-1">{v.vendedor}</td>
-                    <td className="px-2 py-1 text-right font-medium">{fmt(v.primaNeta)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {ready && topBarData.length > 0 && (
-              <div className="mt-1 overflow-hidden">
-                <BarChart width={540} height={50} layout="vertical" data={topBarData} margin={{ top: 2, right: 45, bottom: 2, left: 5 }}>
-                  <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="name" width={55} tick={{ fontSize: 8 }} axisLine={false} tickLine={false} />
-                  <Bar dataKey="value" fill="#2E7D32" radius={[0, 2, 2, 0]} barSize={6}>
-                    <LabelList dataKey="value" position="right" formatter={(v: unknown) => fmtShort(Number(v))} style={{ fontSize: 7, fill: '#2E7D32', fontWeight: 600 }} />
-                  </Bar>
-                </BarChart>
-              </div>
-            )}
+            {/* Chart */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 overflow-hidden">
+              {ready && barData.length > 0 && (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart layout="vertical" data={barData} margin={{ top: 2, right: 30, bottom: 2, left: 0 }}>
+                    <XAxis type="number" hide />
+                    <YAxis type="category" dataKey="name" width={60} tick={{ fontSize: 7 }} axisLine={false} tickLine={false} />
+                    <Bar dataKey="value" radius={[0, 2, 2, 0]} barSize={8}>
+                      {barData.map((entry, idx) => (
+                        <Cell key={idx} fill={entry.color} />
+                      ))}
+                      <LabelList dataKey="value" position="right" formatter={(v: unknown) => fmtShort(Number(v))} style={{ fontSize: 7, fill: '#333', fontWeight: 600 }} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
           </div>
 
-          {/* Right card: Bottom 5 */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-            <p className="text-[10px] font-bold text-[#041224] mb-1">Bottom 5 Vendedores</p>
-            <table className="w-full text-[9px]">
-              <thead>
-                <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
-                  <th className="px-2 py-1 text-left text-[10px] font-semibold w-6">#</th>
-                  <th className="px-2 py-1 text-left text-[10px] font-semibold">Vendedor</th>
-                  <th className="px-2 py-1 text-right text-[10px] font-semibold">Prima Neta</th>
-                </tr>
-              </thead>
-              <tbody>
-                {bottomVendedores.map((v, i) => (
-                  <tr key={v.vendedor} className={`border-b border-[#E5E7E9] ${i % 2 === 1 ? "bg-[#FAFAFA]" : "bg-[#FFF3F3]"}`}>
-                    <td className="px-2 py-1 font-bold text-[#E62800]">{i + 1}</td>
-                    <td className="px-2 py-1">{v.vendedor}</td>
-                    <td className="px-2 py-1 text-right font-medium">{fmt(v.primaNeta)}</td>
+          {/* ROW 2: Top 5 table + chart */}
+          <div className="grid grid-cols-2 gap-2 flex-[2.5] min-h-0">
+            {/* Table */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 overflow-hidden flex flex-col">
+              <p className="text-[9px] font-bold text-[#041224] mb-1">Top 5 Vendedores</p>
+              <table className="w-full text-[8px]">
+                <thead>
+                  <tr className="bg-[#041224] text-white border-b-2 border-b-[#2E7D32]">
+                    <th className="px-1.5 py-[2px] text-left text-[9px] font-semibold w-5">#</th>
+                    <th className="px-1.5 py-[2px] text-left text-[9px] font-semibold">Vendedor</th>
+                    <th className="px-1.5 py-[2px] text-right text-[9px] font-semibold">Prima Neta</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            {ready && bottomBarData.length > 0 && (
-              <div className="mt-1 overflow-hidden">
-                <BarChart width={540} height={50} layout="vertical" data={bottomBarData} margin={{ top: 2, right: 45, bottom: 2, left: 5 }}>
-                  <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="name" width={55} tick={{ fontSize: 8 }} axisLine={false} tickLine={false} />
-                  <Bar dataKey="value" fill="#E62800" radius={[0, 2, 2, 0]} barSize={6}>
-                    <LabelList dataKey="value" position="right" formatter={(v: unknown) => fmtShort(Number(v))} style={{ fontSize: 7, fill: '#E62800', fontWeight: 600 }} />
-                  </Bar>
-                </BarChart>
-              </div>
-            )}
+                </thead>
+                <tbody>
+                  {topVendedores.map((v, i) => (
+                    <tr key={v.vendedor} className={`border-b border-[#E5E7E9] ${i % 2 === 1 ? "bg-[#FAFAFA]" : "bg-[#F1F8F1]"}`}>
+                      <td className="px-1.5 py-[2px] font-bold text-[#2E7D32]">{i + 1}</td>
+                      <td className="px-1.5 py-[2px]">{v.vendedor}</td>
+                      <td className="px-1.5 py-[2px] text-right font-medium">{fmt(v.primaNeta)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {/* Chart */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 overflow-hidden">
+              {ready && topBarData.length > 0 && (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart layout="vertical" data={topBarData} margin={{ top: 2, right: 30, bottom: 2, left: 0 }}>
+                    <XAxis type="number" hide />
+                    <YAxis type="category" dataKey="name" width={60} tick={{ fontSize: 7 }} axisLine={false} tickLine={false} />
+                    <Bar dataKey="value" fill="#2E7D32" radius={[0, 2, 2, 0]} barSize={8}>
+                      <LabelList dataKey="value" position="right" formatter={(v: unknown) => fmtShort(Number(v))} style={{ fontSize: 7, fill: '#2E7D32', fontWeight: 600 }} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
           </div>
-        </div>
 
+          {/* ROW 3: Bottom 5 table + chart */}
+          <div className="grid grid-cols-2 gap-2 flex-[2.5] min-h-0">
+            {/* Table */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 overflow-hidden flex flex-col">
+              <p className="text-[9px] font-bold text-[#041224] mb-1">Bottom 5 Vendedores</p>
+              <table className="w-full text-[8px]">
+                <thead>
+                  <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
+                    <th className="px-1.5 py-[2px] text-left text-[9px] font-semibold w-5">#</th>
+                    <th className="px-1.5 py-[2px] text-left text-[9px] font-semibold">Vendedor</th>
+                    <th className="px-1.5 py-[2px] text-right text-[9px] font-semibold">Prima Neta</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bottomVendedores.map((v, i) => (
+                    <tr key={v.vendedor} className={`border-b border-[#E5E7E9] ${i % 2 === 1 ? "bg-[#FAFAFA]" : "bg-[#FFF3F3]"}`}>
+                      <td className="px-1.5 py-[2px] font-bold text-[#E62800]">{i + 1}</td>
+                      <td className="px-1.5 py-[2px]">{v.vendedor}</td>
+                      <td className="px-1.5 py-[2px] text-right font-medium">{fmt(v.primaNeta)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {/* Chart */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 overflow-hidden">
+              {ready && bottomBarData.length > 0 && (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart layout="vertical" data={bottomBarData} margin={{ top: 2, right: 30, bottom: 2, left: 0 }}>
+                    <XAxis type="number" hide />
+                    <YAxis type="category" dataKey="name" width={60} tick={{ fontSize: 7 }} axisLine={false} tickLine={false} />
+                    <Bar dataKey="value" fill="#E62800" radius={[0, 2, 2, 0]} barSize={8}>
+                      <LabelList dataKey="value" position="right" formatter={(v: unknown) => fmtShort(Number(v))} style={{ fontSize: 7, fill: '#E62800', fontWeight: 600 }} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
   )
