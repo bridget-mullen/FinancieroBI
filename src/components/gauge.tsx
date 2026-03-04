@@ -10,17 +10,17 @@ interface GaugeProps {
 }
 
 const COLORS = [
-  "#2E7D32", "#4E9A2E", "#8AB82A", "#C8D519", "#F5C518",
-  "#F0A31A", "#E67E22", "#E4601A", "#E54412", "#E62800",
+  "#1B8A2D", "#2DA83E", "#6BBF1A", "#C5D900", "#F5D000",
+  "#F5A623", "#F57C00", "#E64A19", "#D32F2F", "#B71C1C",
 ]
 
 export function Gauge({ value, clickable = true }: GaugeProps) {
-  const W = 650
-  const H = 400
+  const W = 500
+  const H = 310
   const cx = W / 2
-  const cy = 300
+  const cy = 240
 
-  const outerR = 260
+  const outerR = 200
   const innerR = outerR * 0.75 // 150
   const borderR = outerR + 10   // 210 — grey frame outside
   const borderInnerR = innerR - 6
@@ -131,7 +131,7 @@ export function Gauge({ value, clickable = true }: GaugeProps) {
           x={cx - outerR - 10}
           y={cy + 20}
           fontSize="15"
-          fill="#2E7D32"
+          fill="#1B8A2D"
           textAnchor="middle"
           fontWeight="900"
           fontFamily="Calibri, Arial, sans-serif"
@@ -145,7 +145,7 @@ export function Gauge({ value, clickable = true }: GaugeProps) {
           x={cx + outerR + 10}
           y={cy + 20}
           fontSize="15"
-          fill="#E62800"
+          fill="#B71C1C"
           textAnchor="middle"
           fontWeight="900"
           fontFamily="Calibri, Arial, sans-serif"
@@ -158,7 +158,7 @@ export function Gauge({ value, clickable = true }: GaugeProps) {
         <text
           x={cx}
           y={cy + 48}
-          fontSize="42"
+          fontSize="36"
           fontWeight="900"
           fill="#111827"
           textAnchor="middle"
