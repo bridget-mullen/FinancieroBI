@@ -141,7 +141,7 @@ export function Gauge({ value, budget = 129.5, clickable = true, cumplimiento = 
         </text>
 
         {/* Cumplimiento circle (left) */}
-        <circle cx={circleLX} cy={circleY} r={circleR} fill="#60A63A" />
+        <circle cx={circleLX} cy={circleY} r={circleR} fill="#3983F6" />
         <text
           x={circleLX} y={circleY + 8}
           fontSize="32" fontWeight="900" fill="white"
