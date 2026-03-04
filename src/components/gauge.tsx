@@ -20,19 +20,16 @@ export function Gauge({ value, budget = 129.5, clickable = true, cumplimiento = 
   const outerR = 340
   const innerR = outerR * 0.75
   const outerGrayR = outerR + 5
-  const labelR = outerR + 28
+  const labelR = outerR + 40
 
   const NEEDLE_PCT = 0.75
 
-  // Arc labels: generate tick values from $0M to budget
-  const tickCount = 7
-  const arcLabels: { pct: number; label: string }[] = []
-  for (let i = 0; i <= tickCount; i++) {
-    const val = Math.round((budget / tickCount) * i)
-    arcLabels.push({ pct: i / tickCount, label: `$${val}M` })
-  }
-  // Add the exact budget as the last label
-  arcLabels[tickCount] = { pct: 1, label: `$${Math.round(budget * 10) / 10}M` }
+  // Arc labels: 5 evenly spaced labels like Power BI
+  const arcLabelValues = [0, 32, 65, 97, 130]
+  const arcLabels = arcLabelValues.map(val => ({
+    pct: val / 130,
+    label: `$${val}M`,
+  }))
 
   function polarToXY(angleDeg: number, r: number): [number, number] {
     const rad = (angleDeg * Math.PI) / 180
@@ -100,7 +97,7 @@ export function Gauge({ value, budget = 129.5, clickable = true, cumplimiento = 
             <text
               key={i}
               x={lx} y={ly}
-              fontSize="14" fontWeight="600" fill="#374151"
+              fontSize="11" fontWeight="600" fill="#374151"
               textAnchor={anchor}
               fontFamily="Calibri, Arial, sans-serif"
             >

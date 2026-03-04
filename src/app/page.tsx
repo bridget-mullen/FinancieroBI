@@ -147,14 +147,14 @@ export default function Home() {
             </div>
 
             {/* Chart */}
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm px-2 py-1.5 flex flex-col h-[280px] overflow-hidden">
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm px-2 py-1.5 flex flex-col flex-1 overflow-hidden">
               <div className="flex gap-3 text-[12px] mb-1 self-start">
                 <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: '#E67E22' }}/><span className="text-gray-700 font-medium">Prima neta efectuada</span></div>
                 <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: '#9CA3AF' }}/><span className="text-gray-700 font-medium">Presupuesto</span></div>
               </div>
               <div className="w-full flex-1 flex justify-center overflow-hidden">
                 {ready && chartData.length > 0 && (
-                    <BarChart width={520} height={240} layout="vertical" data={chartData} margin={{ top: 2, right: 50, left: 10, bottom: 2 }} barGap={8}>
+                    <BarChart width={520} height={380} layout="vertical" data={chartData} margin={{ top: 2, right: 50, left: 10, bottom: 2 }} barGap={12} barCategoryGap="25%">
                       <XAxis type="number" domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickFormatter={v => `$${v}M`} tick={{ fontSize: 11 }} axisLine={{ stroke: '#E5E7EB' }}/>
                       <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} axisLine={false} tickLine={false}/>
                       <Tooltip
@@ -164,10 +164,10 @@ export default function Home() {
                         formatter={(value?: number, name?: string) => [`$${value ?? 0}M`, name === 'pn' ? 'Prima Neta' : 'Presupuesto']}
                         cursor={{ fill: 'rgba(57,131,246,0.08)' }}
                       />
-                      <Bar dataKey="pn" fill="#E67E22" radius={[0, 3, 3, 0]} barSize={14} isAnimationActive={true} animationDuration={800}>
+                      <Bar dataKey="pn" fill="#E67E22" radius={[0, 3, 3, 0]} barSize={20} isAnimationActive={true} animationDuration={800}>
                         <LabelList dataKey="pn" position="right" formatter={(v: unknown) => v != null ? `$${v}M` : ''} style={{ fontSize: 11, fill: '#E67E22', fontWeight: 600 }}/>
                       </Bar>
-                      <Bar dataKey="pp" fill="#9CA3AF" radius={[0, 3, 3, 0]} barSize={14} isAnimationActive={true} animationDuration={800}>
+                      <Bar dataKey="pp" fill="#9CA3AF" radius={[0, 3, 3, 0]} barSize={20} isAnimationActive={true} animationDuration={800}>
                         <LabelList dataKey="pp" position="right" formatter={(v: unknown) => v != null ? `$${v}M` : ''} style={{ fontSize: 11, fill: '#6B7280', fontWeight: 600 }}/>
                       </Bar>
                     </BarChart>
