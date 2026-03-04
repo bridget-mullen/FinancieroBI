@@ -54,7 +54,7 @@ const RAMOS = [
   { nombre: "Vida", pnEfectuada: 59636744, polizas: 4202 },
   { nombre: "Otros", pnEfectuada: 8013999, polizas: 545 },
 ]
-const RAMO_COLORS = ["#E62800", "#041224", "#0EA5E9", "#3B82F6", "#0EA5E9"]
+const RAMO_COLORS = ["#052F5F", "#041224", "#0EA5E9", "#3B82F6", "#0EA5E9"]
 
 const COMPANIES = [
   { nombre: "AFIRME", primaNeta: 15109066, convenio: 15000000, pnAA: 9836221, pendiente: 44534, pnCia: 5677131, difCia: 9430936 },

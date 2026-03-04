@@ -15,11 +15,11 @@ function fmt(v: number) {
 }
 
 const LINEA_LINKS: Record<string, string> = {
-  "Click Franquicias": "/tabla-detalle",
-  "Click Promotoras": "/tabla-detalle",
-  "Corporate": "/tabla-detalle",
-  "Cartera Tradicional": "/tabla-detalle",
-  "Call Center": "/tabla-detalle",
+  "Click Franquicias": "/tabla-detalle?linea=click-franquicias",
+  "Click Promotoras": "/tabla-detalle?linea=click-promotoras",
+  "Corporate": "/tabla-detalle?linea=corporate",
+  "Cartera Tradicional": "/tabla-detalle?linea=cartera-tradicional",
+  "Call Center": "/tabla-detalle?linea=call-center",
 }
 
 export default function Home() {

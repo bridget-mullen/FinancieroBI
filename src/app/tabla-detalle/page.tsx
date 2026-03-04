@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
+import { useSearchParams } from "next/navigation"
 import { ChevronRight, ChevronLeft, Search, Download } from "lucide-react"
 import { PageTabs } from "@/components/page-tabs"
 import { PageFooter } from "@/components/page-footer"
@@ -28,6 +29,10 @@ const SEED: LineaFull[] = [
   { linea: "Call Center", primaNeta: 2602364, presupuesto: 6398081, diferencia: -3795717, pctDifPpto: -59.3, pnAnioAnt: 853685, difYoY: 1748679, pctDifYoY: 204.84, pendiente: 12236199 },
 ]
 
+function toSlug(name: string) {
+  return name.toLowerCase().replace(/\s+/g, "-")
+}
+
 // Umbral configurable de alerta por desviación (default -20%)
 const ALERT_THRESHOLD = -20
 
@@ -39,12 +44,28 @@ interface Crumb { level: DrillLevel; label: string }
 interface DrillRow { name: string; primaNeta: number; presupuesto: number | null; diferencia: number | null; pctDifPpto: number | null; pnAnioAnt: number | null; difYoY: number | null; pctDifYoY: number | null; pendiente: number | null }
 
 export default function TablaDetallePage() {
+  const searchParams = useSearchParams()
+  const lineaParam = searchParams.get("linea")
+  const [highlightId, setHighlightId] = useState<string | null>(null)
+
   const [year, setYear] = useState("2026")
   const [periodos, setPeriodos] = useState<number[]>([2])
   const [search, setSearch] = useState("")
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
+
+  // Scroll to and highlight the row matching the ?linea= param
+  useEffect(() => {
+    if (!lineaParam || loading) return
+    const el = document.getElementById(lineaParam)
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" })
+      setHighlightId(lineaParam)
+      const timer = setTimeout(() => setHighlightId(null), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [lineaParam, loading])
 
   const handleFilterChange = useCallback((newYear: string, newPeriodos: number[]) => {
     setYear(newYear)
@@ -456,7 +477,7 @@ export default function TablaDetallePage() {
                   const isAlert = l.presupuesto > 0 && l.pctDifPpto <= ALERT_THRESHOLD
                   const isCritical = l.presupuesto > 0 && l.pctDifPpto < -15
                   return (
-                    <tr key={l.linea} className={`group border-b border-[#F0F0F0] cursor-pointer transition-all duration-150 hover:bg-[#FFF5F5] hover:border-l-[3px] hover:border-l-[#E62800] ${isAlert ? "bg-[#FFF3F3]" : isCritical ? "bg-[#FFF2F2]" : idx % 2 === 1 ? "bg-[#FAFAFA]" : "bg-white"}`}
+                    <tr key={l.linea} id={toSlug(l.linea)} className={`group border-b border-[#F0F0F0] cursor-pointer transition-all duration-150 hover:bg-[#FFF5F5] hover:border-l-[3px] hover:border-l-[#E62800] ${highlightId === toSlug(l.linea) ? "bg-[#FEFCE8] ring-2 ring-[#3B82F6]" : isAlert ? "bg-[#FFF3F3]" : isCritical ? "bg-[#FFF2F2]" : idx % 2 === 1 ? "bg-[#FAFAFA]" : "bg-white"}`}
                       onClick={() => drill("gerencia", l.linea, { linea: l.linea })}>
                       <td className="px-1 py-1.5 text-center">
                         {/* Alert icons hidden for SEED data presentation */}
