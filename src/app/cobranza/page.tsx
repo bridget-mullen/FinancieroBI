@@ -17,25 +17,26 @@ function fmtM(v: number) {
 
 // ── Donut Chart ──
 function DonutChart({ value, objetivo, color, size = 120 }: { value: number; objetivo: number; color: string; size?: number }) {
-  const radius = size * 0.38
+  const radius = size * 0.35
+  const strokeW = size * 0.16
   const circ = 2 * Math.PI * radius
   const filled = (value / 100) * circ
   const objAngle = (objetivo / 100) * 360 - 90
   return (
     <div className="relative flex items-center justify-center" style={{ width: size, height: size, margin: "0 auto" }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#E5E7E9" strokeWidth={size * 0.12} />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#E5E7EB" strokeWidth={strokeW} />
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={color}
-          strokeWidth={size * 0.12} strokeDasharray={`${filled} ${circ}`}
+          strokeWidth={strokeW} strokeDasharray={`${filled} ${circ}`}
           strokeLinecap="round" transform={`rotate(-90 ${size / 2} ${size / 2})`}
-          className="transition-all duration-1000" />
+          className="transition-all duration-1000" style={{ filter: `drop-shadow(0 0 4px ${color}55)` }} />
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#E62800"
-          strokeWidth={2} strokeDasharray={`3 ${circ - 3}`}
+          strokeWidth={2.5} strokeDasharray={`4 ${circ - 4}`}
           transform={`rotate(${objAngle} ${size / 2} ${size / 2})`} />
       </svg>
       <div className="absolute flex flex-col items-center">
-        <span className="font-black text-[#041224]" style={{ fontSize: size * 0.18 }}>{value}%</span>
-        <span className="text-[#CCD1D3]" style={{ fontSize: size * 0.1 }}>Obj: {objetivo}%</span>
+        <span className="font-black text-[#041224]" style={{ fontSize: size * 0.19 }}>{value}%</span>
+        <span className="text-[#9CA3AF] font-semibold" style={{ fontSize: size * 0.1 }}>Obj: {objetivo}%</span>
       </div>
     </div>
   )
@@ -43,13 +44,13 @@ function DonutChart({ value, objetivo, color, size = 120 }: { value: number; obj
 
 // ── Seed Data ──
 const RAMOS = [
-  { nombre: "Vehículos", pnEfectuada: 787742854, polizas: 160499 },
+  { nombre: "Vehiculos", pnEfectuada: 787742854, polizas: 160499 },
   { nombre: "Acc. y Enf.", pnEfectuada: 276612477, polizas: 10476 },
-  { nombre: "Daños", pnEfectuada: 144378444, polizas: 6455 },
+  { nombre: "Danos", pnEfectuada: 144378444, polizas: 6455 },
   { nombre: "Vida", pnEfectuada: 59636744, polizas: 4202 },
   { nombre: "Otros", pnEfectuada: 8013999, polizas: 545 },
 ]
-const RAMO_COLORS = ["#E62800", "#041224", "#CCD1D3", "#6B7280", "#E5E7E9"]
+const RAMO_COLORS = ["#E62800", "#041224", "#6B7280", "#3B82F6", "#9CA3AF"]
 
 const COMPANIES = [
   { nombre: "AFIRME", primaNeta: 15109066, convenio: 15000000, pnAA: 9836221, pendiente: 44534, pnCia: 5677131, difCia: 9430936 },
@@ -60,7 +61,7 @@ const COMPANIES = [
   { nombre: "GNP", primaNeta: 95000000, convenio: 98000000, pnAA: 82000000, pendiente: 500000, pnCia: 40000000, difCia: 55000000 },
   { nombre: "HDI", primaNeta: 18000000, convenio: 20000000, pnAA: 16000000, pendiente: 150000, pnCia: 7500000, difCia: 10500000 },
   { nombre: "MAPFRE", primaNeta: 12000000, convenio: 13000000, pnAA: 10500000, pendiente: 95000, pnCia: 5000000, difCia: 7000000 },
-  { nombre: "QUÁLITAS", primaNeta: 185000000, convenio: 180000000, pnAA: 160000000, pendiente: 800000, pnCia: 80000000, difCia: 105000000 },
+  { nombre: "QUALITAS", primaNeta: 185000000, convenio: 180000000, pnAA: 160000000, pendiente: 800000, pnCia: 80000000, difCia: 105000000 },
   { nombre: "ZURICH", primaNeta: 22000000, convenio: 24000000, pnAA: 19000000, pendiente: 180000, pnCia: 9000000, difCia: 13000000 },
 ]
 
@@ -73,8 +74,8 @@ function PctBadge({ val, base }: { val: number; base: number }) {
   const p = pct(val, base)
   const neg = p < 0
   return (
-    <td className="px-2 py-2 text-right">
-      <span className={`inline-block px-1.5 py-0.5 rounded text-sm font-bold ${neg ? "bg-[#FEE2E2] text-[#991B1B]" : "bg-[#DCFCE7] text-[#166534]"}`}>
+    <td className="px-3 py-3 text-right">
+      <span className={`inline-block px-2 py-0.5 rounded text-sm font-bold ${neg ? "bg-[#FEE2E2] text-[#991B1B]" : "bg-[#DCFCE7] text-[#166534]"}`}>
         {neg ? "" : "+"}{p.toFixed(2)}%
       </span>
     </td>
@@ -148,7 +149,7 @@ export default function CobranzaPage() {
   }), { primaNeta: 0, convenio: 0, pnAA: 0, pendiente: 0, pnCia: 0, difCia: 0 })
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] px-3 py-4 flex flex-col">
+    <div className="min-h-screen bg-[#F3F4F6] px-3 py-4 flex flex-col">
       <div className="max-w-[1200px] mx-auto w-full flex flex-col flex-1">
       <div className="flex justify-between items-center border-b pb-2 pt-5 w-full">
         <PageTabs />
@@ -156,22 +157,22 @@ export default function CobranzaPage() {
       </div>
 
       {/* Title + simplified filters */}
-      <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
         <h1 className="text-base font-bold text-[#041224]">Aseguradoras</h1>
-        <span className="text-xs text-[#CCD1D3]">Actualizado: 27/02/2026</span>
+        <span className="text-xs text-[#9CA3AF]">Actualizado: 27/02/2026</span>
       </div>
 
-      {/* 3 Metric cards — equal height */}
+      {/* 3 Metric cards */}
       {(() => {
         const metaPct = compTotals.convenio > 0 ? Number(((compTotals.primaNeta / compTotals.convenio) * 100).toFixed(1)) : 0
         const growthPct = compTotals.pnAA > 0 ? ((compTotals.primaNeta - compTotals.pnAA) / compTotals.pnAA) * 100 : 0
         return (
-      <div className="grid grid-cols-3 gap-2 mb-3">
+      <div className="grid grid-cols-3 gap-3 mb-4">
         {/* Card 1 — Meta convenio */}
-        <div className="bg-white rounded-lg shadow-sm p-2 border border-[#E5E7E9] flex flex-col">
-          <p className="text-[#CCD1D3] text-sm font-bold uppercase tracking-wider mb-2">Meta convenio</p>
-          <DonutChart value={metaPct} objetivo={90} color="#E62800" size={90} />
-          <div className="mt-2 space-y-1">
+        <div className="bg-white rounded-xl shadow-md p-3 flex flex-col">
+          <p className="text-[#9CA3AF] text-sm font-bold uppercase tracking-wider mb-2">Meta convenio</p>
+          <DonutChart value={metaPct} objetivo={90} color="#E62800" size={100} />
+          <div className="mt-3 space-y-1.5">
             <p className="text-[#E62800] text-sm font-bold">{growthPct >= 0 ? "+" : ""}{growthPct.toFixed(2)}% vs {Number(year) - 1}</p>
             <div className="flex justify-between text-xs text-[#041224]">
               <span>PN efectuada mensual</span><strong>{fmtM(compTotals.primaNeta)}</strong>
@@ -183,10 +184,10 @@ export default function CobranzaPage() {
         </div>
 
         {/* Card 2 — Acumulado */}
-        <div className="bg-white rounded-lg shadow-sm p-2 border border-[#E5E7E9] flex flex-col">
-          <p className="text-[#CCD1D3] text-sm font-bold uppercase tracking-wider mb-2">Acumulado</p>
-          <DonutChart value={metaPct} objetivo={90} color="#041224" size={90} />
-          <div className="mt-2 space-y-1">
+        <div className="bg-white rounded-xl shadow-md p-3 flex flex-col">
+          <p className="text-[#9CA3AF] text-sm font-bold uppercase tracking-wider mb-2">Acumulado</p>
+          <DonutChart value={metaPct} objetivo={90} color="#041224" size={100} />
+          <div className="mt-3 space-y-1.5">
             <p className="text-[#E62800] text-sm font-bold">{growthPct >= 0 ? "+" : ""}{growthPct.toFixed(2)}% vs {Number(year) - 1}</p>
             <div className="flex justify-between text-xs text-[#041224]">
               <span>Acumulado PN</span><strong>{fmtM(compTotals.primaNeta)}</strong>
@@ -197,18 +198,22 @@ export default function CobranzaPage() {
           </div>
         </div>
 
-        {/* Card 3 — Meta anual con cilindro */}
-        <div className="bg-white rounded-lg shadow-sm p-2 border border-[#E5E7E9] flex flex-col items-center">
-          <p className="text-[#CCD1D3] text-sm font-bold uppercase tracking-wider mb-1 self-start">Meta anual</p>
-          <p className="text-3xl font-black text-[#041224] mb-2">{metaPct}%</p>
-          <div className="w-full"><div className="h-5 w-full bg-[#E5E7E9] rounded overflow-hidden"><div className="h-5 bg-[#041224] rounded-l" style={{width:`${Math.min(metaPct, 100)}%`}} /></div></div>
+        {/* Card 3 — Meta anual */}
+        <div className="bg-white rounded-xl shadow-md p-3 flex flex-col items-center">
+          <p className="text-[#9CA3AF] text-sm font-bold uppercase tracking-wider mb-1 self-start">Meta anual</p>
+          <p className="text-3xl font-black text-[#041224] mb-3">{metaPct}%</p>
+          <div className="w-full">
+            <div className="h-7 w-full bg-[#E5E7EB] rounded-lg overflow-hidden">
+              <div className="h-7 bg-gradient-to-r from-[#041224] to-[#0a2a4a] rounded-lg transition-all duration-1000" style={{width:`${Math.min(metaPct, 100)}%`}} />
+            </div>
+          </div>
           <div className="mt-3 grid grid-cols-2 gap-x-4 text-center w-full">
             <div>
-              <div className="text-sm text-[#CCD1D3] uppercase font-bold">PN efectuada anual</div>
+              <div className="text-sm text-[#9CA3AF] uppercase font-bold">PN efectuada anual</div>
               <div className="text-xs font-bold text-[#041224]">{fmtM(compTotals.primaNeta)}</div>
             </div>
             <div>
-              <div className="text-sm text-[#CCD1D3] uppercase font-bold">Convenio anual</div>
+              <div className="text-sm text-[#9CA3AF] uppercase font-bold">Convenio anual</div>
               <div className="text-xs font-bold text-[#041224]">{fmtM(compTotals.convenio)}</div>
             </div>
           </div>
@@ -218,111 +223,129 @@ export default function CobranzaPage() {
       })()}
 
       {/* Resumen por ramo */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-3">
+      <div className="bg-white rounded-xl shadow-md overflow-hidden mb-4">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-[#041224] border-b-2 border-b-[#E62800]">
-              <th className="text-left px-3 py-2 font-semibold text-white text-sm">Resumen por ramo</th>
-              {ramos.map(r => <th key={r.nombre} className="text-right px-3 py-2 font-semibold text-white text-sm">{r.nombre}</th>)}
-              <th className="text-right px-3 py-2 font-semibold text-white text-sm">Total</th>
+              <th className="text-left px-3 py-2.5 font-semibold text-white text-sm">Resumen por ramo</th>
+              {ramos.map(r => <th key={r.nombre} className="text-right px-3 py-2.5 font-semibold text-white text-sm">{r.nombre}</th>)}
+              <th className="text-right px-3 py-2.5 font-semibold text-white text-sm">Total</th>
             </tr>
           </thead>
           <tbody>
-            <tr className="border-b border-[#E5E7E9] hover:bg-[#FFF5F5] transition-colors">
-              <td className="px-3 py-2 text-sm font-medium text-[#041224]">PN efectuada</td>
-              {ramos.map(r => <td key={r.nombre} className="px-3 py-2 text-right text-sm font-medium">{fmt(r.pnEfectuada)}</td>)}
-              <td className="px-3 py-2 text-right text-sm font-bold">{fmt(totalPN)}</td>
+            <tr className="border-b border-[#E5E7EB] bg-white hover:bg-[#FFF5F5] transition-colors">
+              <td className="px-3 py-2.5 text-sm font-medium text-[#041224]">PN efectuada</td>
+              {ramos.map(r => <td key={r.nombre} className="px-3 py-2.5 text-right text-sm font-medium">{fmt(r.pnEfectuada)}</td>)}
+              <td className="px-3 py-2.5 text-right text-sm font-bold">{fmt(totalPN)}</td>
             </tr>
-            <tr className="border-b border-[#E5E7E9] bg-[#F9F9F9] hover:bg-[#FFF5F5] transition-colors">
-              <td className="px-3 py-2 text-sm font-medium text-[#041224]">% PN efectuada</td>
-              {ramos.map(r => <td key={r.nombre} className="px-3 py-2 text-right text-sm text-[#6B7280]">{totalPN > 0 ? ((r.pnEfectuada / totalPN) * 100).toFixed(2) : 0}%</td>)}
-              <td className="px-3 py-2 text-right text-sm font-bold">100%</td>
+            <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB] hover:bg-[#FFF5F5] transition-colors">
+              <td className="px-3 py-2.5 text-sm font-medium text-[#041224]">% PN efectuada</td>
+              {ramos.map(r => <td key={r.nombre} className="px-3 py-2.5 text-right text-sm text-[#6B7280]">{totalPN > 0 ? ((r.pnEfectuada / totalPN) * 100).toFixed(2) : 0}%</td>)}
+              <td className="px-3 py-2.5 text-right text-sm font-bold">100%</td>
             </tr>
-            <tr className="hover:bg-[#FFF5F5] transition-colors">
-              <td className="px-3 py-2 text-sm font-medium text-[#041224]">No. pólizas</td>
-              {ramos.map(r => <td key={r.nombre} className="px-3 py-2 text-right text-sm font-medium">{new Intl.NumberFormat("es-MX").format(r.polizas)}</td>)}
-              <td className="px-3 py-2 text-right text-sm font-bold">{new Intl.NumberFormat("es-MX").format(totalPOL)}</td>
+            <tr className="border-b border-[#E5E7EB] bg-white hover:bg-[#FFF5F5] transition-colors">
+              <td className="px-3 py-2.5 text-sm font-medium text-[#041224]">No. polizas</td>
+              {ramos.map(r => <td key={r.nombre} className="px-3 py-2.5 text-right text-sm font-medium">{new Intl.NumberFormat("es-MX").format(r.polizas)}</td>)}
+              <td className="px-3 py-2.5 text-right text-sm font-bold">{new Intl.NumberFormat("es-MX").format(totalPOL)}</td>
             </tr>
             {/* TOTAL row */}
             <tr className="bg-[#041224] text-white">
-              <td className="px-3 py-2.5 text-sm font-bold">Total</td>
-              {ramos.map(r => <td key={r.nombre} className="px-3 py-2.5 text-right text-sm font-bold">{fmt(r.pnEfectuada)}</td>)}
-              <td className="px-3 py-2.5 text-right text-sm font-bold">{fmt(totalPN)}</td>
+              <td className="px-3 py-3 text-sm font-bold">Total</td>
+              {ramos.map(r => <td key={r.nombre} className="px-3 py-3 text-right text-sm font-bold">{fmt(r.pnEfectuada)}</td>)}
+              <td className="px-3 py-3 text-right text-sm font-bold">{fmt(totalPN)}</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      {/* Distribución por ramo — pie chart */}
-      <div className="bg-white rounded-lg shadow-sm p-3 mb-3">
-        <h2 className="text-xs font-bold text-[#041224] uppercase mb-3">Distribución por ramo</h2>
-        <div><div className="h-7 w-full rounded overflow-hidden flex">{ramos.map((r,i) => (<div key={r.nombre} style={{width:`${totalPN>0?(r.pnEfectuada/totalPN)*100:0}%`,background:RAMO_COLORS[i]}} className="h-full" />))}</div><div className="flex flex-wrap gap-3 mt-2">{ramos.map((r,i) => (<div key={r.nombre} className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm" style={{backgroundColor:RAMO_COLORS[i]}} /><span className="text-sm text-[#041224] font-medium">{r.nombre}</span><span className="text-sm text-[#6B7280]">{totalPN>0?((r.pnEfectuada/totalPN)*100).toFixed(2):0}%</span></div>))}</div></div>
+      {/* Distribucion por ramo */}
+      <div className="bg-white rounded-xl shadow-md p-4 mb-4">
+        <h2 className="text-xs font-bold text-[#041224] uppercase mb-3">Distribucion por ramo</h2>
+        <div>
+          <div className="h-8 w-full rounded-lg overflow-hidden flex gap-[2px]">
+            {ramos.map((r,i) => (
+              <div key={r.nombre}
+                style={{width:`${totalPN>0?(r.pnEfectuada/totalPN)*100:0}%`,background:RAMO_COLORS[i]}}
+                className="h-full first:rounded-l-lg last:rounded-r-lg transition-all duration-500" />
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-4 mt-3">
+            {ramos.map((r,i) => (
+              <div key={r.nombre} className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-sm" style={{backgroundColor:RAMO_COLORS[i]}} />
+                <span className="text-sm text-[#041224] font-medium">{r.nombre}</span>
+                <span className="text-sm text-[#6B7280] font-semibold">{totalPN>0?((r.pnEfectuada/totalPN)*100).toFixed(1):0}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Detalle por compañía */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-2">
+      {/* Detalle por compania */}
+      <div className="bg-white rounded-xl shadow-md overflow-hidden mb-3">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="bg-[#041224] border-b-2 border-b-[#E62800]">
-                <th className="text-left px-2 py-2 font-semibold text-white min-w-[110px]">Compañía</th>
-                <th className="text-right px-2 py-2 font-semibold text-white">Prima neta</th>
-                <th className="text-right px-2 py-2 font-semibold text-white">Convenio</th>
-                <th className="text-right px-2 py-2 font-semibold text-white">Diferencia</th>
-                <th className="text-right px-2 py-2 font-semibold text-white">% Dif compr</th>
-                <th className="text-right px-2 py-2 font-semibold text-white">PN año ant.</th>
-                <th className="text-right px-2 py-2 font-semibold text-white">Dif PN AA</th>
-                <th className="text-right px-2 py-2 font-semibold text-white">% Dif PN AA</th>
-                <th className="text-right px-2 py-2 font-semibold text-white">Pendiente</th>
-                <th className="text-right px-2 py-2 font-semibold text-white">Prima neta CIA</th>
-                <th className="text-right px-2 py-2 font-semibold text-white">Dif CIA</th>
+                <th className="text-left px-3 py-3 font-semibold text-white min-w-[120px] sticky left-0 bg-[#041224] z-10">Compania</th>
+                <th className="text-right px-3 py-3 font-semibold text-white">Prima neta</th>
+                <th className="text-right px-3 py-3 font-semibold text-white">Convenio</th>
+                <th className="text-right px-3 py-3 font-semibold text-white">Diferencia</th>
+                <th className="text-right px-3 py-3 font-semibold text-white">% Dif compr</th>
+                <th className="text-right px-3 py-3 font-semibold text-white">PN ano ant.</th>
+                <th className="text-right px-3 py-3 font-semibold text-white">Dif PN AA</th>
+                <th className="text-right px-3 py-3 font-semibold text-white">% Dif PN AA</th>
+                <th className="text-right px-3 py-3 font-semibold text-white">Pendiente</th>
+                <th className="text-right px-3 py-3 font-semibold text-white">Prima neta CIA</th>
+                <th className="text-right px-3 py-3 font-semibold text-white">Dif CIA</th>
               </tr>
             </thead>
             <tbody>
               {companies.map((c, idx) => {
                 const difConv = c.primaNeta - c.convenio
                 const difAA = c.primaNeta - c.pnAA
-                const isQualitas = c.nombre === "QUÁLITAS"
+                const isQualitas = c.nombre === "QUALITAS"
+                const rowBg = isQualitas ? "bg-[#F0FDF4]" : idx % 2 === 0 ? "bg-white" : "bg-[#F9FAFB]"
                 return (
-                  <tr key={c.nombre} className={`border-b border-[#E5E7E9] hover:bg-[#FFF5F5] transition-colors ${isQualitas ? "bg-[#F0FDF4]" : idx % 2 === 1 ? "bg-[#F9F9F9]" : "bg-white"}`}>
-                    <td className="px-2 py-2 font-bold text-[#041224]">{c.nombre}</td>
-                    <td className="px-2 py-2 text-right font-medium">{fmt(c.primaNeta)}</td>
-                    <td className="px-2 py-2 text-right text-[#6B7280]">{fmt(c.convenio)}</td>
-                    <td className={`px-2 py-2 text-right font-medium ${difConv < 0 ? "text-[#E62800]" : "text-[#1a7a1a]"}`}>
+                  <tr key={c.nombre} className={`border-b border-[#E5E7EB] hover:bg-[#FFF5F5] transition-colors ${rowBg}`}>
+                    <td className={`px-3 py-3 font-bold text-[#041224] sticky left-0 z-10 ${rowBg}`}>{c.nombre}</td>
+                    <td className="px-3 py-3 text-right font-medium tabular-nums">{fmt(c.primaNeta)}</td>
+                    <td className="px-3 py-3 text-right text-[#6B7280] tabular-nums">{fmt(c.convenio)}</td>
+                    <td className={`px-3 py-3 text-right font-semibold tabular-nums ${difConv < 0 ? "text-[#DC2626]" : "text-[#16A34A]"}`}>
                       {difConv < 0 ? `(${fmt(Math.abs(difConv))})` : fmt(difConv)}
                     </td>
                     <PctBadge val={c.primaNeta} base={c.convenio} />
-                    <td className="px-2 py-2 text-right text-[#6B7280]">{fmt(c.pnAA)}</td>
-                    <td className={`px-2 py-2 text-right font-medium ${difAA < 0 ? "text-[#E62800]" : "text-[#1a7a1a]"}`}>
+                    <td className="px-3 py-3 text-right text-[#6B7280] tabular-nums">{fmt(c.pnAA)}</td>
+                    <td className={`px-3 py-3 text-right font-semibold tabular-nums ${difAA < 0 ? "text-[#DC2626]" : "text-[#16A34A]"}`}>
                       {difAA < 0 ? `(${fmt(Math.abs(difAA))})` : fmt(difAA)}
                     </td>
                     <PctBadge val={c.primaNeta} base={c.pnAA} />
-                    <td className="px-2 py-2 text-right font-medium">{fmt(c.pendiente)}</td>
-                    <td className="px-2 py-2 text-right font-medium">{fmt(c.pnCia)}</td>
-                    <td className="px-2 py-2 text-right font-medium">{fmt(c.difCia)}</td>
+                    <td className="px-3 py-3 text-right font-medium tabular-nums">{fmt(c.pendiente)}</td>
+                    <td className="px-3 py-3 text-right font-medium tabular-nums">{fmt(c.pnCia)}</td>
+                    <td className="px-3 py-3 text-right font-medium tabular-nums">{fmt(c.difCia)}</td>
                   </tr>
                 )
               })}
               {/* TOTAL */}
               <tr className="bg-[#041224] text-white">
-                <td className="px-2 py-2.5 font-bold">TOTAL</td>
-                <td className="px-2 py-2.5 text-right font-bold">{fmt(compTotals.primaNeta)}</td>
-                <td className="px-2 py-2.5 text-right font-bold">{fmt(compTotals.convenio)}</td>
-                <td className="px-2 py-2.5 text-right font-bold">{fmt(compTotals.primaNeta - compTotals.convenio)}</td>
-                <td className="px-2 py-2.5 text-right font-bold">{pct(compTotals.primaNeta, compTotals.convenio).toFixed(2)}%</td>
-                <td className="px-2 py-2.5 text-right font-bold">{fmt(compTotals.pnAA)}</td>
-                <td className="px-2 py-2.5 text-right font-bold">{fmt(compTotals.primaNeta - compTotals.pnAA)}</td>
-                <td className="px-2 py-2.5 text-right font-bold">{pct(compTotals.primaNeta, compTotals.pnAA).toFixed(2)}%</td>
-                <td className="px-2 py-2.5 text-right font-bold">{fmt(compTotals.pendiente)}</td>
-                <td className="px-2 py-2.5 text-right font-bold">{fmt(compTotals.pnCia)}</td>
-                <td className="px-2 py-2.5 text-right font-bold">{fmt(compTotals.difCia)}</td>
+                <td className="px-3 py-3.5 font-bold sticky left-0 bg-[#041224] z-10">TOTAL</td>
+                <td className="px-3 py-3.5 text-right font-bold tabular-nums">{fmt(compTotals.primaNeta)}</td>
+                <td className="px-3 py-3.5 text-right font-bold tabular-nums">{fmt(compTotals.convenio)}</td>
+                <td className="px-3 py-3.5 text-right font-bold tabular-nums">{fmt(compTotals.primaNeta - compTotals.convenio)}</td>
+                <td className="px-3 py-3.5 text-right font-bold">{pct(compTotals.primaNeta, compTotals.convenio).toFixed(2)}%</td>
+                <td className="px-3 py-3.5 text-right font-bold tabular-nums">{fmt(compTotals.pnAA)}</td>
+                <td className="px-3 py-3.5 text-right font-bold tabular-nums">{fmt(compTotals.primaNeta - compTotals.pnAA)}</td>
+                <td className="px-3 py-3.5 text-right font-bold">{pct(compTotals.primaNeta, compTotals.pnAA).toFixed(2)}%</td>
+                <td className="px-3 py-3.5 text-right font-bold tabular-nums">{fmt(compTotals.pendiente)}</td>
+                <td className="px-3 py-3.5 text-right font-bold tabular-nums">{fmt(compTotals.pnCia)}</td>
+                <td className="px-3 py-3.5 text-right font-bold tabular-nums">{fmt(compTotals.difCia)}</td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <p className="text-sm text-[#CCD1D3] mb-4 cursor-pointer hover:underline">Personalizar columnas</p>
+      <p className="text-sm text-[#9CA3AF] mb-4 cursor-pointer hover:underline">Personalizar columnas</p>
 
       <PageFooter />
       </div>
