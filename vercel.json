@@ -1,0 +1,17 @@
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors 'self' https://vulkn-ai.com https://*.vulkn-ai.com"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "ALLOW-FROM https://vulkn-ai.com"
+        }
+      ]
+    }
+  ]
+}
