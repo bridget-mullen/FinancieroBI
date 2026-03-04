@@ -74,7 +74,7 @@ function PctBadge({ val, base }: { val: number; base: number }) {
   const p = pct(val, base)
   const neg = p < 0
   return (
-    <td className="px-3 py-3 text-right">
+    <td className="px-3 py-3 text-right border-b border-[#E5E7EB]">
       <span className={`inline-block px-2 py-0.5 rounded text-sm font-bold ${neg ? "bg-[#FEE2E2] text-[#991B1B]" : "bg-[#DCFCE7] text-[#166534]"}`}>
         {neg ? "" : "+"}{p.toFixed(2)}%
       </span>
@@ -265,14 +265,14 @@ export default function CobranzaPage() {
           <div className="h-8 w-full rounded-lg overflow-hidden flex gap-[2px]">
             {ramos.map((r,i) => (
               <div key={r.nombre}
-                style={{width:`${totalPN>0?(r.pnEfectuada/totalPN)*100:0}%`,background:RAMO_COLORS[i]}}
+                style={{width:`${totalPN>0?(r.pnEfectuada/totalPN)*100:0}%`,background:RAMO_COLORS[i % RAMO_COLORS.length]}}
                 className="h-full first:rounded-l-lg last:rounded-r-lg transition-all duration-500" />
             ))}
           </div>
           <div className="flex flex-wrap gap-4 mt-3">
             {ramos.map((r,i) => (
               <div key={r.nombre} className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-sm" style={{backgroundColor:RAMO_COLORS[i]}} />
+                <div className="w-3 h-3 rounded-sm" style={{backgroundColor:RAMO_COLORS[i % RAMO_COLORS.length]}} />
                 <span className="text-sm text-[#041224] font-medium">{r.nombre}</span>
                 <span className="text-sm text-[#6B7280] font-semibold">{totalPN>0?((r.pnEfectuada/totalPN)*100).toFixed(1):0}%</span>
               </div>
@@ -284,20 +284,20 @@ export default function CobranzaPage() {
       {/* Detalle por compania */}
       <div className="bg-white rounded-xl shadow-md overflow-hidden mb-3">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm border-collapse">
+          <table className="w-full text-sm border-separate border-spacing-0">
             <thead>
-              <tr className="bg-[#041224] border-b-2 border-b-[#E62800]">
-                <th className="text-left px-3 py-3 font-semibold text-white min-w-[120px] sticky left-0 bg-[#041224] z-10">Compania</th>
-                <th className="text-right px-3 py-3 font-semibold text-white">Prima neta</th>
-                <th className="text-right px-3 py-3 font-semibold text-white">Convenio</th>
-                <th className="text-right px-3 py-3 font-semibold text-white">Diferencia</th>
-                <th className="text-right px-3 py-3 font-semibold text-white">% Dif compr</th>
-                <th className="text-right px-3 py-3 font-semibold text-white">PN ano ant.</th>
-                <th className="text-right px-3 py-3 font-semibold text-white">Dif PN AA</th>
-                <th className="text-right px-3 py-3 font-semibold text-white">% Dif PN AA</th>
-                <th className="text-right px-3 py-3 font-semibold text-white">Pendiente</th>
-                <th className="text-right px-3 py-3 font-semibold text-white">Prima neta CIA</th>
-                <th className="text-right px-3 py-3 font-semibold text-white">Dif CIA</th>
+              <tr className="bg-[#041224]">
+                <th className="text-left px-3 py-3 font-semibold text-white min-w-[120px] sticky left-0 bg-[#041224] z-10 border-b-2 border-b-[#E62800]">Compania</th>
+                <th className="text-right px-3 py-3 font-semibold text-white border-b-2 border-b-[#E62800]">Prima neta</th>
+                <th className="text-right px-3 py-3 font-semibold text-white border-b-2 border-b-[#E62800]">Convenio</th>
+                <th className="text-right px-3 py-3 font-semibold text-white border-b-2 border-b-[#E62800]">Diferencia</th>
+                <th className="text-right px-3 py-3 font-semibold text-white border-b-2 border-b-[#E62800]">% Dif compr</th>
+                <th className="text-right px-3 py-3 font-semibold text-white border-b-2 border-b-[#E62800]">PN ano ant.</th>
+                <th className="text-right px-3 py-3 font-semibold text-white border-b-2 border-b-[#E62800]">Dif PN AA</th>
+                <th className="text-right px-3 py-3 font-semibold text-white border-b-2 border-b-[#E62800]">% Dif PN AA</th>
+                <th className="text-right px-3 py-3 font-semibold text-white border-b-2 border-b-[#E62800]">Pendiente</th>
+                <th className="text-right px-3 py-3 font-semibold text-white border-b-2 border-b-[#E62800]">Prima neta CIA</th>
+                <th className="text-right px-3 py-3 font-semibold text-white border-b-2 border-b-[#E62800]">Dif CIA</th>
               </tr>
             </thead>
             <tbody>
@@ -307,22 +307,22 @@ export default function CobranzaPage() {
                 const isQualitas = c.nombre === "QUALITAS"
                 const rowBg = isQualitas ? "bg-[#F0FDF4]" : idx % 2 === 0 ? "bg-white" : "bg-[#F9FAFB]"
                 return (
-                  <tr key={c.nombre} className={`border-b border-[#E5E7EB] hover:bg-[#FFF5F5] transition-colors ${rowBg}`}>
-                    <td className={`px-3 py-3 font-bold text-[#041224] sticky left-0 z-10 ${rowBg}`}>{c.nombre}</td>
-                    <td className="px-3 py-3 text-right font-medium tabular-nums">{fmt(c.primaNeta)}</td>
-                    <td className="px-3 py-3 text-right text-[#6B7280] tabular-nums">{fmt(c.convenio)}</td>
-                    <td className={`px-3 py-3 text-right font-semibold tabular-nums ${difConv < 0 ? "text-[#DC2626]" : "text-[#16A34A]"}`}>
+                  <tr key={c.nombre} className={`group hover:bg-[#FFF5F5] transition-colors ${rowBg}`}>
+                    <td className={`px-3 py-3 font-bold text-[#041224] sticky left-0 z-10 border-b border-[#E5E7EB] ${rowBg} group-hover:bg-[#FFF5F5] transition-colors`}>{c.nombre}</td>
+                    <td className="px-3 py-3 text-right font-medium tabular-nums border-b border-[#E5E7EB]">{fmt(c.primaNeta)}</td>
+                    <td className="px-3 py-3 text-right text-[#6B7280] tabular-nums border-b border-[#E5E7EB]">{fmt(c.convenio)}</td>
+                    <td className={`px-3 py-3 text-right font-semibold tabular-nums border-b border-[#E5E7EB] ${difConv < 0 ? "text-[#DC2626]" : "text-[#16A34A]"}`}>
                       {difConv < 0 ? `(${fmt(Math.abs(difConv))})` : fmt(difConv)}
                     </td>
                     <PctBadge val={c.primaNeta} base={c.convenio} />
-                    <td className="px-3 py-3 text-right text-[#6B7280] tabular-nums">{fmt(c.pnAA)}</td>
-                    <td className={`px-3 py-3 text-right font-semibold tabular-nums ${difAA < 0 ? "text-[#DC2626]" : "text-[#16A34A]"}`}>
+                    <td className="px-3 py-3 text-right text-[#6B7280] tabular-nums border-b border-[#E5E7EB]">{fmt(c.pnAA)}</td>
+                    <td className={`px-3 py-3 text-right font-semibold tabular-nums border-b border-[#E5E7EB] ${difAA < 0 ? "text-[#DC2626]" : "text-[#16A34A]"}`}>
                       {difAA < 0 ? `(${fmt(Math.abs(difAA))})` : fmt(difAA)}
                     </td>
                     <PctBadge val={c.primaNeta} base={c.pnAA} />
-                    <td className="px-3 py-3 text-right font-medium tabular-nums">{fmt(c.pendiente)}</td>
-                    <td className="px-3 py-3 text-right font-medium tabular-nums">{fmt(c.pnCia)}</td>
-                    <td className="px-3 py-3 text-right font-medium tabular-nums">{fmt(c.difCia)}</td>
+                    <td className="px-3 py-3 text-right font-medium tabular-nums border-b border-[#E5E7EB]">{fmt(c.pendiente)}</td>
+                    <td className="px-3 py-3 text-right font-medium tabular-nums border-b border-[#E5E7EB]">{fmt(c.pnCia)}</td>
+                    <td className="px-3 py-3 text-right font-medium tabular-nums border-b border-[#E5E7EB]">{fmt(c.difCia)}</td>
                   </tr>
                 )
               })}
