@@ -143,11 +143,11 @@ export default function CompromisosPage() {
                   {loading ? (
                     <tr><td colSpan={5} className="px-2 py-2 text-center text-gray-400">Cargando...</td></tr>
                   ) : data.slice(0, 10).map((r, idx) => (
-                    <tr key={r.vendedor} className="border-b border-[#F0F0F0]" style={{ backgroundColor: r.pctAvance >= 80 ? 'rgba(46,125,50,0.08)' : r.pctAvance >= 60 ? 'rgba(245,197,24,0.10)' : 'rgba(230,40,0,0.06)' }}>
+                    <tr key={r.vendedor} className={`border-b border-[#F0F0F0] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#F9FAFB]'}`}>
                       <td className="px-2 py-[2px] font-medium text-[#111]">{r.vendedor}</td>
                       <td className="px-2 py-[2px] text-right text-gray-500">{fmt(r.meta)}</td>
                       <td className="px-2 py-[2px] text-right font-medium">{fmt(r.primaActual)}</td>
-                      <td className="px-2 py-[2px] text-right font-medium" style={{ color: semaforoColor(r.pctAvance) }}>{r.pctAvance}%</td>
+                      <td className="px-2 py-[2px] text-right font-medium" style={{ color: r.pctAvance >= 80 ? '#60A63A' : r.pctAvance >= 60 ? '#F9DC5C' : '#E62800' }}>{r.pctAvance}%</td>
                       <td className="px-2 py-[2px] text-center"><Semaforo pct={r.pctAvance} /></td>
                     </tr>
                   ))}
@@ -166,11 +166,20 @@ export default function CompromisosPage() {
             <div className="bg-white rounded-xl shadow-md border border-gray-100 p-3 flex flex-col" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
               <p className="text-sm font-bold text-[#041224] mb-2 tracking-tight">Prima Neta por Vendedor</p>
               <div className="flex-1">
-                <PremiumBarChart data={barData} barHeight={20} colorFn={(idx, pct) => {
-                  const p = pct ?? 0
-                  if (p >= 90) return { from: '#1B5E20', to: '#43A047' }
-                  if (p >= 70) return { from: '#E6A800', to: '#FFD54F' }
-                  return { from: '#C62828', to: '#EF5350' }
+                <PremiumBarChart data={barData} barHeight={20} colorFn={(idx) => {
+                  const shades = [
+                    { from: '#1a5dc7', to: '#3983F6' },
+                    { from: '#2568d4', to: '#4a90f7' },
+                    { from: '#3074e0', to: '#5b9df8' },
+                    { from: '#3b80ec', to: '#6caaf9' },
+                    { from: '#468cf8', to: '#7db7fa' },
+                    { from: '#5198f9', to: '#8ec4fb' },
+                    { from: '#5ca4fa', to: '#9fd1fc' },
+                    { from: '#67b0fb', to: '#b0defd' },
+                    { from: '#72bcfc', to: '#c1ebfe' },
+                    { from: '#7dc8fd', to: '#d2f8ff' },
+                  ]
+                  return shades[idx % shades.length]
                 }} />
               </div>
             </div>
@@ -204,11 +213,11 @@ export default function CompromisosPage() {
               <div className="flex-1">
                 <PremiumBarChart data={topBarData} barHeight={22} showGrid={false} colorFn={(idx) => {
                   const shades = [
-                    { from: '#0D2137', to: '#1E3A5F' },
-                    { from: '#14325A', to: '#2A5082' },
-                    { from: '#1E4A7A', to: '#3B72B0' },
-                    { from: '#2A6099', to: '#4A90D9' },
-                    { from: '#3A78B8', to: '#6BA8E8' },
+                    { from: '#1a5dc7', to: '#3983F6' },
+                    { from: '#2568d4', to: '#4a90f7' },
+                    { from: '#3074e0', to: '#5b9df8' },
+                    { from: '#3b80ec', to: '#6caaf9' },
+                    { from: '#468cf8', to: '#7db7fa' },
                   ]
                   return shades[idx] || shades[4]
                 }} />
@@ -244,11 +253,11 @@ export default function CompromisosPage() {
               <div className="flex-1">
                 <PremiumBarChart data={bottomBarData} barHeight={22} showGrid={false} colorFn={(idx) => {
                   const shades = [
-                    { from: '#8B0000', to: '#CC0000' },
-                    { from: '#A52020', to: '#D84040' },
-                    { from: '#BF3030', to: '#E56060' },
-                    { from: '#D04A4A', to: '#EF8080' },
-                    { from: '#E06565', to: '#F5A0A0' },
+                    { from: '#8F2D56', to: '#E62800' },
+                    { from: '#A03862', to: '#E84020' },
+                    { from: '#B1436E', to: '#EA5840' },
+                    { from: '#C24E7A', to: '#EC7060' },
+                    { from: '#D35986', to: '#EE8880' },
                   ]
                   return shades[idx] || shades[4]
                 }} />
