@@ -11,6 +11,7 @@ import type { SearchResult } from "@/lib/queries"
 import type { PolizaRow } from "@/lib/queries"
 import { exportExcel, exportPDF } from "@/lib/export"
 import { NLQuery } from "@/components/nl-query"
+import { DrillCharts } from "@/components/drill-charts"
 
 function fmt(v: number) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v)
@@ -604,6 +605,20 @@ function TablaDetalleContent() {
           </tbody>
         </table>
       </div>
+
+      {/* Dynamic Charts — bottom half, reacts to drill level */}
+      <DrillCharts
+        rows={
+          drillLevel === "linea"
+            ? filteredLineas.map(l => ({ name: l.linea, primaNeta: l.primaNeta }))
+            : drillLevel === "poliza"
+            ? filteredPolizas.map(p => ({ name: p.documento, primaNeta: p.primaNeta }))
+            : filteredRows.map(r => ({ name: r.name, primaNeta: r.primaNeta }))
+        }
+        levelLabel={levelLabels[drillLevel]}
+        parentLabel={crumbs.length > 0 ? crumbs.map(c => c.label).join(" > ") : "Todas las líneas"}
+        loading={loading}
+      />
 
       {/* Natural Language Query — beta, feature flag OFF */}
       <NLQuery periodo={periodo} year={year} />
