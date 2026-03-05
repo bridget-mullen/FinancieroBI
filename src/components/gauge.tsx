@@ -17,7 +17,7 @@ export function Gauge({ value, budget = 129.5, clickable = true, cumplimiento = 
   const cx = W / 2
   const cy = 390
 
-  const outerR = 320
+  const outerR = 340
   const innerR = outerR * 0.75
   const outerGrayR = outerR + 5
   const labelR = outerR + 32
