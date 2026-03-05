@@ -8,6 +8,7 @@ import type { LineaRow } from "@/lib/queries"
 import { Gauge } from "@/components/gauge"
 import { PageTabs } from "@/components/page-tabs"
 import { PeriodFilter } from "@/components/period-filter"
+import { DetailDrillTable } from "@/components/detail-drill-table"
 import { BarChart, Bar, XAxis, YAxis, LabelList, Tooltip } from "recharts"
 
 function fmt(v: number) {
@@ -27,6 +28,7 @@ export default function Home() {
   const [year, setYear] = useState("2026")
   const [periodos, setPeriodos] = useState<number[]>([2])
   const [lineas, setLineas] = useState<LineaRow[]>(SEED_LINEAS)
+  const [selectedLinea, setSelectedLinea] = useState<string | null>(null)
 
   const handleFilterChange = useCallback((newYear: string, newPeriodos: number[]) => {
     setYear(newYear)
@@ -120,7 +122,7 @@ export default function Home() {
                     const diff = l.primaNeta - l.presupuesto
                     const link = LINEA_LINKS[l.nombre]
                     return (
-                      <tr key={l.nombre} className={`cursor-pointer transition-colors hover:bg-blue-50 ${i % 2 === 0 ? "bg-white" : "bg-gray-50/70"}`}>
+                      <tr key={l.nombre} className={`cursor-pointer transition-colors hover:bg-blue-50 ${selectedLinea === l.nombre ? "bg-blue-50 ring-1 ring-inset ring-[#3983F6]/30" : i % 2 === 0 ? "bg-white" : "bg-gray-50/70"}`} onClick={() => setSelectedLinea(prev => prev === l.nombre ? null : l.nombre)}>
                         <td className="px-1.5 py-0.5 font-medium text-gray-900">
                           {link ? <Link href={link} className="hover:underline text-gray-900">{l.nombre}</Link> : l.nombre}
                         </td>
@@ -164,7 +166,7 @@ export default function Home() {
                         formatter={(value?: number, name?: string) => [`$${value ?? 0}M`, name === 'pn' ? 'Prima Neta' : 'Presupuesto']}
                         cursor={{ fill: 'rgba(57,131,246,0.08)' }}
                       />
-                      <Bar dataKey="pn" fill="#3983F6" radius={[0, 3, 3, 0]} barSize={14} isAnimationActive={true} animationDuration={800}>
+                      <Bar dataKey="pn" fill="#3983F6" radius={[0, 3, 3, 0]} barSize={14} isAnimationActive={true} animationDuration={800} cursor="pointer" onClick={(data: {name?: string}) => data?.name && setSelectedLinea(prev => prev === data.name ? null : (data.name ?? null))}>
                         <LabelList dataKey="pn" position="right" formatter={(v: unknown) => v != null ? `$${v}M` : ''} style={{ fontSize: 11, fill: '#3983F6', fontWeight: 600 }}/>
                       </Bar>
                       <Bar dataKey="pp" fill="#9CA3AF" radius={[0, 3, 3, 0]} barSize={14} isAnimationActive={true} animationDuration={800}>
@@ -176,6 +178,9 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* Bottom Half: Cascading Drill-Down Detail Table */}
+        <DetailDrillTable selectedLinea={selectedLinea} periodo={periodo} year={year} />
 
       </div>
     </div>
