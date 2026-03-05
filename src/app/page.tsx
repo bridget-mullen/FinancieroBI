@@ -97,8 +97,8 @@ export default function Home() {
         {/* Main Grid */}
         <div className="flex gap-3 flex-1 mt-0">
           {/* Left column: Gauge (Mickey Mouse layout — gauge up top, circles below inside gauge component) */}
-          <div className="w-[55%] flex items-center justify-center overflow-visible">
-            <div className="w-full overflow-visible">
+          <div className="w-[55%] flex items-center justify-center">
+            <div className="w-full">
               <Gauge value={total / 1e6} prevYear={totalAA / 1e6} budget={totalPpto / 1e6} cumplimiento={cumpl} crecimiento={crec} />
             </div>
           </div>

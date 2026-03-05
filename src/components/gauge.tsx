@@ -12,27 +12,28 @@ interface GaugeProps {
 }
 
 export function Gauge({ value, budget = 129.5, clickable = true, cumplimiento = 0, crecimiento = 0 }: GaugeProps) {
-  const W = 940
+  const W = 820
   const H = 720
   const cx = W / 2
   const cy = 380
 
-  const outerR = 310
+  const outerR = 340
   const innerR = outerR * 0.75
   const outerGrayR = outerR + 5
-  const labelR = outerR + 40
 
   const NEEDLE_PCT = 0.75
 
-  // Arc labels: generate tick values from $0M to budget
-  const tickCount = 7
-  const arcLabels: { pct: number; label: string }[] = []
-  for (let i = 0; i <= tickCount; i++) {
-    const val = Math.round((budget / tickCount) * i)
-    arcLabels.push({ pct: i / tickCount, label: `$${val}M` })
-  }
-  // Add the exact budget as the last label
-  arcLabels[tickCount] = { pct: 1, label: `$${Math.round(budget * 10) / 10}M` }
+  // Clean labels: just 3 key values — start, middle, end
+  const arcLabels = [
+    { pct: 0, label: "$0M" },
+    { pct: 0.25, label: `$${Math.round(budget * 0.25)}M` },
+    { pct: 0.5, label: `$${Math.round(budget * 0.5)}M` },
+    { pct: 0.75, label: `$${Math.round(budget * 0.75)}M` },
+    { pct: 1, label: `$${Math.round(budget * 10) / 10}M` },
+  ]
+
+  // Place labels INSIDE the donut (between inner and outer radius) for clean look
+  const labelR = innerR - 24
 
   function polarToXY(angleDeg: number, r: number): [number, number] {
     const rad = (angleDeg * Math.PI) / 180
@@ -66,6 +67,10 @@ export function Gauge({ value, budget = 129.5, clickable = true, cumplimiento = 
   const tailLen = 20
   const [tailX, tailY] = polarToXY(needleAngleDeg + 180, tailLen)
 
+  // Small tick marks on outer edge
+  const tickR1 = outerR + 2
+  const tickR2 = outerR + 10
+
   // Circle KPI positions (Mickey Mouse inverted: gauge on top, two circles below)
   const circleR = 62
   const circleY = cy + 200
@@ -77,7 +82,7 @@ export function Gauge({ value, budget = 129.5, clickable = true, cumplimiento = 
       <svg
         width="100%"
         viewBox={`0 0 ${W} ${H}`}
-        style={{ display: "block", overflow: "visible" }}
+        style={{ display: "block" }}
       >
         {/* Smooth gradient definition */}
         <defs>
@@ -91,26 +96,30 @@ export function Gauge({ value, budget = 129.5, clickable = true, cumplimiento = 
         {/* Outer gray arc */}
         <path d={grayArc} fill="none" stroke="#D0D0D0" strokeWidth={2} />
 
-        {/* Arc labels */}
-        {arcLabels.map((tick, i) => {
-          const angleDeg = 180 - tick.pct * 180
-          const [lx, ly] = polarToXY(angleDeg, labelR)
-          const anchor = tick.pct < 0.3 ? "start" : tick.pct > 0.7 ? "end" : "middle"
-          return (
-            <text
-              key={i}
-              x={lx} y={ly}
-              fontSize="14" fontWeight="600" fill="#374151"
-              textAnchor={anchor}
-              fontFamily="Calibri, Arial, sans-serif"
-            >
-              {tick.label}
-            </text>
-          )
-        })}
-
         {/* Smooth color arc */}
         <path d={smoothArc} fill="url(#gaugeGradient)" />
+
+        {/* Tick marks + labels INSIDE the arc */}
+        {arcLabels.map((tick, i) => {
+          const angleDeg = 180 - tick.pct * 180
+          const [t1x, t1y] = polarToXY(angleDeg, tickR1)
+          const [t2x, t2y] = polarToXY(angleDeg, tickR2)
+          const [lx, ly] = polarToXY(angleDeg, labelR)
+          const anchor = tick.pct < 0.15 ? "start" : tick.pct > 0.85 ? "end" : "middle"
+          return (
+            <g key={i}>
+              <line x1={t1x} y1={t1y} x2={t2x} y2={t2y} stroke="#9CA3AF" strokeWidth={1.5} />
+              <text
+                x={lx} y={ly + 5}
+                fontSize="13" fontWeight="700" fill="#4B5563"
+                textAnchor={anchor}
+                fontFamily="Calibri, Arial, sans-serif"
+              >
+                {tick.label}
+              </text>
+            </g>
+          )
+        })}
 
         {/* Thick needle */}
         <polygon
