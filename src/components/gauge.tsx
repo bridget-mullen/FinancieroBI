@@ -12,18 +12,19 @@ interface GaugeProps {
 }
 
 export function Gauge({ value, budget = 129.5, clickable = true, cumplimiento = 0, crecimiento = 0 }: GaugeProps) {
-  const W = 820
-  const H = 720
+  const W = 1000
+  const H = 740
   const cx = W / 2
-  const cy = 380
+  const cy = 390
 
-  const outerR = 340
+  const outerR = 320
   const innerR = outerR * 0.75
   const outerGrayR = outerR + 5
+  const labelR = outerR + 32
 
   const NEEDLE_PCT = 0.75
 
-  // Clean labels: just 3 key values — start, middle, end
+  // 5 clean labels outside the arc
   const arcLabels = [
     { pct: 0, label: "$0M" },
     { pct: 0.25, label: `$${Math.round(budget * 0.25)}M` },
@@ -32,15 +33,11 @@ export function Gauge({ value, budget = 129.5, clickable = true, cumplimiento = 
     { pct: 1, label: `$${Math.round(budget * 10) / 10}M` },
   ]
 
-  // Place labels INSIDE the donut (between inner and outer radius) for clean look
-  const labelR = innerR - 24
-
   function polarToXY(angleDeg: number, r: number): [number, number] {
     const rad = (angleDeg * Math.PI) / 180
     return [cx + r * Math.cos(rad), cy - r * Math.sin(rad)]
   }
 
-  // Single smooth arc path (semicircle donut)
   const smoothArc = [
     `M ${cx - outerR} ${cy}`,
     `A ${outerR} ${outerR} 0 1 1 ${cx + outerR} ${cy}`,
@@ -67,11 +64,9 @@ export function Gauge({ value, budget = 129.5, clickable = true, cumplimiento = 
   const tailLen = 20
   const [tailX, tailY] = polarToXY(needleAngleDeg + 180, tailLen)
 
-  // Small tick marks on outer edge
   const tickR1 = outerR + 2
-  const tickR2 = outerR + 10
+  const tickR2 = outerR + 12
 
-  // Circle KPI positions (Mickey Mouse inverted: gauge on top, two circles below)
   const circleR = 62
   const circleY = cy + 200
   const circleLX = cx - 120
@@ -84,7 +79,6 @@ export function Gauge({ value, budget = 129.5, clickable = true, cumplimiento = 
         viewBox={`0 0 ${W} ${H}`}
         style={{ display: "block" }}
       >
-        {/* Smooth gradient definition */}
         <defs>
           <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#E62800" />
@@ -93,26 +87,25 @@ export function Gauge({ value, budget = 129.5, clickable = true, cumplimiento = 
           </linearGradient>
         </defs>
 
-        {/* Outer gray arc */}
         <path d={grayArc} fill="none" stroke="#D0D0D0" strokeWidth={2} />
-
-        {/* Smooth color arc */}
         <path d={smoothArc} fill="url(#gaugeGradient)" />
 
-        {/* Tick marks + labels INSIDE the arc */}
+        {/* Tick marks + labels OUTSIDE */}
         {arcLabels.map((tick, i) => {
           const angleDeg = 180 - tick.pct * 180
           const [t1x, t1y] = polarToXY(angleDeg, tickR1)
           const [t2x, t2y] = polarToXY(angleDeg, tickR2)
           const [lx, ly] = polarToXY(angleDeg, labelR)
-          const anchor = tick.pct < 0.15 ? "start" : tick.pct > 0.85 ? "end" : "middle"
+          // Anchor: left labels start, right labels end, middle ones middle
+          const anchor = tick.pct < 0.2 ? "start" : tick.pct > 0.8 ? "end" : "middle"
           return (
             <g key={i}>
               <line x1={t1x} y1={t1y} x2={t2x} y2={t2y} stroke="#9CA3AF" strokeWidth={1.5} />
               <text
-                x={lx} y={ly + 5}
-                fontSize="13" fontWeight="700" fill="#4B5563"
+                x={lx} y={ly}
+                fontSize="15" fontWeight="700" fill="#374151"
                 textAnchor={anchor}
+                dominantBaseline="middle"
                 fontFamily="Calibri, Arial, sans-serif"
               >
                 {tick.label}
@@ -121,18 +114,15 @@ export function Gauge({ value, budget = 129.5, clickable = true, cumplimiento = 
           )
         })}
 
-        {/* Thick needle */}
         <polygon
           points={`${tipX},${tipY} ${b1x},${b1y} ${tailX},${tailY} ${b2x},${b2y}`}
           fill="#052F5F"
         />
 
-        {/* Pivot center */}
         <circle cx={cx} cy={cy} r={18} fill="#052F5F" />
         <circle cx={cx} cy={cy} r={11} fill="white" />
         <circle cx={cx} cy={cy} r={5} fill="#052F5F" />
 
-        {/* KPI Value */}
         <text
           x={cx} y={cy + 60}
           fontSize="54" fontWeight="900" fill="#052F5F"
@@ -149,7 +139,6 @@ export function Gauge({ value, budget = 129.5, clickable = true, cumplimiento = 
           Prima neta cobrada
         </text>
 
-        {/* Cumplimiento circle (left) */}
         <circle cx={circleLX} cy={circleY} r={circleR} fill="#3983F6" />
         <text
           x={circleLX} y={circleY + 8}
@@ -166,7 +155,6 @@ export function Gauge({ value, budget = 129.5, clickable = true, cumplimiento = 
           Cumplimiento
         </text>
 
-        {/* Crecimiento circle (right) */}
         <circle cx={circleRX} cy={circleY} r={circleR} fill={crecimiento < 0 ? '#E62800' : '#60A63A'} />
         <text
           x={circleRX} y={circleY + 8}
