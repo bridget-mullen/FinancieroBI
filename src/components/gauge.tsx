@@ -1,5 +1,6 @@
 "use client"
 
+import { useId } from "react"
 import Link from "next/link"
 
 interface GaugeProps {
@@ -12,6 +13,8 @@ interface GaugeProps {
 }
 
 export function Gauge({ value, budget = 129.5, clickable = true, cumplimiento = 0, crecimiento = 0 }: GaugeProps) {
+  const uniqueId = useId()
+  const gradientId = `gaugeGradient${uniqueId.replace(/:/g, '_')}`
   const W = 860
   const H = 720
   const cx = W / 2
@@ -80,7 +83,7 @@ export function Gauge({ value, budget = 129.5, clickable = true, cumplimiento = 
         style={{ display: "block" }}
       >
         <defs>
-          <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#E62800" />
             <stop offset="50%" stopColor="#F9DC5C" />
             <stop offset="100%" stopColor="#60A63A" />
@@ -88,7 +91,7 @@ export function Gauge({ value, budget = 129.5, clickable = true, cumplimiento = 
         </defs>
 
         <path d={grayArc} fill="none" stroke="#D0D0D0" strokeWidth={2} />
-        <path d={smoothArc} fill="url(#gaugeGradient)" />
+        <path d={smoothArc} fill={`url(#${gradientId})`} />
 
         {/* Tick marks + labels OUTSIDE */}
         {arcLabels.map((tick, i) => {
