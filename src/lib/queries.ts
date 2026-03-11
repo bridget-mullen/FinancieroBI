@@ -81,8 +81,8 @@ export async function getLineasNegocio(periodo?: number, año?: string): Promise
       .from("dashboard_data")
       .select("LBussinesNombre, PrimaNeta, TCPago, Descuento, FLiquidacion")
 
-    if (periodo) query = query.eq("Periodo", periodo)
-    if (año) query = query.ilike("FLiquidacion", `%/${año.slice(2)} %`)
+    if (periodo) query = query.eq("mes", periodo)
+    if (año) query = query.eq("anio", parseInt(año))
 
     // Supabase default limit is 1000 — we need ALL rows for accurate aggregation
     const { data, error } = await query.limit(50000)
@@ -114,8 +114,8 @@ export async function getGerencias(
       .eq("LBussinesNombre", linea)
       .limit(5000)
 
-    if (periodo) query = query.eq("Periodo", periodo)
-    if (año) query = query.ilike("FLiquidacion", `%/${año.slice(2)} %`)
+    if (periodo) query = query.eq("mes", periodo)
+    if (año) query = query.eq("anio", parseInt(año))
 
     const { data, error } = await query
     if (error || !data?.length) return null
@@ -148,8 +148,8 @@ export async function getVendedores(
       .eq("LBussinesNombre", linea)
       .limit(5000)
 
-    if (periodo) query = query.eq("Periodo", periodo)
-    if (año) query = query.ilike("FLiquidacion", `%/${año.slice(2)} %`)
+    if (periodo) query = query.eq("mes", periodo)
+    if (año) query = query.eq("anio", parseInt(año))
 
     const { data, error } = await query
     if (error || !data?.length) return null
@@ -208,8 +208,8 @@ export async function getGrupos(
       .eq("GerenciaNombre", gerencia)
       .eq("LBussinesNombre", linea)
 
-    if (periodo) query = query.eq("Periodo", periodo)
-    if (año) query = query.ilike("FLiquidacion", `%/${año.slice(2)} %`)
+    if (periodo) query = query.eq("mes", periodo)
+    if (año) query = query.eq("anio", parseInt(año))
 
     const { data, error } = await query
     if (error || !data?.length) return null
@@ -253,8 +253,8 @@ export async function getClientes(
       .eq("GerenciaNombre", gerencia)
       .eq("LBussinesNombre", linea)
 
-    if (periodo) query = query.eq("Periodo", periodo)
-    if (año) query = query.ilike("FLiquidacion", `%/${año.slice(2)} %`)
+    if (periodo) query = query.eq("mes", periodo)
+    if (año) query = query.eq("anio", parseInt(año))
 
     const { data, error } = await query
     if (error || !data?.length) return null
@@ -301,8 +301,8 @@ export async function getPolizas(
       .eq("GerenciaNombre", gerencia)
       .eq("LBussinesNombre", linea)
 
-    if (periodo) query = query.eq("Periodo", periodo)
-    if (año) query = query.ilike("FLiquidacion", `%/${año.slice(2)} %`)
+    if (periodo) query = query.eq("mes", periodo)
+    if (año) query = query.eq("anio", parseInt(año))
 
     const { data, error } = await query
     if (error || !data?.length) return null
@@ -333,8 +333,8 @@ export async function getRankedVendedores(
     let query = supabase
       .from("dashboard_data")
       .select("VendNombre, PrimaNeta, TCPago, Descuento, FLiquidacion")
-    if (periodo) query = query.eq("Periodo", periodo)
-    if (año) query = query.ilike("FLiquidacion", `%/${año.slice(2)} %`)
+    if (periodo) query = query.eq("mes", periodo)
+    if (año) query = query.eq("anio", parseInt(año))
     const { data, error } = await query
     if (error || !data?.length) return null
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -356,8 +356,8 @@ export async function getRankedAseguradoras(
     let query = supabase
       .from("dashboard_data")
       .select("CiaAbreviacion, PrimaNeta, TCPago, Descuento, FLiquidacion")
-    if (periodo) query = query.eq("Periodo", periodo)
-    if (año) query = query.ilike("FLiquidacion", `%/${año.slice(2)} %`)
+    if (periodo) query = query.eq("mes", periodo)
+    if (año) query = query.eq("anio", parseInt(año))
     const { data, error } = await query
     if (error || !data?.length) return null
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -443,7 +443,7 @@ export async function globalSearch(
       .select("LBussinesNombre, GerenciaNombre, VendNombre, NombreCompleto, Grupo, Documento, PrimaNeta, TCPago, Descuento, FLiquidacion")
       .or(`GerenciaNombre.ilike.%${query}%,VendNombre.ilike.%${query}%,NombreCompleto.ilike.%${query}%,Documento.ilike.%${query}%`)
     if (periodo) q = q.eq("Periodo", periodo)
-    if (año) q = q.ilike("FLiquidacion", `%/${año.slice(2)} %`)
+    if (año) q = q.eq("anio", parseInt(año))
     q = q.limit(100)
 
     const { data, error } = await q
@@ -519,8 +519,8 @@ export async function getRamos(
     let query = supabase
       .from("dashboard_data")
       .select("RamosNombre, PrimaNeta, TCPago, Descuento, FLiquidacion")
-    if (periodo) query = query.eq("Periodo", periodo)
-    if (año) query = query.ilike("FLiquidacion", `%/${año.slice(2)} %`)
+    if (periodo) query = query.eq("mes", periodo)
+    if (año) query = query.eq("anio", parseInt(año))
     const { data, error } = await query
     if (error || !data?.length) return null
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
