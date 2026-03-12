@@ -234,17 +234,9 @@ export function DrillCharts({ rows, levelLabel, parentLabel, loading }: DrillCha
             </div>
           </div>
 
-          {/* Right: Bars + Percentage cards */}
-          <div className="flex-1 min-w-0 flex flex-col gap-4">
-            {/* Horizontal bars */}
+          {/* Right: Horizontal bars only */}
+          <div className="flex-1 min-w-0">
             <HBarChart data={items} maxValue={maxValue} />
-
-            {/* Percentage grid */}
-            {items.length <= 8 && (
-              <div className="pt-2 border-t border-gray-100">
-                <PctGrid data={items} />
-              </div>
-            )}
           </div>
         </div>
       </div>

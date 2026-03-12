@@ -9,10 +9,17 @@ function fmt(v: number) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v)
 }
 
+function fmtShort(v: number) {
+  if (Math.abs(v) >= 1e6) return `$${(v / 1e6).toFixed(1)}M`
+  if (Math.abs(v) >= 1e3) return `$${(v / 1e3).toFixed(0)}K`
+  return `$${v}`
+}
+
 export default function AseguradorasPage() {
   const [year, setYear] = useState("2026")
   const [periodos, setPeriodos] = useState<number[]>([2])
-  const [topAseguradoras, setTopAseguradoras] = useState<{ aseguradora: string; primaNeta: number; pct: number }[]>([])
+  const [allAseguradoras, setAllAseguradoras] = useState<{ aseguradora: string; primaNeta: number; pct: number }[]>([])
+  const [totalPrima, setTotalPrima] = useState(0)
 
   const handleFilterChange = useCallback((newYear: string, newPeriodos: number[]) => {
     setYear(newYear)
@@ -27,18 +34,21 @@ export default function AseguradorasPage() {
     getRankedAseguradoras(month, year).then(a => {
       if (a && a.length > 0) {
         const total = a.reduce((s, x) => s + x.primaNeta, 0)
-        setTopAseguradoras(a.slice(0, 5).map(x => ({ ...x, pct: total > 0 ? Math.round((x.primaNeta / total) * 1000) / 10 : 0 })))
+        setTotalPrima(total)
+        setAllAseguradoras(a.slice(0, 10).map(x => ({ ...x, pct: total > 0 ? Math.round((x.primaNeta / total) * 1000) / 10 : 0 })))
       } else {
-        setTopAseguradoras([])
+        setAllAseguradoras([])
+        setTotalPrima(0)
       }
     })
   }, [year, month])
 
-  const maxAseguradora = topAseguradoras.length > 0 ? Math.max(...topAseguradoras.map(a => a.primaNeta)) : 0
+  const maxAseguradora = allAseguradoras.length > 0 ? Math.max(...allAseguradoras.map(a => a.primaNeta)) : 0
+  const COLORS = ["#1B5E20", "#2E7D32", "#388E3C", "#43A047", "#4CAF50", "#66BB6A", "#81C784", "#A5D6A7", "#C8E6C9", "#E8F5E9"]
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] px-3 py-4 flex flex-col">
-      <div className="max-w-[1200px] mx-auto w-full flex flex-col flex-1">
+    <div className="bg-[#FAFAFA] px-3 py-4">
+      <div className="max-w-[1200px] mx-auto w-full">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-2 pt-3 md:pt-5 w-full gap-2 md:gap-0">
           <PageTabs />
           <PeriodFilter onFilterChange={handleFilterChange} />
@@ -46,19 +56,23 @@ export default function AseguradorasPage() {
 
         <h1 className="text-sm font-bold text-[#111] font-lato mt-3 mb-3">Aseguradoras</h1>
 
-        {topAseguradoras.length > 0 ? (
-          <div className="flex flex-col gap-4">
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <h3 className="text-xs font-bold text-[#041224] mb-2">Top 5 Aseguradoras</h3>
+        {allAseguradoras.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* Left: Table */}
+            <div className="bg-white rounded-lg border border-gray-200 p-3">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-bold text-[#041224]">Top 10 Aseguradoras</h3>
+                <span className="text-xs text-gray-500">Total: {fmtShort(totalPrima)}</span>
+              </div>
               <table className="w-full text-sm">
                 <thead><tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
-                  <th className="px-2 py-1.5 text-left font-semibold w-8">#</th>
+                  <th className="px-2 py-1.5 text-left font-semibold w-6">#</th>
                   <th className="px-2 py-1.5 text-left font-semibold">Aseguradora</th>
                   <th className="px-2 py-1.5 text-right font-semibold">Prima Neta</th>
-                  <th className="px-2 py-1.5 text-right font-semibold">% del total</th>
+                  <th className="px-2 py-1.5 text-right font-semibold">%</th>
                 </tr></thead>
                 <tbody>
-                  {topAseguradoras.map((a, i) => (
+                  {allAseguradoras.map((a, i) => (
                     <tr key={a.aseguradora} className={`border-b border-[#E5E7E9] ${i % 2 === 1 ? "bg-[#FAFAFA]" : "bg-white"}`}>
                       <td className="px-2 py-1 font-bold text-[#041224]">{i + 1}</td>
                       <td className="px-2 py-1">{a.aseguradora}</td>
@@ -70,22 +84,30 @@ export default function AseguradorasPage() {
               </table>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <h3 className="text-xs font-bold text-[#041224] mb-3">Distribución Aseguradoras</h3>
+            {/* Right: Chart */}
+            <div className="bg-white rounded-lg border border-gray-200 p-3">
+              <h3 className="text-xs font-bold text-[#041224] mb-3">Distribución por Prima Neta</h3>
               <div className="space-y-2">
-                {topAseguradoras.map((a) => (
+                {allAseguradoras.map((a, i) => (
                   <div key={a.aseguradora} className="flex items-center gap-2">
-                    <span className="text-sm text-[#333] w-28 truncate shrink-0">{a.aseguradora}</span>
-                    <div className="flex-1 bg-gray-100 rounded-full h-4 overflow-hidden">
+                    <span className="text-xs text-[#333] w-24 truncate shrink-0" title={a.aseguradora}>{a.aseguradora}</span>
+                    <div className="flex-1 bg-gray-100 rounded h-5 overflow-hidden relative">
                       <div
-                        className="h-full rounded-full transition-all duration-500"
+                        className="h-full rounded transition-all duration-500 flex items-center"
                         style={{
-                          width: `${maxAseguradora > 0 ? (a.primaNeta / maxAseguradora) * 100 : 0}%`,
-                          backgroundColor: ["#1B5E20", "#2E7D32", "#388E3C", "#43A047", "#4CAF50"][topAseguradoras.indexOf(a)] || "#4CAF50"
+                          width: `${maxAseguradora > 0 ? Math.max((a.primaNeta / maxAseguradora) * 100, 3) : 0}%`,
+                          backgroundColor: COLORS[i] || "#4CAF50"
                         }}
-                      />
+                      >
+                        {(a.primaNeta / maxAseguradora) * 100 > 20 && (
+                          <span className="text-[10px] text-white font-medium px-1.5 whitespace-nowrap">{fmtShort(a.primaNeta)}</span>
+                        )}
+                      </div>
+                      {(a.primaNeta / maxAseguradora) * 100 <= 20 && (
+                        <span className="absolute right-1 top-1/2 -translate-y-1/2 text-[10px] text-gray-600 font-medium">{fmtShort(a.primaNeta)}</span>
+                      )}
                     </div>
-                    <span className="text-sm font-medium text-[#041224] w-10 text-right shrink-0">{a.pct}%</span>
+                    <span className="text-xs font-bold w-10 text-right shrink-0" style={{ color: COLORS[i] || "#4CAF50" }}>{a.pct}%</span>
                   </div>
                 ))}
               </div>

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { PageTabs } from "@/components/page-tabs"
 import { PeriodFilter } from "@/components/period-filter"
-import { getCompromisos, getRankedVendedores } from "@/lib/queries"
+import { getCompromisos } from "@/lib/queries"
 import type { CompromisoRow } from "@/lib/queries"
 
 function fmt(v: number) {
@@ -14,9 +14,13 @@ function fmtShort(v: number) {
   if (v >= 1e3) return `$${(v / 1e3).toFixed(0)}K`
   return `$${v}`
 }
-function surname(name: string) {
+function shortName(name: string) {
   const parts = name.trim().split(/\s+/)
-  return parts.length >= 3 ? parts[parts.length - 2] : parts[parts.length - 1] || name
+  if (parts.length <= 2) return name
+  // First name + first letter of middle name + last name (e.g., "Juan A. Behar")
+  const firstName = parts[0]
+  const lastName = parts[parts.length - 1]
+  return `${firstName} ${lastName}`
 }
 function semaforoColor(pct: number) {
   if (pct >= 90) return "#2E7D32"
@@ -90,7 +94,6 @@ export default function CompromisosPage() {
   const [periodos, setPeriodos] = useState<number[]>([2])
   const [data, setData] = useState<CompromisoRow[]>([])
   const [loading, setLoading] = useState(true)
-  const [topVendedores, setTopVendedores] = useState<{ vendedor: string; primaNeta: number }[]>([])
   // Bottom 5 removed per Angel's request
 
   const handleFilterChange = useCallback((newYear: string, newPeriodos: number[]) => { setYear(newYear); setPeriodos(newPeriodos) }, [])
@@ -100,21 +103,19 @@ export default function CompromisosPage() {
   useEffect(() => {
     setLoading(true)
     getCompromisos(Number(year), month).then(r => { setData(r ?? []); setLoading(false) }).catch(() => setLoading(false))
-    getRankedVendedores(month, year).then(v => {
-      if (v && v.length > 0) { setTopVendedores(v.slice(0, 5)) }
-    })
   }, [year, month])
 
   const totalMeta = data.reduce((s, r) => s + r.meta, 0)
   const totalActual = data.reduce((s, r) => s + r.primaActual, 0)
   const totalPct = totalMeta > 0 ? Math.round((totalActual / totalMeta) * 1000) / 10 : 0
 
-  const barData = data.map(r => ({ name: surname(r.vendedor), value: r.primaActual, pct: r.pctAvance }))
-  const topBarData = topVendedores.map(v => ({ name: surname(v.vendedor), value: v.primaNeta }))
-  // bottomBarData removed
+  const barData = data.map(r => ({ name: shortName(r.vendedor), value: r.primaActual, pct: r.pctAvance }))
+  // Top 5 from compromisos data (sorted by prima actual, desc)
+  const top5Compromisos = [...data].sort((a, b) => b.primaActual - a.primaActual).slice(0, 5)
+  const topBarData = top5Compromisos.map(r => ({ name: shortName(r.vendedor), value: r.primaActual }))
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] px-3 py-4 flex flex-col">
+    <div className="bg-[#FAFAFA] px-3 py-4">
       {/* CSS for hover semaforo */}
       <style>{`
         .vendedor-row .semaforo-lights span { background-color: #D1D5DB !important; border-color: #E5E7EB !important; }
@@ -215,13 +216,13 @@ export default function CompromisosPage() {
           {/* Row 2: Top 5 table + chart */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="bg-white rounded-xl shadow-md border border-gray-100 p-3">
-              <p className="text-sm font-bold text-[#041224] mb-1">Top 5 Vendedores</p>
+              <p className="text-sm font-bold text-[#041224] mb-1">Top 5 Vendedores (Prima Neta)</p>
               {/* Mobile: compact list */}
               <div className="md:hidden space-y-1">
-                {topVendedores.map((v, i) => (
-                  <div key={v.vendedor} className="flex justify-between items-center border-b border-gray-100 py-1.5">
-                    <span className="text-sm"><strong className="text-gray-500 mr-1.5">#{i+1}</strong>{v.vendedor}</span>
-                    <span className="text-sm font-bold text-[#374151]">{fmt(v.primaNeta)}</span>
+                {top5Compromisos.map((r, i) => (
+                  <div key={r.vendedor} className="flex justify-between items-center border-b border-gray-100 py-1.5">
+                    <span className="text-sm"><strong className="text-gray-500 mr-1.5">#{i+1}</strong>{r.vendedor}</span>
+                    <span className="text-sm font-bold text-[#374151]">{fmt(r.primaActual)}</span>
                   </div>
                 ))}
               </div>
@@ -235,11 +236,11 @@ export default function CompromisosPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {topVendedores.map((v, i) => (
-                    <tr key={v.vendedor} className={`border-b border-[#E5E7EB] ${i % 2 === 0 ? 'bg-white' : 'bg-[#F8FAFC]'}`}>
+                  {top5Compromisos.map((r, i) => (
+                    <tr key={r.vendedor} className={`border-b border-[#E5E7EB] ${i % 2 === 0 ? 'bg-white' : 'bg-[#F8FAFC]'}`}>
                       <td className="px-2 py-[2px] font-bold text-center text-[#374151]">{i + 1}</td>
-                      <td className="px-2 py-[2px] text-left text-[#374151]">{v.vendedor}</td>
-                      <td className="px-2 py-[2px] text-center font-medium text-[#374151]">{fmt(v.primaNeta)}</td>
+                      <td className="px-2 py-[2px] text-left text-[#374151]">{r.vendedor}</td>
+                      <td className="px-2 py-[2px] text-center font-medium text-[#374151]">{fmt(r.primaActual)}</td>
                     </tr>
                   ))}
                 </tbody>
