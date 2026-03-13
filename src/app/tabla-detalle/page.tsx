@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback, Suspense } from "react"
+import React, { useState, useEffect, useRef, useCallback, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { ChevronRight, ChevronLeft, ChevronDown, Search, Download } from "lucide-react"
 import { PageTabs } from "@/components/page-tabs"
@@ -660,6 +660,59 @@ function TablaDetalleContent() {
               <span className="font-bold">Total</span><span className="font-bold">{fmt(polizaTotal)}</span>
             </div>
           </>
+        ) : drillLevel === "vendedor" && tipoGroups && tipoGroups.length > 0 ? (
+          /* MOBILE: Tier groups for Franquicias/Promotorías */
+          <>
+            {tipoGroups.map((group) => {
+              const isExpanded = expandedTipos.has(group.tipo)
+              const toggleTipo = () => {
+                setExpandedTipos(prev => {
+                  const next = new Set(prev)
+                  if (next.has(group.tipo)) next.delete(group.tipo)
+                  else next.add(group.tipo)
+                  return next
+                })
+              }
+              return (
+                <React.Fragment key={group.tipo}>
+                  {/* Tier header */}
+                  <div
+                    className="bg-[#F3F4F6] rounded-lg border border-gray-200 px-3 py-2.5 shadow-sm active:bg-gray-200"
+                    onClick={toggleTipo}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold text-sm text-[#111] flex items-center gap-1">
+                        <ChevronDown className={`w-4 h-4 text-[#041224] transition-transform ${isExpanded ? "" : "-rotate-90"}`} />
+                        Vendedores {group.tipo} <span className="text-[#666] font-normal">({group.vendedores.length})</span>
+                      </span>
+                      <span className="text-sm font-bold">{fmtShort(group.total)}</span>
+                    </div>
+                  </div>
+                  {/* Vendedores within tier */}
+                  {isExpanded && group.vendedores.map((v) => (
+                    <div
+                      key={v.vendedor}
+                      className="ml-4 bg-white rounded-lg border border-gray-200 px-3 py-2 shadow-sm active:bg-gray-50"
+                      onClick={() => drill("grupo", v.vendedor, { ...sel, vendedor: v.vendedor })}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-sm text-[#111] flex items-center gap-1">
+                          <ChevronRight className="w-3.5 h-3.5 text-[#E62800]" />
+                          {v.vendedor}
+                        </span>
+                        <span className={`text-sm font-bold ${v.primaNeta < 0 ? "text-[#E62800]" : ""}`}>
+                          {v.primaNeta < 0 ? `(${fmt(Math.abs(v.primaNeta))})` : fmt(v.primaNeta)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </React.Fragment>
+              )
+            })}
+            <div className="bg-[#041224] text-white rounded-lg px-3 py-2.5 flex justify-between">
+              <span className="font-bold">Total</span><span className="font-bold">{fmt(tipoGroups.reduce((s, g) => s + g.total, 0))}</span>
+            </div>
+          </>
         ) : (
           <>
             {displayRows.length === 0 ? (
@@ -801,6 +854,81 @@ function TablaDetalleContent() {
                 <tr className="bg-[#041224] text-white border-t-2 cursor-default">
                   <td className="px-3 py-1.5 font-bold" colSpan={6}>Total</td>
                   <td className="px-3 py-1.5 text-right font-bold tabular-nums">{fmt(polizaTotal)}</td>
+                </tr>
+              </>
+
+            ) : drillLevel === "vendedor" && tipoGroups && tipoGroups.length > 0 ? (
+              /* ─── VENDEDOR LEVEL WITH TIPO GROUPER (Franquicias/Promotorías) ─── */
+              <>
+                {tipoGroups.map((group, gIdx) => {
+                  const isExpanded = expandedTipos.has(group.tipo)
+                  const toggleTipo = () => {
+                    setExpandedTipos(prev => {
+                      const next = new Set(prev)
+                      if (next.has(group.tipo)) next.delete(group.tipo)
+                      else next.add(group.tipo)
+                      return next
+                    })
+                  }
+                  return (
+                    <React.Fragment key={group.tipo}>
+                      {/* Tier group header row */}
+                      <tr
+                        className={`bg-[#F3F4F6] border-b border-[#E5E7EB] cursor-pointer hover:bg-[#E5E7EB] transition-colors ${gIdx % 2 === 1 ? "" : ""}`}
+                        onClick={toggleTipo}
+                      >
+                        <td className="px-1 py-2 text-center w-6">
+                          <ChevronDown className={`w-3.5 h-3.5 text-[#041224] inline transition-transform ${isExpanded ? "" : "-rotate-90"}`} />
+                        </td>
+                        <td className="px-3 py-2 font-semibold text-[#111] text-left">
+                          Vendedores {group.tipo} <span className="text-[#666] font-normal">({group.vendedores.length})</span>
+                        </td>
+                        <td className="px-3 py-2 text-right tabular-nums font-semibold">{fmt(group.total)}</td>
+                        <td className="px-3 py-2 text-right tabular-nums text-gray-400">—</td>
+                        <td className="px-3 py-2 text-right tabular-nums text-gray-400">—</td>
+                        <td className="px-3 py-2 text-right tabular-nums text-gray-400">—</td>
+                        <td className="px-3 py-2 text-right tabular-nums text-gray-400">—</td>
+                        <td className="px-3 py-2 text-right tabular-nums text-gray-400">—</td>
+                        <td className="px-3 py-2 text-right tabular-nums text-gray-400">—</td>
+                        <td className="px-3 py-2 text-right tabular-nums text-gray-400">—</td>
+                      </tr>
+                      {/* Individual vendedor rows within tier (when expanded) */}
+                      {isExpanded && group.vendedores.map((v, vIdx) => (
+                        <tr
+                          key={v.vendedor}
+                          className={`group border-b border-[#F0F0F0] cursor-pointer transition-all duration-150 hover:bg-[#FFF5F5] ${vIdx % 2 === 1 ? "bg-[#FAFBFC]" : "bg-white"}`}
+                          onClick={() => drill("grupo", v.vendedor, { ...sel, vendedor: v.vendedor })}
+                        >
+                          <td className="px-1 py-2 text-center w-6">
+                            <ChevronRight className="w-3.5 h-3.5 text-[#E62800] inline transition-transform group-hover:scale-110 group-hover:translate-x-0.5" />
+                          </td>
+                          <td className="pl-8 pr-3 py-2 font-medium text-[#111] text-left">{v.vendedor}</td>
+                          <td className={`px-3 py-2 text-right tabular-nums font-normal ${v.primaNeta < 0 ? "text-red-500" : ""}`}>
+                            {v.primaNeta < 0 ? `(${fmt(Math.abs(v.primaNeta))})` : fmt(v.primaNeta)}
+                          </td>
+                          <td className="px-3 py-2 text-right tabular-nums text-gray-300">—</td>
+                          <td className="px-3 py-2 text-right tabular-nums text-gray-300">—</td>
+                          <td className="px-3 py-2 text-right tabular-nums text-gray-300">—</td>
+                          <td className="px-3 py-2 text-right tabular-nums text-gray-300">—</td>
+                          <td className="px-3 py-2 text-right tabular-nums text-gray-300">—</td>
+                          <td className="px-3 py-2 text-right tabular-nums text-gray-300">—</td>
+                          <td className="px-3 py-2 text-right tabular-nums text-gray-300">—</td>
+                        </tr>
+                      ))}
+                    </React.Fragment>
+                  )
+                })}
+                <tr className="bg-[#041224] text-white border-t-2 cursor-default">
+                  <td className="px-1 py-1.5 w-6"></td>
+                  <td className="px-3 py-1.5 font-bold text-left">Total</td>
+                  <td className="px-3 py-1.5 text-right font-bold tabular-nums">{fmt(tipoGroups.reduce((s, g) => s + g.total, 0))}</td>
+                  <td className="px-3 py-1.5 text-right text-white/50 tabular-nums">—</td>
+                  <td className="px-3 py-1.5 text-right text-white/50 tabular-nums">—</td>
+                  <td className="px-3 py-1.5 text-right text-white/50 tabular-nums">—</td>
+                  <td className="px-3 py-1.5 text-right text-white/50 tabular-nums">—</td>
+                  <td className="px-3 py-1.5 text-right text-white/50 tabular-nums">—</td>
+                  <td className="px-3 py-1.5 text-right text-white/50 tabular-nums">—</td>
+                  <td className="px-3 py-1.5 text-right text-white/50 tabular-nums">—</td>
                 </tr>
               </>
 
