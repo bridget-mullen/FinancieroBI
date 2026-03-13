@@ -229,7 +229,7 @@ export default function CorporatePage() {
   // Apply Top 10 + Otros for drill levels (gerencia, vendedor, grupo, cliente)
   const { rows: displayRows } = drillLevel !== "poliza"
     ? computeTop10WithOtros(filteredRows)
-    : { rows: filteredRows, otrosCount: 0 }
+    : { rows: filteredRows }
   const filteredPolizas = filterSearch(polizas, "documento")
   const rowTotal = filteredRows.reduce((s, r) => s + r.primaNeta, 0)
   const polizaTotal = filteredPolizas.reduce((s, p) => s + p.primaNeta, 0)
