@@ -190,25 +190,25 @@ export default function Home() {
                     const diffColor = diff < 0 ? "text-[#E62800]" : "text-[#059669]"
                     return (
                       <tr key={l.nombre} className={`cursor-pointer transition-colors hover:bg-blue-50 ${i % 2 === 0 ? "bg-white" : "bg-gray-50/70"}`}>
-                        <td className="px-2 py-4 text-base font-bold text-gray-900">
+                        <td className="px-2 py-3 text-sm font-semibold text-gray-900">
                           {link ? <Link href={link} className="hover:underline text-gray-900">{l.nombre}</Link> : l.nombre}
                         </td>
-                        <td className="px-2 py-4 text-center text-base font-medium text-gray-900 tabular-nums">{fmt(l.primaNeta)}</td>
-                        <td className="px-2 py-4 text-center text-base font-medium text-gray-800 tabular-nums">{fmt(l.anioAnterior)}</td>
-                        <td className="px-2 py-4 text-center text-base font-medium text-gray-600 tabular-nums">{fmt(l.presupuesto)}</td>
-                        <td className={`px-2 py-4 text-center text-base tabular-nums ${diffColor} ${diff < 0 ? 'font-bold' : 'font-medium'}`}>
+                        <td className="px-2 py-3 text-center text-sm font-medium text-gray-900 tabular-nums">{fmt(l.primaNeta)}</td>
+                        <td className="px-2 py-3 text-center text-sm font-medium text-gray-800 tabular-nums">{fmt(l.anioAnterior)}</td>
+                        <td className="px-2 py-3 text-center text-sm font-medium text-gray-600 tabular-nums">{fmt(l.presupuesto)}</td>
+                        <td className={`px-2 py-3 text-center text-sm tabular-nums ${diffColor} ${diff < 0 ? 'font-bold' : 'font-medium'}`}>
                           {diff < 0 ? `(${fmt(Math.abs(diff))})` : fmt(diff)}
                         </td>
                       </tr>
                     )
                   })}
                   {/* Total row with semáforo logic */}
-                  <tr className="font-black border-t-2 border-gray-300 bg-[#041224]">
-                    <td className="px-2 py-4 text-base font-black text-white">Total</td>
-                    <td className="px-2 py-4 text-center text-base font-black tabular-nums text-white">{fmt(total)}</td>
-                    <td className="px-2 py-4 text-center text-base font-black tabular-nums text-white">{fmt(totalAA)}</td>
-                    <td className="px-2 py-4 text-center text-base font-black tabular-nums text-gray-400">{fmt(totalPpto)}</td>
-                    <td className="px-2 py-4 text-center text-base font-black tabular-nums" style={{ color: (total - totalPpto) < 0 ? '#E62800' : '#059669' }}>
+                  <tr className="font-bold border-t-2 border-gray-300 bg-[#041224]">
+                    <td className="px-2 py-3 text-sm font-bold text-white">Total</td>
+                    <td className="px-2 py-3 text-center text-sm font-bold tabular-nums text-white">{fmt(total)}</td>
+                    <td className="px-2 py-3 text-center text-sm font-bold tabular-nums text-white">{fmt(totalAA)}</td>
+                    <td className="px-2 py-3 text-center text-sm font-bold tabular-nums text-gray-400">{fmt(totalPpto)}</td>
+                    <td className="px-2 py-3 text-center text-sm font-bold tabular-nums" style={{ color: (total - totalPpto) < 0 ? '#E62800' : '#059669' }}>
                       {(total - totalPpto) < 0 ? `(${fmt(Math.abs(total - totalPpto))})` : fmt(total - totalPpto)}
                     </td>
                   </tr>
