@@ -54,13 +54,14 @@ const RAMOS = [
   { nombre: "Vida", pnEfectuada: 59636744, polizas: 4202 },
   { nombre: "Otros", pnEfectuada: 8013999, polizas: 545 },
 ]
+// Neutral palette for ramo distribution - NOT semáforo colors
 function ramoColor(nombre: string): string {
   const n = nombre.toLowerCase()
-  if (n.includes("dano") || n.includes("daño")) return "#E62800"
-  if (n.includes("acc") || n.includes("enf")) return "#1a1a1a"
-  if (n.includes("vida")) return "#9CA3AF"
-  if (n.includes("vehic") || n.includes("vehíc") || n.includes("auto")) return "#D1D5DB"
-  return "#0EA5E9" // Asistencias, Descuentos, Otros
+  if (n.includes("vehic") || n.includes("vehíc") || n.includes("auto")) return "#041224" // darkest navy
+  if (n.includes("acc") || n.includes("enf")) return "#1E3A5F" // dark blue
+  if (n.includes("dano") || n.includes("daño")) return "#3B6B9A" // medium blue
+  if (n.includes("vida")) return "#6B9FCC" // light blue
+  return "#9CA3AF" // gray - Asistencias, Descuentos, Otros
 }
 
 const COMPANIES = [
@@ -486,8 +487,26 @@ export default function CobranzaPage() {
                     <td className={`px-3 py-2 text-xs font-medium text-[#041224] sticky left-0 z-10 border-b border-[#E5E7EB] ${rowBg} group-hover:bg-[#FFF5F5] transition-colors`}>{c.nombre}</td>
                     <td className="px-3 py-2 text-center text-xs font-normal tabular-nums border-b border-[#E5E7EB]">{fmt(c.primaNeta)}</td>
                     <td className="px-3 py-2 text-center text-xs font-normal tabular-nums text-gray-600 border-b border-[#E5E7EB]">{c.convenio > 0 ? fmt(c.convenio) : <span className="text-gray-400">—</span>}</td>
-                    <SemaforoBadge primaNeta={c.primaNeta} pnAA={c.pnAA} convenio={c.convenio} value={c.convenio > 0 ? (difConv < 0 ? `(${fmt(Math.abs(difConv))})` : fmt(difConv)) : "—"} />
-                    <SemaforoBadge primaNeta={c.primaNeta} pnAA={c.pnAA} convenio={c.convenio} value={`${Number(pctConvValue) >= 0 ? "+" : ""}${pctConvValue}%`} />
+                    {/* Diferencia: simple positive/negative coloring (not semáforo) */}
+                    <td className="px-3 py-2 text-center border-b border-[#E5E7EB]">
+                      {c.convenio > 0 ? (
+                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium tabular-nums ${difConv < 0 ? "bg-[#FEE2E2] text-[#E62800]" : "bg-[#DCFCE7] text-[#059669]"}`}>
+                          {difConv < 0 ? `(${fmt(Math.abs(difConv))})` : fmt(difConv)}
+                        </span>
+                      ) : (
+                        <span className="inline-block px-2 py-0.5 rounded text-xs font-medium tabular-nums bg-[#F3F4F6] text-[#9CA3AF]">—</span>
+                      )}
+                    </td>
+                    {/* % Dif: also simple positive/negative coloring */}
+                    <td className="px-3 py-2 text-center border-b border-[#E5E7EB]">
+                      {c.convenio > 0 ? (
+                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium tabular-nums ${Number(pctConvValue) < 0 ? "bg-[#FEE2E2] text-[#E62800]" : "bg-[#DCFCE7] text-[#059669]"}`}>
+                          {Number(pctConvValue) >= 0 ? "+" : ""}{pctConvValue}%
+                        </span>
+                      ) : (
+                        <span className="inline-block px-2 py-0.5 rounded text-xs font-medium tabular-nums bg-[#F3F4F6] text-[#9CA3AF]">—</span>
+                      )}
+                    </td>
                     <td className="px-3 py-2 text-center text-xs font-normal tabular-nums text-[#6B7280] border-b border-[#E5E7EB]">{fmt(c.pnAA)}</td>
                     <td className={`px-3 py-2 text-center text-xs font-normal tabular-nums border-b border-[#E5E7EB]`} style={{ color: difAA < 0 ? "#E62800" : "#059669" }}>
                       {difAA < 0 ? `(${fmt(Math.abs(difAA))})` : fmt(difAA)}

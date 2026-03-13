@@ -131,7 +131,7 @@ export default function Home() {
           {/* Chart — full width */}
           <div className="bg-white border border-gray-200 rounded-xl shadow-sm px-3 py-3">
             <div className="flex gap-3 text-[10px] mb-2">
-              <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#3983F6]"/><span className="text-gray-600 font-medium">Prima neta</span></div>
+              <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#041224]"/><span className="text-gray-600 font-medium">Prima neta</span></div>
               <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#9CA3AF]"/><span className="text-gray-600 font-medium">Presupuesto</span></div>
             </div>
             <div className="w-full" style={{ height: 220 }}>
@@ -147,8 +147,8 @@ export default function Home() {
                       formatter={(value?: number, name?: string) => [`$${value ?? 0}M`, name === 'pn' ? 'Prima Neta' : 'Presupuesto']}
                       cursor={{ fill: 'rgba(57,131,246,0.08)' }}
                     />
-                    <Bar dataKey="pn" fill="#3983F6" radius={[0, 3, 3, 0]} barSize={10} isAnimationActive={true} animationDuration={800}>
-                      <LabelList dataKey="pn" position="right" formatter={(v: unknown) => v != null ? `$${v}M` : ''} style={{ fontSize: 9, fill: '#3983F6', fontWeight: 600 }}/>
+                    <Bar dataKey="pn" fill="#041224" radius={[0, 3, 3, 0]} barSize={10} isAnimationActive={true} animationDuration={800}>
+                      <LabelList dataKey="pn" position="right" formatter={(v: unknown) => v != null ? `$${v}M` : ''} style={{ fontSize: 9, fill: '#041224', fontWeight: 600 }}/>
                     </Bar>
                     <Bar dataKey="pp" fill="#9CA3AF" radius={[0, 3, 3, 0]} barSize={10} isAnimationActive={true} animationDuration={800}>
                       <LabelList dataKey="pp" position="right" formatter={(v: unknown) => v != null ? `$${v}M` : ''} style={{ fontSize: 9, fill: '#6B7280', fontWeight: 600 }}/>
@@ -219,7 +219,7 @@ export default function Home() {
             {/* Chart */}
             <div className="bg-white border border-gray-200 rounded-lg shadow-sm px-2 py-1.5 flex flex-col h-[280px] overflow-hidden">
               <div className="flex gap-3 text-[12px] mb-1 self-start">
-                <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: '#3983F6' }}/><span className="text-gray-700 font-medium">Prima neta efectuada</span></div>
+                <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: '#041224' }}/><span className="text-gray-700 font-medium">Prima neta efectuada</span></div>
                 <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: '#9CA3AF' }}/><span className="text-gray-700 font-medium">Presupuesto</span></div>
               </div>
               <div style={{ width: '100%', height: 240, minWidth: 0 }}>
@@ -235,8 +235,8 @@ export default function Home() {
                         formatter={(value?: number, name?: string) => [`$${value ?? 0}M`, name === 'pn' ? 'Prima Neta' : 'Presupuesto']}
                         cursor={{ fill: 'rgba(57,131,246,0.08)' }}
                       />
-                      <Bar dataKey="pn" fill="#3983F6" radius={[0, 3, 3, 0]} barSize={14} isAnimationActive={true} animationDuration={800}>
-                        <LabelList dataKey="pn" position="right" formatter={(v: unknown) => v != null ? `$${v}M` : ''} style={{ fontSize: 11, fill: '#3983F6', fontWeight: 600 }}/>
+                      <Bar dataKey="pn" fill="#041224" radius={[0, 3, 3, 0]} barSize={14} isAnimationActive={true} animationDuration={800}>
+                        <LabelList dataKey="pn" position="right" formatter={(v: unknown) => v != null ? `$${v}M` : ''} style={{ fontSize: 11, fill: '#041224', fontWeight: 600 }}/>
                       </Bar>
                       <Bar dataKey="pp" fill="#9CA3AF" radius={[0, 3, 3, 0]} barSize={14} isAnimationActive={true} animationDuration={800}>
                         <LabelList dataKey="pp" position="right" formatter={(v: unknown) => v != null ? `$${v}M` : ''} style={{ fontSize: 11, fill: '#6B7280', fontWeight: 600 }}/>
