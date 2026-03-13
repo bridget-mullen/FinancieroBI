@@ -195,7 +195,7 @@ export default function Home() {
                         </td>
                         <td className="px-2 py-2 text-center font-normal text-gray-900 tabular-nums">{fmt(l.primaNeta)}</td>
                         <td className="px-2 py-2 text-center font-normal text-gray-800 tabular-nums">{fmt(l.anioAnterior)}</td>
-                        <td className="px-2 py-2 text-center font-normal text-emerald-600 tabular-nums">{fmt(l.presupuesto)}</td>
+                        <td className="px-2 py-2 text-center font-semibold text-green-600 tabular-nums">{fmt(l.presupuesto)}</td>
                         <td className={`px-2 py-2 text-center font-normal tabular-nums ${diffColor}`}>
                           {diff < 0 ? `(${fmt(Math.abs(diff))})` : fmt(diff)}
                         </td>
@@ -207,7 +207,7 @@ export default function Home() {
                     <td className="px-2 py-2 font-bold" style={{ color: '#fff' }}>Total</td>
                     <td className="px-2 py-2 text-center font-bold tabular-nums" style={{ color: '#fff' }}>{fmt(total)}</td>
                     <td className="px-2 py-2 text-center font-bold tabular-nums" style={{ color: '#fff' }}>{fmt(totalAA)}</td>
-                    <td className="px-2 py-2 text-center font-bold tabular-nums text-emerald-600">{fmt(totalPpto)}</td>
+                    <td className="px-2 py-2 text-center font-bold tabular-nums text-green-600">{fmt(totalPpto)}</td>
                     <td className="px-2 py-2 text-center font-bold tabular-nums" style={{ color: (total - totalPpto) < 0 ? '#ff6b6b' : '#4ade80' }}>
                       {(total - totalPpto) < 0 ? `(${fmt(Math.abs(total - totalPpto))})` : fmt(total - totalPpto)}
                     </td>
