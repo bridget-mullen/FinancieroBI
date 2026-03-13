@@ -84,20 +84,20 @@ export default function AseguradorasPage() {
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-[#041224]">Top 10 Aseguradoras</h3>
                 <span className="text-xs text-gray-500">Total: {fmtShort(totalPrima)}</span>
               </div>
-              <table className="w-full">
+              <table className="w-full text-xs">
                 <thead><tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
-                  <th className="px-2 py-1.5 text-left text-xs font-semibold uppercase tracking-wider w-6">#</th>
+                  <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider w-6">#</th>
                   <th className="px-2 py-1.5 text-left text-xs font-semibold uppercase tracking-wider">Aseguradora</th>
-                  <th className="px-2 py-1.5 text-right text-xs font-semibold uppercase tracking-wider">Prima Neta</th>
-                  <th className="px-2 py-1.5 text-right text-xs font-semibold uppercase tracking-wider">%</th>
+                  <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">Prima Neta</th>
+                  <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">%</th>
                 </tr></thead>
                 <tbody>
                   {filteredAseguradoras.map((a, i) => (
-                    <tr key={a.aseguradora} className={`border-b border-[#E5E7E9] ${i % 2 === 1 ? "bg-[#FAFAFA]" : "bg-white"}`}>
-                      <td className="px-2 py-1.5 text-xs font-medium text-[#041224] tabular-nums">{i + 1}</td>
-                      <td className="px-2 py-1.5 text-xs">{a.aseguradora}</td>
-                      <td className="px-2 py-1.5 text-right text-xs font-medium tabular-nums">{fmt(a.primaNeta)}</td>
-                      <td className="px-2 py-1.5 text-right text-xs font-medium tabular-nums text-[#041224]">{a.pct}%</td>
+                    <tr key={a.aseguradora} className={`border-b border-[#E5E7EB] ${i % 2 === 1 ? "bg-[#FAFBFC]" : "bg-white"}`}>
+                      <td className="px-2 py-1.5 text-center text-gray-800 tabular-nums">{i + 1}</td>
+                      <td className="px-2 py-1.5 font-medium text-[#111]">{a.aseguradora}</td>
+                      <td className="px-2 py-1.5 text-center font-normal tabular-nums">{fmt(a.primaNeta)}</td>
+                      <td className="px-2 py-1.5 text-center font-normal tabular-nums text-gray-800">{a.pct}%</td>
                     </tr>
                   ))}
                 </tbody>

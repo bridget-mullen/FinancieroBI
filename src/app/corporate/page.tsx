@@ -20,6 +20,20 @@ const LINEA = "Corporate" // Pre-filtered
 type DrillLevel = "gerencia" | "vendedor" | "grupo" | "cliente" | "poliza"
 interface SimpleRow { name: string; primaNeta: number }
 
+// Top 10 + Otros aggregation
+function computeTop10WithOtros(items: SimpleRow[]): { rows: SimpleRow[]; otrosCount: number } {
+  if (items.length <= 10) return { rows: items, otrosCount: 0 }
+  const sorted = [...items].sort((a, b) => b.primaNeta - a.primaNeta)
+  const top10 = sorted.slice(0, 10)
+  const rest = sorted.slice(10)
+  const sumPN = rest.reduce((s, r) => s + r.primaNeta, 0)
+  const otrosRow: SimpleRow = {
+    name: `Otros (${rest.length})`,
+    primaNeta: sumPN
+  }
+  return { rows: [...top10, otrosRow], otrosCount: rest.length }
+}
+
 export default function CorporatePage() {
   const [year, setYear] = useState("2026")
   const [periodos, setPeriodos] = useState<number[]>([2])
@@ -118,6 +132,10 @@ export default function CorporatePage() {
   const filterSearch = <T,>(items: T[], key: string): T[] => search ? items.filter(item => String((item as any)[key]).toLowerCase().includes(search.toLowerCase())) : items
 
   const filteredRows = filterSearch(rows, "name")
+  // Apply Top 10 + Otros for drill levels (gerencia, vendedor, grupo, cliente)
+  const { rows: displayRows, otrosCount } = drillLevel !== "poliza"
+    ? computeTop10WithOtros(filteredRows)
+    : { rows: filteredRows, otrosCount: 0 }
   const filteredPolizas = filterSearch(polizas, "documento")
   const rowTotal = filteredRows.reduce((s, r) => s + r.primaNeta, 0)
   const polizaTotal = filteredPolizas.reduce((s, p) => s + p.primaNeta, 0)
@@ -214,7 +232,7 @@ export default function CorporatePage() {
             )}
           </div>
         )}
-        <table className={`w-full ${drillLevel === "poliza" ? "hidden md:table" : ""}`}>
+        <table className={`w-full text-xs ${drillLevel === "poliza" ? "hidden md:table" : ""}`}>
           <thead className="sticky top-0 z-10">
             {drillLevel === "poliza" ? (
               <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
@@ -223,13 +241,13 @@ export default function CorporatePage() {
                 <th className="text-left px-2 py-1.5 text-xs font-semibold uppercase tracking-wider">Ramo</th>
                 <th className="text-left px-2 py-1.5 text-xs font-semibold uppercase tracking-wider">Subramo</th>
                 <th className="text-left px-2 py-1.5 text-xs font-semibold uppercase tracking-wider">F. Liquidación</th>
-                <th className="text-right px-2 py-1.5 text-xs font-semibold uppercase tracking-wider">Prima neta</th>
+                <th className="text-center px-2 py-1.5 text-xs font-semibold uppercase tracking-wider">Prima neta</th>
               </tr>
             ) : (
               <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
                 <th className="w-6 px-1 py-1.5"></th>
                 <th className="text-left px-2 py-1.5 text-xs font-semibold uppercase tracking-wider">{levelLabels[drillLevel]}</th>
-                <th className="text-right px-2 py-1.5 text-xs font-semibold uppercase tracking-wider">Prima neta</th>
+                <th className="text-center px-2 py-1.5 text-xs font-semibold uppercase tracking-wider">Prima neta</th>
               </tr>
             )}
           </thead>
@@ -241,34 +259,35 @@ export default function CorporatePage() {
                 {filteredPolizas.length === 0 ? (
                   <tr><td colSpan={6} className="px-2 py-6 text-center text-xs text-[#888]">Datos en integración</td></tr>
                 ) : filteredPolizas.map((p, idx) => (
-                  <tr key={`${p.documento}-${idx}`} className={`border-b border-[#F0F0F0] hover:bg-[#FFF5F5] ${idx % 2 === 1 ? "bg-[#FAFAFA]" : ""}`}>
-                    <td className="px-2 py-2 text-xs font-medium text-[#111]">{p.documento}</td>
-                    <td className="px-2 py-2 text-xs">{p.aseguradora}</td>
-                    <td className="px-2 py-2 text-xs">{p.ramo}</td>
-                    <td className="px-2 py-2 text-xs text-[#666]">{p.subramo}</td>
-                    <td className="px-2 py-2 text-xs text-[#666]">{p.fechaLiquidacion}</td>
-                    <td className={`px-2 py-2 text-right text-xs font-medium tabular-nums ${p.primaNeta < 0 ? "text-[#E62800]" : ""}`}>{p.primaNeta < 0 ? `(${fmt(Math.abs(p.primaNeta))})` : fmt(p.primaNeta)}</td>
+                  <tr key={`${p.documento}-${idx}`} className={`border-b border-[#F0F0F0] hover:bg-[#FFF5F5] ${idx % 2 === 1 ? "bg-[#FAFBFC]" : "bg-white"}`}>
+                    <td className="px-2 py-1.5 font-medium text-[#111]">{p.documento}</td>
+                    <td className="px-2 py-1.5 text-gray-800">{p.aseguradora}</td>
+                    <td className="px-2 py-1.5 text-gray-800">{p.ramo}</td>
+                    <td className="px-2 py-1.5 text-[#666]">{p.subramo}</td>
+                    <td className="px-2 py-1.5 text-[#666] tabular-nums">{p.fechaLiquidacion}</td>
+                    <td className={`px-2 py-1.5 text-center font-normal tabular-nums ${p.primaNeta < 0 ? "text-red-600" : ""}`}>{p.primaNeta < 0 ? `(${fmt(Math.abs(p.primaNeta))})` : fmt(p.primaNeta)}</td>
                   </tr>
                 ))}
-                <tr className="bg-[#041224] text-white"><td className="px-2 py-1.5 text-xs font-bold" colSpan={5}>Total</td><td className="px-2 py-1.5 text-right text-xs font-bold tabular-nums">{fmt(polizaTotal)}</td></tr>
+                <tr className="bg-[#041224] text-white"><td className="px-2 py-1.5 font-bold" colSpan={5}>Total</td><td className="px-2 py-1.5 text-center font-bold tabular-nums">{fmt(polizaTotal)}</td></tr>
               </>
             ) : (
               <>
-                {filteredRows.length === 0 ? (
+                {displayRows.length === 0 ? (
                   <tr><td colSpan={3} className="px-2 py-6 text-center text-xs text-[#888]">Sin datos para este periodo {year}</td></tr>
-                ) : filteredRows.map((r, idx) => {
-                  const nextLevel: DrillLevel | null = drillLevel === "gerencia" ? "vendedor" : drillLevel === "vendedor" ? "grupo" : drillLevel === "grupo" ? "cliente" : drillLevel === "cliente" ? "poliza" : null
-                  const selKey = drillLevel === "gerencia" ? "gerencia" : drillLevel === "vendedor" ? "vendedor" : drillLevel === "grupo" ? "grupo" : drillLevel === "cliente" ? "cliente" : null
+                ) : displayRows.map((r, idx) => {
+                  const isOtros = r.name.startsWith("Otros (")
+                  const nextLevel: DrillLevel | null = isOtros ? null : (drillLevel === "gerencia" ? "vendedor" : drillLevel === "vendedor" ? "grupo" : drillLevel === "grupo" ? "cliente" : drillLevel === "cliente" ? "poliza" : null)
+                  const selKey = isOtros ? null : (drillLevel === "gerencia" ? "gerencia" : drillLevel === "vendedor" ? "vendedor" : drillLevel === "grupo" ? "grupo" : drillLevel === "cliente" ? "cliente" : null)
                   return (
-                    <tr key={r.name} className={`border-b border-[#F0F0F0] ${nextLevel ? "cursor-pointer" : ""} hover:bg-[#FFF5F5] ${idx % 2 === 1 ? "bg-[#FAFAFA]" : ""}`}
+                    <tr key={r.name} className={`group border-b border-[#F0F0F0] ${nextLevel ? "cursor-pointer" : ""} hover:bg-[#FFF5F5] ${isOtros ? "bg-gray-100" : idx % 2 === 1 ? "bg-[#FAFBFC]" : "bg-white"}`}
                       onClick={() => nextLevel && selKey && drill(nextLevel, r.name, { ...sel, [selKey]: r.name })}>
-                      <td className="px-1 py-2 text-center">{nextLevel && <ChevronRight className="w-3 h-3 text-[#E62800] inline" />}</td>
-                      <td className="px-2 py-2 text-xs font-medium text-[#111]">{r.name}</td>
-                      <td className={`px-2 py-2 text-right text-xs font-medium tabular-nums ${r.primaNeta < 0 ? "text-[#E62800]" : ""}`}>{r.primaNeta < 0 ? `(${fmt(Math.abs(r.primaNeta))})` : fmt(r.primaNeta)}</td>
+                      <td className="px-1 py-1.5 text-center">{nextLevel && <ChevronRight className="w-3 h-3 text-[#E62800] inline transition-transform group-hover:scale-110" />}</td>
+                      <td className="px-2 py-1.5 font-medium text-[#111]">{r.name}</td>
+                      <td className={`px-2 py-1.5 text-center font-normal tabular-nums ${r.primaNeta < 0 ? "text-red-600" : ""}`}>{r.primaNeta < 0 ? `(${fmt(Math.abs(r.primaNeta))})` : fmt(r.primaNeta)}</td>
                     </tr>
                   )
                 })}
-                <tr className="bg-[#041224] text-white"><td className="px-1 py-1.5"></td><td className="px-2 py-1.5 text-xs font-bold">Total</td><td className="px-2 py-1.5 text-right text-xs font-bold tabular-nums">{fmt(rowTotal)}</td></tr>
+                <tr className="bg-[#041224] text-white"><td className="px-1 py-1.5"></td><td className="px-2 py-1.5 font-bold">Total</td><td className="px-2 py-1.5 text-center font-bold tabular-nums">{fmt(rowTotal)}</td></tr>
               </>
             )}
           </tbody>

@@ -120,6 +120,24 @@ function PremiumBarChart({ data, colorFn, barHeight = 18, showGrid = true }: {
   )
 }
 
+// Top 10 + Otros aggregation
+function computeTop10WithOtros(items: CompromisoRow[]): { rows: CompromisoRow[]; otrosCount: number; otrosRow: CompromisoRow | null } {
+  if (items.length <= 10) return { rows: items, otrosCount: 0, otrosRow: null }
+  const sorted = [...items].sort((a, b) => b.primaActual - a.primaActual)
+  const top10 = sorted.slice(0, 10)
+  const rest = sorted.slice(10)
+  const sumMeta = rest.reduce((s, r) => s + r.meta, 0)
+  const sumActual = rest.reduce((s, r) => s + r.primaActual, 0)
+  const pctAvance = sumMeta > 0 ? Math.round((sumActual / sumMeta) * 1000) / 10 : 0
+  const otrosRow: CompromisoRow = {
+    vendedor: `Otros (${rest.length})`,
+    meta: sumMeta,
+    primaActual: sumActual,
+    pctAvance
+  }
+  return { rows: top10, otrosCount: rest.length, otrosRow }
+}
+
 export default function CompromisosPage() {
   const [year, setYear] = useState("2026")
   const [periodos, setPeriodos] = useState<number[]>([2])
@@ -140,7 +158,11 @@ export default function CompromisosPage() {
   const totalActual = data.reduce((s, r) => s + r.primaActual, 0)
   const totalPct = totalMeta > 0 ? Math.round((totalActual / totalMeta) * 1000) / 10 : 0
 
-  const barData = data.map(r => ({ name: shortName(r.vendedor), value: r.primaActual, pct: r.pctAvance }))
+  // Apply Top 10 + Otros
+  const { rows: displayRows, otrosCount, otrosRow } = computeTop10WithOtros(data)
+  const allDisplayRows = otrosRow ? [...displayRows, otrosRow] : displayRows
+
+  const barData = allDisplayRows.map(r => ({ name: shortName(r.vendedor), value: r.primaActual, pct: r.pctAvance }))
   // Top 5 from compromisos data (sorted by prima actual, desc)
   const top5Compromisos = [...data].sort((a, b) => b.primaActual - a.primaActual).slice(0, 5)
   const topBarData = top5Compromisos.map(r => ({ name: shortName(r.vendedor), value: r.primaActual }))
@@ -174,10 +196,11 @@ export default function CompromisosPage() {
               <div className="md:hidden space-y-1.5">
                 {loading ? (
                   <p className="text-center text-gray-400 py-4 text-xs">Cargando...</p>
-                ) : data.slice(0, 10).map((r) => {
+                ) : allDisplayRows.map((r, idx) => {
+                  const isOtros = r.vendedor.startsWith("Otros (")
                   const status = semaforoStatus(r.primaActual, r.meta * 0.8, r.meta)
                   return (
-                    <div key={r.vendedor} className="vendedor-row border border-gray-100 rounded-lg px-3 py-1.5">
+                    <div key={r.vendedor} className={`vendedor-row border border-gray-100 rounded-lg px-3 py-1.5 ${isOtros ? "bg-gray-100" : ""}`}>
                       <div className="flex justify-between items-center mb-0.5">
                         <span className="text-xs font-medium text-[#374151]">{r.vendedor}</span>
                         <span className="flex items-center gap-1.5">
@@ -187,7 +210,7 @@ export default function CompromisosPage() {
                       </div>
                       <div className="flex justify-between text-xs text-gray-500">
                         <span>PN: <span className="text-gray-900 font-medium tabular-nums">{fmt(r.primaActual)}</span></span>
-                        <span>Meta: <span className="tabular-nums">{fmt(r.meta)}</span></span>
+                        <span>Meta: <span className="text-green-600 font-semibold tabular-nums">{fmt(r.meta)}</span></span>
                       </div>
                     </div>
                   )
@@ -207,23 +230,26 @@ export default function CompromisosPage() {
                 <thead>
                   <tr className="bg-[#6B7280] text-white">
                     <th className="px-2 py-1.5 text-left text-xs font-semibold uppercase tracking-wider">Vendedor</th>
-                    <th className="px-2 py-1.5 text-right text-xs font-semibold uppercase tracking-wider">Meta</th>
-                    <th className="px-2 py-1.5 text-right text-xs font-semibold uppercase tracking-wider">Prima Neta</th>
-                    <th className="px-2 py-1.5 text-right text-xs font-semibold uppercase tracking-wider">%</th>
+                    <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">Meta</th>
+                    <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">Prima Neta</th>
+                    <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">%</th>
                     <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">Sem.</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr><td colSpan={5} className="px-2 py-2 text-center text-gray-400 text-xs">Cargando...</td></tr>
-                  ) : data.slice(0, 10).map((r, idx) => {
+                  ) : allDisplayRows.map((r, idx) => {
+                    const isOtros = r.vendedor.startsWith("Otros (")
                     const status = semaforoStatus(r.primaActual, r.meta * 0.8, r.meta)
+                    // Semáforo 3-color: red if below 80%, amber if 80-99%, green if >= 100%
+                    const semaforoColor = status === 'green' ? 'text-emerald-600' : status === 'yellow' ? 'text-amber-600' : 'text-red-600'
                     return (
-                      <tr key={r.vendedor} className={`vendedor-row border-b border-[#E5E7EB] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#F8FAFC]'}`}>
-                        <td className="px-2 py-1.5 text-left text-[#374151]">{r.vendedor}</td>
-                        <td className="px-2 py-1.5 text-right text-[#374151] tabular-nums">{fmt(r.meta)}</td>
-                        <td className="px-2 py-1.5 text-right text-[#374151] font-medium tabular-nums">{fmt(r.primaActual)}</td>
-                        <td className="px-2 py-1.5 text-right text-[#374151] tabular-nums">{r.pctAvance.toFixed(1)}%</td>
+                      <tr key={r.vendedor} className={`vendedor-row border-b border-[#E5E7EB] ${isOtros ? 'bg-gray-100' : idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFBFC]'}`}>
+                        <td className="px-2 py-1.5 text-left font-medium text-[#111]">{r.vendedor}</td>
+                        <td className="px-2 py-1.5 text-center text-green-600 font-semibold tabular-nums">{fmt(r.meta)}</td>
+                        <td className="px-2 py-1.5 text-center font-normal tabular-nums">{fmt(r.primaActual)}</td>
+                        <td className={`px-2 py-1.5 text-center tabular-nums ${semaforoColor}`}>{r.pctAvance.toFixed(1)}%</td>
                         <td className="px-2 py-1.5 text-center"><Semaforo status={status} /></td>
                       </tr>
                     )
@@ -233,9 +259,9 @@ export default function CompromisosPage() {
                     return (
                       <tr className="total-row bg-[#6B7280] text-white">
                         <td className="px-2 py-1.5 font-bold text-left">Total</td>
-                        <td className="px-2 py-1.5 text-right font-bold tabular-nums">{fmt(totalMeta)}</td>
-                        <td className="px-2 py-1.5 text-right font-bold tabular-nums">{fmt(totalActual)}</td>
-                        <td className="px-2 py-1.5 text-right font-bold tabular-nums">{totalPct.toFixed(1)}%</td>
+                        <td className="px-2 py-1.5 text-center font-bold tabular-nums">{fmt(totalMeta)}</td>
+                        <td className="px-2 py-1.5 text-center font-bold tabular-nums">{fmt(totalActual)}</td>
+                        <td className="px-2 py-1.5 text-center font-bold tabular-nums">{totalPct.toFixed(1)}%</td>
                         <td className="px-2 py-1.5 text-center"><Semaforo status={totalStatus} /></td>
                       </tr>
                     )
@@ -275,15 +301,15 @@ export default function CompromisosPage() {
                   <tr className="bg-[#6B7280] text-white">
                     <th className="px-2 py-1.5 text-center w-6 text-xs font-semibold uppercase tracking-wider">#</th>
                     <th className="px-2 py-1.5 text-left text-xs font-semibold uppercase tracking-wider">Vendedor</th>
-                    <th className="px-2 py-1.5 text-right text-xs font-semibold uppercase tracking-wider">Prima Neta</th>
+                    <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">Prima Neta</th>
                   </tr>
                 </thead>
                 <tbody>
                   {top5Compromisos.map((r, i) => (
-                    <tr key={r.vendedor} className={`border-b border-[#E5E7EB] ${i % 2 === 0 ? 'bg-white' : 'bg-[#F8FAFC]'}`}>
-                      <td className="px-2 py-1.5 text-center text-[#374151] tabular-nums">{i + 1}</td>
-                      <td className="px-2 py-1.5 text-left text-[#374151]">{r.vendedor}</td>
-                      <td className="px-2 py-1.5 text-right text-[#374151] font-medium tabular-nums">{fmt(r.primaActual)}</td>
+                    <tr key={r.vendedor} className={`border-b border-[#E5E7EB] ${i % 2 === 0 ? 'bg-white' : 'bg-[#FAFBFC]'}`}>
+                      <td className="px-2 py-1.5 text-center text-gray-800 tabular-nums">{i + 1}</td>
+                      <td className="px-2 py-1.5 text-left font-medium text-[#111]">{r.vendedor}</td>
+                      <td className="px-2 py-1.5 text-center font-normal tabular-nums">{fmt(r.primaActual)}</td>
                     </tr>
                   ))}
                 </tbody>
