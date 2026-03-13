@@ -124,7 +124,7 @@ function VerticalBarChart({ data }: { data: { name: string; value: number; pct?:
   return (
     <div className="flex flex-col flex-1">
       {/* Chart area */}
-      <div className="flex-1 flex items-end justify-center gap-1 px-1" style={{ minHeight: 200 }}>
+      <div className="flex items-end justify-center gap-1 px-1" style={{ height: 250 }}>
         {data.map((d, i) => {
           const heightPct = Math.max((d.value / max) * 100, 3)
           const color = COLUMN_COLORS[i % COLUMN_COLORS.length]
@@ -133,8 +133,7 @@ function VerticalBarChart({ data }: { data: { name: string; value: number; pct?:
               <span className="text-[9px] font-bold tabular-nums text-gray-700 mb-0.5">{fmtShort(d.value)}</span>
               <div style={{
                 width: '100%',
-                height: `${heightPct}%`,
-                minHeight: 4,
+                height: Math.max((d.value / max) * 230, 4),
                 background: `linear-gradient(180deg, ${color}CC, ${color})`,
                 borderRadius: '3px 3px 0 0',
                 transition: 'height 0.5s ease',
@@ -143,12 +142,14 @@ function VerticalBarChart({ data }: { data: { name: string; value: number; pct?:
           )
         })}
       </div>
-      {/* Legend */}
-      <div className="flex flex-wrap justify-center gap-x-2 gap-y-0.5 mt-2 px-1">
+      {/* Names below bars */}
+      <div className="flex justify-center gap-1 px-1 mt-1">
         {data.map((d, i) => (
-          <div key={i} className="flex items-center gap-0.5">
-            <span className="inline-block w-2 h-2 rounded-sm" style={{ backgroundColor: COLUMN_COLORS[i % COLUMN_COLORS.length] }} />
-            <span className="text-[8px] text-gray-600 truncate" style={{ maxWidth: 60 }}>{d.name}</span>
+          <div key={i} className="flex-1 text-center" style={{ maxWidth: 50 }}>
+            <span className="text-[7px] text-gray-600 leading-tight block" style={{ 
+              writingMode: 'vertical-rl', transform: 'rotate(180deg)', 
+              height: 50, overflow: 'hidden', margin: '0 auto'
+            }}>{d.name}</span>
           </div>
         ))}
       </div>
