@@ -51,25 +51,16 @@ export function PageTabs() {
       </div>
 
       {/* Desktop: horizontal tabs */}
-      <nav className="hidden md:flex items-center gap-6">
-        {TABS.map((tab) => (
-          <Link
-            key={tab.href}
-            href={tab.href}
-            className={`relative text-sm tracking-wide font-medium transition-colors pb-1 ${
-              pathname === tab.href
-                ? "text-[#0A1628] font-semibold"
-                : "text-[#8896A6] hover:text-[#0A1628]"
-            }`}
-            style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
-          >
-            {tab.label}
-            {pathname === tab.href && (
-              <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#C6922A]" />
-            )}
-          </Link>
+      <div className="hidden md:flex items-center">
+        {TABS.map((tab, i) => (
+          <React.Fragment key={tab.href}>
+            {i > 0 && <span className="text-gray-300 mx-2">|</span>}
+            <Link href={tab.href} className={`text-sm tracking-wide font-medium ${pathname === tab.href ? "text-gray-900 font-bold" : "text-gray-500 hover:text-gray-700"}`}>
+              {tab.label}
+            </Link>
+          </React.Fragment>
         ))}
-      </nav>
+      </div>
     </>
   )
 }

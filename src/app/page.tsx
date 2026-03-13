@@ -67,18 +67,8 @@ export default function Home() {
           <PeriodFilter onFilterChange={handleFilterChange} defaultYear="2026" defaultMonth={2} />
         </div>
 
-        {/* Title - Premium header */}
-        <div className="flex items-center justify-between mt-4 md:mt-6 mb-3 pb-2 border-b border-[#E8ECF1]">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-[#0A1628] rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">CLK</span>
-            </div>
-            <div>
-              <h1 className="text-lg font-bold tracking-[0.15em] text-[#0A1628]" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>PRIMA NETA COBRADA</h1>
-              <p className="text-xs text-[#8896A6]">Período: {year} - Mes {periodo}</p>
-            </div>
-          </div>
-        </div>
+        {/* Title */}
+        <h1 className="text-lg md:text-xl font-bold tracking-wide text-gray-800 mt-4 md:mt-6 mb-3 pb-1 border-b border-gray-200">PRIMA NETA COBRADA</h1>
 
         {/* ═══ MOBILE LAYOUT ═══ */}
         <div className="md:hidden flex flex-col gap-3">
@@ -164,52 +154,52 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ═══ DESKTOP LAYOUT ═══ */}
-        <div className="hidden md:flex gap-6 flex-1 mt-0">
-          {/* Left column: Gauge — 50% */}
-          <div className="w-1/2 flex items-center justify-center">
+        {/* ═══ DESKTOP LAYOUT (unchanged) ═══ */}
+        <div className="hidden md:flex gap-3 flex-1 mt-0">
+          {/* Left column: Gauge */}
+          <div className="w-[55%] flex items-center justify-center">
             <div className="w-full">
-              <Gauge value={total / 1e6} budget={totalPpto / 1e6} cumplimiento={cumpl} crecimiento={crec} />
+              <Gauge value={total / 1e6} prevYear={totalAA / 1e6} budget={totalPpto / 1e6} cumplimiento={cumpl} crecimiento={crec} />
             </div>
           </div>
 
-          {/* Right column: Table + Chart — 50% with breathing room */}
-          <div className="w-1/2 flex flex-col gap-4 justify-center">
-            <div className="bg-white shadow-lg rounded-xl border border-[#E8ECF1] overflow-hidden">
+          {/* Right column: Table + Chart */}
+          <div className="w-[45%] flex flex-col gap-1 justify-center mt-6">
+            <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
               <table className="w-full text-xs min-w-[480px]">
                 <thead>
-                  <tr className="bg-[#0A1628] border-b-2 border-[#C6922A]">
-                    <th className="text-left px-2 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-white">Línea</th>
-                    <th className="text-right px-2 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-white">Prima Neta</th>
-                    <th className="text-right px-2 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-white">Año Ant.</th>
-                    <th className="text-right px-2 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-white">Presupuesto</th>
-                    <th className="text-right px-2 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-white">Diferencia</th>
+                  <tr style={{ backgroundColor: '#6B7280' }}>
+                    <th className="text-left px-1.5 py-1 text-xs font-semibold uppercase tracking-wider text-white">Línea</th>
+                    <th className="text-right px-1.5 py-1 text-xs font-semibold uppercase tracking-wider text-white">Prima Neta</th>
+                    <th className="text-right px-1.5 py-1 text-xs font-semibold uppercase tracking-wider text-white">Año Ant.</th>
+                    <th className="text-right px-1.5 py-1 text-xs font-semibold uppercase tracking-wider text-white">Presupuesto</th>
+                    <th className="text-right px-1.5 py-1 text-xs font-semibold uppercase tracking-wider text-white">Diferencia</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#E8ECF1]">
+                <tbody className="divide-y divide-gray-100">
                   {lineas.map((l, i) => {
                     const diff = l.primaNeta - l.presupuesto
                     const link = LINEA_LINKS[l.nombre]
                     return (
-                      <tr key={l.nombre} className={`cursor-pointer transition-colors hover:bg-[#F0F4F8] ${i % 2 === 0 ? "bg-white" : "bg-[#F8FAFC]"}`}>
-                        <td className="px-2 py-1.5 font-medium text-[#0A1628]">
-                          {link ? <Link href={link} className="hover:underline text-[#0A1628]">{l.nombre}</Link> : l.nombre}
+                      <tr key={l.nombre} className={`cursor-pointer transition-colors hover:bg-blue-50 ${i % 2 === 0 ? "bg-white" : "bg-gray-50/70"}`}>
+                        <td className="px-1.5 py-1 font-medium text-gray-900">
+                          {link ? <Link href={link} className="hover:underline text-gray-900">{l.nombre}</Link> : l.nombre}
                         </td>
-                        <td className="px-2 py-1.5 text-right font-medium text-[#0A1628] tabular-nums">{fmt(l.primaNeta)}</td>
-                        <td className="px-2 py-1.5 text-right text-[#8896A6] tabular-nums">{fmt(l.anioAnterior)}</td>
-                        <td className="px-2 py-1.5 text-right text-[#4A5568] tabular-nums">{fmt(l.presupuesto)}</td>
-                        <td className={`px-2 py-1.5 text-right font-medium tabular-nums ${diff < 0 ? "text-[#8B2500]" : "text-[#1B6B4A]"}`}>
+                        <td className="px-1.5 py-1 text-right font-medium text-gray-900 tabular-nums">{fmt(l.primaNeta)}</td>
+                        <td className="px-1.5 py-1 text-right text-gray-500 tabular-nums">{fmt(l.anioAnterior)}</td>
+                        <td className="px-1.5 py-1 text-right font-medium text-gray-700 tabular-nums">{fmt(l.presupuesto)}</td>
+                        <td className={`px-1.5 py-1 text-right font-medium tabular-nums ${diff < 0 ? "text-red-600" : "text-emerald-600"}`}>
                           {diff < 0 ? `(${fmt(Math.abs(diff))})` : fmt(diff)}
                         </td>
                       </tr>
                     )
                   })}
-                  <tr className="bg-[#0A1628]">
-                    <td className="px-2 py-1.5 font-bold text-white">Total</td>
-                    <td className="px-2 py-1.5 text-right font-bold tabular-nums text-white">{fmt(total)}</td>
-                    <td className="px-2 py-1.5 text-right font-bold tabular-nums text-white">{fmt(totalAA)}</td>
-                    <td className="px-2 py-1.5 text-right font-bold tabular-nums text-white">{fmt(totalPpto)}</td>
-                    <td className={`px-2 py-1.5 text-right font-bold tabular-nums ${(total - totalPpto) < 0 ? "text-[#FF8C8C]" : "text-[#86EFAC]"}`}>
+                  <tr className="font-bold border-t-2 border-gray-300" style={{ backgroundColor: '#6B7280', color: '#fff' }}>
+                    <td className="px-1.5 py-1 font-bold" style={{ color: '#fff' }}>Total</td>
+                    <td className="px-1.5 py-1 text-right font-bold tabular-nums" style={{ color: '#fff' }}>{fmt(total)}</td>
+                    <td className="px-1.5 py-1 text-right font-bold tabular-nums" style={{ color: '#fff' }}>{fmt(totalAA)}</td>
+                    <td className="px-1.5 py-1 text-right font-bold tabular-nums" style={{ color: '#fff' }}>{fmt(totalPpto)}</td>
+                    <td className="px-1.5 py-1 text-right font-bold tabular-nums" style={{ color: (total - totalPpto) < 0 ? '#ff6b6b' : '#4ade80' }}>
                       {(total - totalPpto) < 0 ? `(${fmt(Math.abs(total - totalPpto))})` : fmt(total - totalPpto)}
                     </td>
                   </tr>
@@ -217,30 +207,30 @@ export default function Home() {
               </table>
             </div>
 
-            {/* Chart — Premium styling */}
-            <div className="bg-white border border-[#E8ECF1] rounded-xl shadow-lg px-3 py-2 flex flex-col h-[240px] overflow-hidden">
-              <div className="flex gap-4 text-[11px] mb-1.5 self-start">
-                <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#0A1628]"/><span className="text-[#4A5568] font-medium">Prima neta</span></div>
-                <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#C6922A]"/><span className="text-[#4A5568] font-medium">Presupuesto</span></div>
+            {/* Chart */}
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm px-2 py-1.5 flex flex-col h-[280px] overflow-hidden">
+              <div className="flex gap-3 text-[12px] mb-1 self-start">
+                <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: '#3983F6' }}/><span className="text-gray-700 font-medium">Prima neta efectuada</span></div>
+                <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: '#9CA3AF' }}/><span className="text-gray-700 font-medium">Presupuesto</span></div>
               </div>
               <div className="w-full flex-1">
                 {ready && chartData.length > 0 && (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart layout="vertical" data={chartData} margin={{ top: 2, right: 50, left: 10, bottom: 2 }} barGap={8}>
-                      <XAxis type="number" domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickFormatter={v => `$${v}M`} tick={{ fontSize: 10, fill: '#8896A6' }} axisLine={{ stroke: '#E8ECF1' }}/>
-                      <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 10, fill: '#8896A6' }} axisLine={false} tickLine={false}/>
+                      <XAxis type="number" domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickFormatter={v => `$${v}M`} tick={{ fontSize: 11 }} axisLine={{ stroke: '#E5E7EB' }}/>
+                      <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} axisLine={false} tickLine={false}/>
                       <Tooltip
-                        contentStyle={{ backgroundColor: '#0A1628', border: 'none', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.25)', fontSize: 11, padding: '8px 12px', color: '#fff' }}
+                        contentStyle={{ backgroundColor: '#052F5F', border: 'none', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.25)', fontSize: 12, padding: '8px 12px', color: '#fff' }}
                         itemStyle={{ color: '#fff' }}
-                        labelStyle={{ color: '#E8ECF1', fontWeight: 600, marginBottom: 4 }}
+                        labelStyle={{ color: '#ccc', fontWeight: 600, marginBottom: 4 }}
                         formatter={(value?: number, name?: string) => [`$${value ?? 0}M`, name === 'pn' ? 'Prima Neta' : 'Presupuesto']}
-                        cursor={{ fill: 'rgba(10,22,40,0.05)' }}
+                        cursor={{ fill: 'rgba(57,131,246,0.08)' }}
                       />
-                      <Bar dataKey="pn" fill="#0A1628" radius={[0, 3, 3, 0]} barSize={12} isAnimationActive={true} animationDuration={800}>
-                        <LabelList dataKey="pn" position="right" formatter={(v: unknown) => v != null ? `$${v}M` : ''} style={{ fontSize: 10, fill: '#0A1628', fontWeight: 600 }}/>
+                      <Bar dataKey="pn" fill="#3983F6" radius={[0, 3, 3, 0]} barSize={14} isAnimationActive={true} animationDuration={800}>
+                        <LabelList dataKey="pn" position="right" formatter={(v: unknown) => v != null ? `$${v}M` : ''} style={{ fontSize: 11, fill: '#3983F6', fontWeight: 600 }}/>
                       </Bar>
-                      <Bar dataKey="pp" fill="#C6922A" radius={[0, 3, 3, 0]} barSize={12} isAnimationActive={true} animationDuration={800}>
-                        <LabelList dataKey="pp" position="right" formatter={(v: unknown) => v != null ? `$${v}M` : ''} style={{ fontSize: 10, fill: '#C6922A', fontWeight: 600 }}/>
+                      <Bar dataKey="pp" fill="#9CA3AF" radius={[0, 3, 3, 0]} barSize={14} isAnimationActive={true} animationDuration={800}>
+                        <LabelList dataKey="pp" position="right" formatter={(v: unknown) => v != null ? `$${v}M` : ''} style={{ fontSize: 11, fill: '#6B7280', fontWeight: 600 }}/>
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
