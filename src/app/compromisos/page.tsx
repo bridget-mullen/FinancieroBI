@@ -1,11 +1,10 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { PageTabs } from "@/components/page-tabs"
 import { PeriodFilter } from "@/components/period-filter"
 import { getCompromisos } from "@/lib/queries"
 import type { CompromisoRow } from "@/lib/queries"
-import { DrillCharts } from "@/components/drill-charts"
 
 function fmt(v: number) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v)
@@ -162,10 +161,6 @@ export default function CompromisosPage() {
   const top5Compromisos = [...data].sort((a, b) => b.primaActual - a.primaActual).slice(0, 5)
   const topBarData = top5Compromisos.map(r => ({ name: shortName(r.vendedor), value: r.primaActual }))
 
-  // Data for DrillCharts component - distribution by vendedor
-  const chartRows = useMemo(() => {
-    return allDisplayRows.map(r => ({ name: r.vendedor, primaNeta: r.primaActual }))
-  }, [allDisplayRows])
 
   return (
     <div className="bg-[#FAFAFA] px-3 py-4">
@@ -272,17 +267,27 @@ export default function CompromisosPage() {
                 </tbody>
               </table>
             </div>
-            <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-              <DrillCharts
-                rows={chartRows}
-                levelLabel="Vendedor"
-                parentLabel="Compromisos de Venta"
-                loading={loading}
-              />
+            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-3 flex flex-col" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#041224] mb-2">Distribución por Vendedor</p>
+              <div className="flex-1">
+                <PremiumBarChart data={barData} barHeight={18} showGrid={false} colorFn={(idx) => {
+                  return { from: '#041224', to: '#1E3A5F' }
+                }} />
+              </div>
             </div>
           </div>
 
-          {/* Bottom 5 removed */}
+          {/* Top 10 Vendedores — bar chart */}
+          <div className="bg-white rounded-xl shadow-md border border-gray-100 p-3" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+            <p className="text-xs font-semibold uppercase tracking-wider text-[#041224] mb-2">Top 10 Vendedores — Prima Neta</p>
+            <div style={{ maxWidth: 700 }}>
+              <PremiumBarChart data={[...data].sort((a,b) => b.primaActual - a.primaActual).slice(0, 10).map(r => ({ name: shortName(r.vendedor), value: r.primaActual, pct: r.pctAvance }))} barHeight={22} showGrid colorFn={(idx, pct) => {
+                if (pct !== undefined && pct >= 100) return { from: '#059669', to: '#10B981' }
+                if (pct !== undefined && pct >= 80) return { from: '#D97706', to: '#F59E0B' }
+                return { from: '#E62800', to: '#EF4444' }
+              }} />
+            </div>
+          </div>
 
         </div>
       </div>
