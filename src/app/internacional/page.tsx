@@ -20,6 +20,7 @@ export default function AseguradorasPage() {
   const [periodos, setPeriodos] = useState<number[]>([2])
   const [allAseguradoras, setAllAseguradoras] = useState<{ aseguradora: string; primaNeta: number; pct: number }[]>([])
   const [totalPrima, setTotalPrima] = useState(0)
+  const [clasificacionFilter, setClasificacionFilter] = useState<string>("Todas")
 
   const handleFilterChange = useCallback((newYear: string, newPeriodos: number[]) => {
     setYear(newYear)
@@ -31,7 +32,7 @@ export default function AseguradorasPage() {
   const month = periodos[0] ?? 2
 
   useEffect(() => {
-    getRankedAseguradoras(month, year).then(a => {
+    getRankedAseguradoras(month, year, clasificacionFilter).then(a => {
       if (a && a.length > 0) {
         const total = a.reduce((s, x) => s + x.primaNeta, 0)
         setTotalPrima(total)
@@ -41,7 +42,7 @@ export default function AseguradorasPage() {
         setTotalPrima(0)
       }
     })
-  }, [year, month])
+  }, [year, month, clasificacionFilter])
 
   const maxAseguradora = allAseguradoras.length > 0 ? Math.max(...allAseguradoras.map(a => a.primaNeta)) : 0
   const COLORS = ["#1B5E20", "#2E7D32", "#388E3C", "#43A047", "#4CAF50", "#66BB6A", "#81C784", "#A5D6A7", "#C8E6C9", "#E8F5E9"]
@@ -57,7 +58,23 @@ export default function AseguradorasPage() {
           <PeriodFilter onFilterChange={handleFilterChange} />
         </div>
 
-        <h1 className="text-sm font-bold text-[#111] font-lato mt-3 mb-2">Aseguradoras</h1>
+        <div className="flex items-center justify-between mt-3 mb-2">
+          <h1 className="text-sm font-bold text-[#111] font-lato">Aseguradoras</h1>
+          <div className="flex items-center gap-1.5">
+            <label htmlFor="clasif-filter" className="text-xs text-gray-500 font-medium">Clasificación:</label>
+            <select
+              id="clasif-filter"
+              value={clasificacionFilter}
+              onChange={e => setClasificacionFilter(e.target.value)}
+              className="border border-gray-300 rounded-md px-2 py-0.5 text-xs font-medium bg-white"
+            >
+              <option value="Todas">Todas</option>
+              <option value="Estratégica">Estratégica</option>
+              <option value="Importante">Importante</option>
+              <option value="Servicio">Servicio</option>
+            </select>
+          </div>
+        </div>
 
         {filteredAseguradoras.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">

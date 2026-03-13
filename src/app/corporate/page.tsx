@@ -242,12 +242,12 @@ export default function CorporatePage() {
                   <tr><td colSpan={6} className="px-2 py-6 text-center text-xs text-[#888]">Datos en integración</td></tr>
                 ) : filteredPolizas.map((p, idx) => (
                   <tr key={`${p.documento}-${idx}`} className={`border-b border-[#F0F0F0] hover:bg-[#FFF5F5] ${idx % 2 === 1 ? "bg-[#FAFAFA]" : ""}`}>
-                    <td className="px-2 py-1.5 text-xs font-medium text-[#111]">{p.documento}</td>
-                    <td className="px-2 py-1.5 text-xs">{p.aseguradora}</td>
-                    <td className="px-2 py-1.5 text-xs">{p.ramo}</td>
-                    <td className="px-2 py-1.5 text-xs text-[#666]">{p.subramo}</td>
-                    <td className="px-2 py-1.5 text-xs text-[#666]">{p.fechaLiquidacion}</td>
-                    <td className={`px-2 py-1.5 text-right text-xs font-medium tabular-nums ${p.primaNeta < 0 ? "text-[#E62800]" : ""}`}>{p.primaNeta < 0 ? `(${fmt(Math.abs(p.primaNeta))})` : fmt(p.primaNeta)}</td>
+                    <td className="px-2 py-2 text-xs font-medium text-[#111]">{p.documento}</td>
+                    <td className="px-2 py-2 text-xs">{p.aseguradora}</td>
+                    <td className="px-2 py-2 text-xs">{p.ramo}</td>
+                    <td className="px-2 py-2 text-xs text-[#666]">{p.subramo}</td>
+                    <td className="px-2 py-2 text-xs text-[#666]">{p.fechaLiquidacion}</td>
+                    <td className={`px-2 py-2 text-right text-xs font-medium tabular-nums ${p.primaNeta < 0 ? "text-[#E62800]" : ""}`}>{p.primaNeta < 0 ? `(${fmt(Math.abs(p.primaNeta))})` : fmt(p.primaNeta)}</td>
                   </tr>
                 ))}
                 <tr className="bg-[#041224] text-white"><td className="px-2 py-1.5 text-xs font-bold" colSpan={5}>Total</td><td className="px-2 py-1.5 text-right text-xs font-bold tabular-nums">{fmt(polizaTotal)}</td></tr>
@@ -262,9 +262,9 @@ export default function CorporatePage() {
                   return (
                     <tr key={r.name} className={`border-b border-[#F0F0F0] ${nextLevel ? "cursor-pointer" : ""} hover:bg-[#FFF5F5] ${idx % 2 === 1 ? "bg-[#FAFAFA]" : ""}`}
                       onClick={() => nextLevel && selKey && drill(nextLevel, r.name, { ...sel, [selKey]: r.name })}>
-                      <td className="px-1 py-1.5 text-center">{nextLevel && <ChevronRight className="w-3 h-3 text-[#E62800] inline" />}</td>
-                      <td className="px-2 py-1.5 text-xs font-medium text-[#111]">{r.name}</td>
-                      <td className={`px-2 py-1.5 text-right text-xs font-medium tabular-nums ${r.primaNeta < 0 ? "text-[#E62800]" : ""}`}>{r.primaNeta < 0 ? `(${fmt(Math.abs(r.primaNeta))})` : fmt(r.primaNeta)}</td>
+                      <td className="px-1 py-2 text-center">{nextLevel && <ChevronRight className="w-3 h-3 text-[#E62800] inline" />}</td>
+                      <td className="px-2 py-2 text-xs font-medium text-[#111]">{r.name}</td>
+                      <td className={`px-2 py-2 text-right text-xs font-medium tabular-nums ${r.primaNeta < 0 ? "text-[#E62800]" : ""}`}>{r.primaNeta < 0 ? `(${fmt(Math.abs(r.primaNeta))})` : fmt(r.primaNeta)}</td>
                     </tr>
                   )
                 })}

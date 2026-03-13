@@ -460,11 +460,12 @@ export async function getRankedVendedores(
 }
 
 /**
- * Fetch aseguradoras ranked by prima
+ * Fetch aseguradoras ranked by prima with optional clasificación filter
  */
 export async function getRankedAseguradoras(
   periodo?: number,
-  año?: string
+  año?: string,
+  clasificacion?: string
 ): Promise<{ aseguradora: string; primaNeta: number }[] | null> {
   try {
     let query = supabase
@@ -476,6 +477,30 @@ export async function getRankedAseguradoras(
     if (error || !data?.length) return null
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const grouped = groupBySum(data as any[], "CiaAbreviacion")
+
+    // If clasificación filter is set, filter aseguradoras by ClasCia_TXT from catalogos_cias
+    if (clasificacion && clasificacion !== "Todas") {
+      const aseguradoras = Object.keys(grouped)
+      const { data: ciaData } = await supabase
+        .from("catalogos_cias")
+        .select("CiaAbreviacion, ClasCia_TXT")
+        .in("CiaAbreviacion", aseguradoras)
+        .eq("ClasCia_TXT", clasificacion)
+
+      if (ciaData) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const filteredCias = new Set((ciaData as any[]).map(c => c.CiaAbreviacion))
+        const filtered: Record<string, number> = {}
+        for (const [cia, prima] of Object.entries(grouped)) {
+          if (filteredCias.has(cia)) filtered[cia] = prima
+        }
+        return Object.entries(filtered)
+          .map(([aseguradora, prima]) => ({ aseguradora, primaNeta: Math.round(prima) }))
+          .sort((a, b) => b.primaNeta - a.primaNeta)
+      }
+      return []
+    }
+
     return Object.entries(grouped)
       .map(([aseguradora, prima]) => ({ aseguradora, primaNeta: Math.round(prima) }))
       .sort((a, b) => b.primaNeta - a.primaNeta)
@@ -647,7 +672,7 @@ export async function getRamos(
  */
 export async function getPeriodos(): Promise<number[] | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error} = await supabase
       .from("dashboard_data")
       .select("mes")
       .not("mes", "is", null)
@@ -660,6 +685,86 @@ export async function getPeriodos(): Promise<number[] | null> {
     for (const r of data as any[]) { set.add(r.mes as number) }
     const unique = Array.from(set).sort((a, b) => a - b)
     return unique
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Fetch vendedores grouped by tipo (Plata, Oro, Platino, etc.) for compromisos page
+ * Requires JOIN with catalogos_agentes on VendNombre = NombreCompleto
+ */
+export interface VendedorByTipoRow {
+  vendedor: string
+  tipo: string
+  primaNeta: number
+}
+
+export async function getVendedoresByTipo(
+  linea: string,
+  periodo?: number,
+  año?: string
+): Promise<{ tipo: string; vendedores: VendedorByTipoRow[]; total: number }[] | null> {
+  try {
+    // Fetch vendedores with tipo from catalogos_agentes
+    // Note: This requires catalogos_agentes table with columns: NombreCompleto, TipoVend_TXT
+    const { data, error } = await supabase
+      .from("dashboard_data")
+      .select(`
+        VendNombre,
+        PrimaNeta,
+        TCPago,
+        Descuento,
+        FLiquidacion
+      `)
+      .eq("LBussinesNombre", linea)
+      .eq("mes", periodo || 2)
+      .eq("anio", parseInt(año || "2026"))
+      .limit(10000)
+
+    if (error || !data?.length) return null
+
+    // Group by vendedor first
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const vendedorMap = groupBySum(data as any[], "VendNombre")
+
+    // Fetch tipo for each vendedor from catalogos_agentes
+    const vendedores = Object.keys(vendedorMap)
+    const { data: catData } = await supabase
+      .from("catalogos_agentes")
+      .select("NombreCompleto, TipoVend_TXT")
+      .in("NombreCompleto", vendedores)
+
+    // Map vendedor -> tipo
+    const tipoMap: Record<string, string> = {}
+    if (catData) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      for (const cat of catData as any[]) {
+        tipoMap[cat.NombreCompleto] = cat.TipoVend_TXT || "Sin clasificar"
+      }
+    }
+
+    // Group by tipo
+    const byTipo: Record<string, VendedorByTipoRow[]> = {}
+    for (const [vendedor, prima] of Object.entries(vendedorMap)) {
+      const tipo = tipoMap[vendedor] || "Sin clasificar"
+      if (!byTipo[tipo]) byTipo[tipo] = []
+      byTipo[tipo].push({ vendedor, tipo, primaNeta: Math.round(prima) })
+    }
+
+    // Sort vendedores within each tipo by primaNeta desc
+    for (const tipo in byTipo) {
+      byTipo[tipo].sort((a, b) => b.primaNeta - a.primaNeta)
+    }
+
+    // Return as array with totals
+    return Object.entries(byTipo)
+      .map(([tipo, vendedores]) => ({
+        tipo,
+        vendedores,
+        total: vendedores.reduce((s, v) => s + v.primaNeta, 0)
+      }))
+      .sort((a, b) => b.total - a.total)
   } catch {
     return null
   }

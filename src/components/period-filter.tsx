@@ -33,6 +33,7 @@ export function PeriodFilter({ onFilterChange, defaultYear = "2026", defaultMont
   const [selectedMonths, setSelectedMonths] = useState<number[]>([defaultMonth])
   const [selectedTrimestre, setSelectedTrimestre] = useState(0)
   const [selectedSemestre, setSelectedSemestre] = useState(0)
+  const [showMonthPicker, setShowMonthPicker] = useState(false)
 
   useEffect(() => {
     let periodos: number[] = []
@@ -85,19 +86,49 @@ export function PeriodFilter({ onFilterChange, defaultYear = "2026", defaultMont
       </div>
 
       {periodoType === "mes" && (
-        <div className="flex items-center gap-1.5 text-sm">
-          <label htmlFor="pf-mes" className="text-gray-500 font-medium">Mes</label>
-          <select
-            id="pf-mes"
-            name="pf-mes"
-            value={selectedMonths[0]}
-            onChange={e => setSelectedMonths([Number(e.target.value)])}
-            className="border border-gray-300 rounded-md px-2 py-0.5 text-sm font-medium bg-white"
-          >
-            {MESES_LABELS.map((m, i) => (
-              <option key={m} value={i + 1}>{m}</option>
-            ))}
-          </select>
+        <div className="flex items-center gap-1.5 text-sm relative">
+          <label className="text-gray-500 font-medium">Mes</label>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowMonthPicker(!showMonthPicker)}
+              onBlur={() => setTimeout(() => setShowMonthPicker(false), 200)}
+              className="border border-gray-300 rounded-md px-2 py-0.5 text-sm font-medium bg-white min-w-[120px] text-left flex items-center justify-between"
+            >
+              <span className="truncate">
+                {selectedMonths.length === 1
+                  ? MESES_LABELS[selectedMonths[0] - 1]
+                  : `${selectedMonths.length} meses`}
+              </span>
+              <span className="ml-1 text-gray-400">▼</span>
+            </button>
+            {showMonthPicker && (
+              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
+                {MESES_LABELS.map((m, i) => {
+                  const val = i + 1
+                  const isSelected = selectedMonths.includes(val)
+                  return (
+                    <label
+                      key={m}
+                      className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 cursor-pointer text-sm whitespace-nowrap"
+                      onMouseDown={(e) => {
+                        e.preventDefault()
+                        toggleMonth(val)
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => {}}
+                        className="w-3.5 h-3.5 rounded border-gray-300"
+                      />
+                      <span>{m}</span>
+                    </label>
+                  )
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

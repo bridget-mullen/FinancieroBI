@@ -19,6 +19,17 @@ function fmtShort(v: number) {
   return `$${v}`
 }
 
+// Semáforo color logic: RED if below prior year, AMBER if between prior year and budget, GREEN if above budget
+function getSemaforoColor(actual: number, priorYear: number, budget: number): string {
+  try {
+    if (actual < priorYear) return "text-red-600"
+    if (actual < budget) return "text-amber-600"
+    return "text-emerald-600"
+  } catch {
+    return "text-gray-600"
+  }
+}
+
 const LINEA_LINKS: Record<string, string> = {
   "Click Franquicias": "/tabla-detalle?linea=click-franquicias",
   "Click Promotoras": "/tabla-detalle?linea=click-promotoras",
@@ -205,13 +216,13 @@ export default function Home() {
                         key={l.nombre}
                         className={`cursor-pointer transition-colors hover:bg-[#F1F5F9] ${i % 2 === 0 ? "bg-white" : "bg-[#F8FAFC]"}`}
                       >
-                        <td className="px-2 py-1.5 font-medium text-gray-900">
+                        <td className="px-2 py-2 font-medium text-gray-900">
                           {link ? <Link href={link} className="hover:underline text-gray-900">{l.nombre}</Link> : l.nombre}
                         </td>
-                        <td className="px-2 py-1.5 text-right font-medium text-gray-900 tabular-nums">{fmt(l.primaNeta)}</td>
-                        <td className="px-2 py-1.5 text-right text-gray-500 tabular-nums">{fmt(l.anioAnterior)}</td>
-                        <td className="px-2 py-1.5 text-right font-medium text-gray-700 tabular-nums">{fmt(l.presupuesto)}</td>
-                        <td className={`px-2 py-1.5 text-right font-medium tabular-nums ${diff < 0 ? "text-[#991B1B]" : "text-[#166534]"}`}>
+                        <td className="px-2 py-2 text-right font-medium text-gray-900 tabular-nums">{fmt(l.primaNeta)}</td>
+                        <td className="px-2 py-2 text-right text-gray-500 tabular-nums">{fmt(l.anioAnterior)}</td>
+                        <td className="px-2 py-2 text-right font-medium text-gray-700 tabular-nums">{fmt(l.presupuesto)}</td>
+                        <td className={`px-2 py-2 text-right font-medium tabular-nums ${getSemaforoColor(l.primaNeta, l.anioAnterior, l.presupuesto)}`}>
                           {diff < 0 ? `(${fmt(Math.abs(diff))})` : fmt(diff)}
                         </td>
                       </tr>
@@ -223,7 +234,7 @@ export default function Home() {
                     <td className="px-2 py-2 text-right font-bold tabular-nums text-white">{fmt(total)}</td>
                     <td className="px-2 py-2 text-right font-bold tabular-nums text-white">{fmt(totalAA)}</td>
                     <td className="px-2 py-2 text-right font-bold tabular-nums text-white">{fmt(totalPpto)}</td>
-                    <td className={`px-2 py-2 text-right font-bold tabular-nums ${(total - totalPpto) < 0 ? "text-red-400" : "text-emerald-400"}`}>
+                    <td className={`px-2 py-2 text-right font-bold tabular-nums ${getSemaforoColor(total, totalAA, totalPpto).replace('text-', 'text-').replace('600', '400')}`}>
                       {(total - totalPpto) < 0 ? `(${fmt(Math.abs(total - totalPpto))})` : fmt(total - totalPpto)}
                     </td>
                   </tr>
