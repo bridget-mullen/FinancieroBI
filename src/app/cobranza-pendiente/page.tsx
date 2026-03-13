@@ -96,12 +96,12 @@ export default function CobranzaPendientePage() {
           <table className="w-full">
             <thead>
               <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
-                <th className="text-left px-2 py-1.5 text-xs font-semibold uppercase tracking-wider">Póliza</th>
-                <th className="text-left px-2 py-1.5 text-xs font-semibold uppercase tracking-wider">Cliente</th>
-                <th className="text-left px-2 py-1.5 text-xs font-semibold uppercase tracking-wider">Gerencia</th>
-                <th className="text-right px-2 py-1.5 text-xs font-semibold uppercase tracking-wider">Prima pendiente</th>
-                <th className="text-right px-2 py-1.5 text-xs font-semibold uppercase tracking-wider">Días vencido</th>
-                <th className="text-center px-2 py-1.5 text-xs font-semibold uppercase tracking-wider">Status</th>
+                <th className="text-left px-2 py-2.5 text-xs font-semibold uppercase tracking-wider">Póliza</th>
+                <th className="text-left px-2 py-2.5 text-xs font-semibold uppercase tracking-wider">Cliente</th>
+                <th className="text-left px-2 py-2.5 text-xs font-semibold uppercase tracking-wider">Gerencia</th>
+                <th className="text-right px-2 py-2.5 text-xs font-semibold uppercase tracking-wider">Prima pendiente</th>
+                <th className="text-right px-2 py-2.5 text-xs font-semibold uppercase tracking-wider">Días vencido</th>
+                <th className="text-center px-2 py-2.5 text-xs font-semibold uppercase tracking-wider">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -112,20 +112,20 @@ export default function CobranzaPendientePage() {
                     i % 2 === 1 ? "bg-[#FAFBFC]" : "bg-white"
                   }`}
                 >
-                  <td className="px-2 py-1.5 text-sm font-normal text-[#111]">{r.poliza}</td>
-                  <td className="px-2 py-1.5 text-sm font-normal text-gray-600">{r.cliente}</td>
-                  <td className="px-2 py-1.5 text-sm font-normal text-gray-600">{r.gerencia}</td>
-                  <td className="px-2 py-1.5 text-center text-sm font-medium tabular-nums">{fmt(r.prima_pendiente)}</td>
-                  <td className={`px-2 py-1.5 text-center text-sm font-medium tabular-nums ${r.dias_vencido > 30 ? "text-[#E62800]" : ""}`}>
+                  <td className="px-2 py-3 text-sm font-semibold text-[#111]">{r.poliza}</td>
+                  <td className="px-2 py-3 text-sm font-semibold text-gray-600">{r.cliente}</td>
+                  <td className="px-2 py-3 text-sm font-normal text-gray-600">{r.gerencia}</td>
+                  <td className="px-2 py-3 text-center text-sm font-medium tabular-nums">{fmt(r.prima_pendiente)}</td>
+                  <td className={`px-2 py-3 text-center text-sm font-medium tabular-nums ${r.dias_vencido > 30 ? "text-[#E62800]" : ""}`}>
                     {r.dias_vencido}
                   </td>
-                  <td className="px-2 py-1.5 text-center"><StatusBadge status={r.status} /></td>
+                  <td className="px-2 py-3 text-center"><StatusBadge status={r.status} /></td>
                 </tr>
               ))}
               <tr className="bg-[#041224] text-white">
-                <td className="px-2 py-1.5 text-sm font-bold" colSpan={3}>TOTAL</td>
-                <td className="px-2 py-1.5 text-right text-sm font-bold tabular-nums">{fmt(totalPendiente)}</td>
-                <td className="px-2 py-1.5" colSpan={2}></td>
+                <td className="px-2 py-3 text-sm font-bold" colSpan={3}>TOTAL</td>
+                <td className="px-2 py-3 text-right text-sm font-bold tabular-nums">{fmt(totalPendiente)}</td>
+                <td className="px-2 py-3" colSpan={2}></td>
               </tr>
             </tbody>
           </table>

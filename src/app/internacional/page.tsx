@@ -232,11 +232,11 @@ export default function AseguradorasPage() {
               <table className="hidden md:table w-full text-xs">
                 <thead className="sticky top-0 z-10">
                   <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
-                    <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider w-8">#</th>
-                    <th className="px-3 py-1.5 text-left text-xs font-semibold uppercase tracking-wider">Aseguradora</th>
-                    <th className="px-3 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">Clasificación</th>
-                    <th className="px-3 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">Prima Neta</th>
-                    <th className="px-3 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">% Participación</th>
+                    <th className="px-2 py-2.5 text-center text-xs font-semibold uppercase tracking-wider w-8">#</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider">Aseguradora</th>
+                    <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wider">Clasificación</th>
+                    <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wider">Prima Neta</th>
+                    <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wider">% Participación</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -244,20 +244,20 @@ export default function AseguradorasPage() {
                     const isOtros = a.aseguradora.startsWith("Otros (")
                     return (
                       <tr key={a.aseguradora} className={`border-b border-[#E5E7EB] hover:bg-[#FFF5F5] transition-colors ${isOtros ? "bg-gray-100" : i % 2 === 1 ? "bg-[#FAFBFC]" : "bg-white"}`}>
-                        <td className="px-2 py-1.5 text-center text-sm text-gray-800 tabular-nums">{i + 1}</td>
-                        <td className="px-3 py-1.5 text-sm font-medium text-[#111] text-left">{a.aseguradora}</td>
-                        <td className="px-3 py-1.5 text-center">{a.clasificacion ? getClasificacionBadge(a.clasificacion) : <span className="text-gray-300">—</span>}</td>
-                        <td className="px-3 py-1.5 text-center text-sm font-medium tabular-nums">{fmt(a.primaNeta)}</td>
-                        <td className="px-3 py-1.5 text-center text-sm font-medium tabular-nums text-gray-800">{a.pct}%</td>
+                        <td className="px-2 py-3 text-center text-sm text-gray-800 tabular-nums">{i + 1}</td>
+                        <td className="px-3 py-3 text-sm font-semibold text-[#111] text-left">{a.aseguradora}</td>
+                        <td className="px-3 py-3 text-center">{a.clasificacion ? getClasificacionBadge(a.clasificacion) : <span className="text-gray-300">—</span>}</td>
+                        <td className="px-3 py-3 text-center text-sm font-medium tabular-nums">{fmt(a.primaNeta)}</td>
+                        <td className="px-3 py-3 text-center text-sm font-medium tabular-nums text-gray-800">{a.pct}%</td>
                       </tr>
                     )
                   })}
                   <tr className="bg-[#041224] text-white border-t-2 cursor-default">
-                    <td className="px-2 py-1.5"></td>
-                    <td className="px-3 py-1.5 text-sm font-bold text-left">Total</td>
-                    <td className="px-3 py-1.5"></td>
-                    <td className="px-3 py-1.5 text-center text-sm font-bold tabular-nums">{fmt(totalPrima)}</td>
-                    <td className="px-3 py-1.5 text-center text-sm font-bold tabular-nums">100%</td>
+                    <td className="px-2 py-3"></td>
+                    <td className="px-3 py-3 text-sm font-bold text-left">Total</td>
+                    <td className="px-3 py-3"></td>
+                    <td className="px-3 py-3 text-center text-sm font-bold tabular-nums">{fmt(totalPrima)}</td>
+                    <td className="px-3 py-3 text-center text-sm font-bold tabular-nums">100%</td>
                   </tr>
                 </tbody>
               </table>
