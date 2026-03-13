@@ -15,7 +15,7 @@ interface GaugeProps {
 export function Gauge({ value, prevYear = 0, budget = 129.5, clickable = true, cumplimiento = 0, crecimiento = 0 }: GaugeProps) {
   const uniqueId = useId()
   const W = 860
-  const H = 440
+  const H = 720
   const cx = W / 2
   const cy = 390
 
@@ -32,8 +32,8 @@ export function Gauge({ value, prevYear = 0, budget = 129.5, clickable = true, c
   // RED zone: 0% to (prevYear / budget * 100)%
   // YELLOW zone: from red threshold to 100%
   // GREEN zone: above 100%
-  const redThreshold = 0.33 // Fixed: roughly equal thirds for visual balance
-  const yellowThreshold = 0.66 // Fixed: roughly equal thirds for visual balance
+  const redThreshold = budget > 0 ? (prevYear / budget) : 0.5 // fraction of arc for red zone
+  const yellowThreshold = 1.0 // 100% = end of yellow, start of green
 
   // 5 clean labels outside the arc (scaled to 120% max for green zone visibility)
   const maxScale = 1.2 // Show up to 120% on gauge
@@ -70,8 +70,8 @@ export function Gauge({ value, prevYear = 0, budget = 129.5, clickable = true, c
 
   // Create the three zone arcs (as fractions of the full arc)
   // The gauge goes from 0 to 120% (maxScale), so we need to scale zones
-  const redEndPct = 1/3 // Equal thirds
-  const yellowEndPct = 2/3 // Equal thirds
+  const redEndPct = Math.min(redThreshold / maxScale, 1)
+  const yellowEndPct = Math.min(yellowThreshold / maxScale, 1)
   const greenEndPct = 1 // Full arc
 
   const redArc = createArcPath(0, redEndPct, outerR, innerR)
@@ -100,6 +100,10 @@ export function Gauge({ value, prevYear = 0, budget = 129.5, clickable = true, c
   const tickR1 = outerR + 2
   const tickR2 = outerR + 12
 
+  const circleR = 62
+  const circleY = cy + 200
+  const circleLX = cx - 120
+  const circleRX = cx + 120
 
   const content = (
     <div style={{ width: "100%", position: "relative" }}>
@@ -146,6 +150,10 @@ export function Gauge({ value, prevYear = 0, budget = 129.5, clickable = true, c
           fill="#052F5F"
         />
 
+        <circle cx={cx} cy={cy} r={18} fill="#052F5F" />
+        <circle cx={cx} cy={cy} r={11} fill="white" />
+        <circle cx={cx} cy={cy} r={5} fill="#052F5F" />
+
         {/* Prominent % achievement in center */}
         <text
           x={cx} y={cy + 55}
@@ -163,8 +171,47 @@ export function Gauge({ value, prevYear = 0, budget = 129.5, clickable = true, c
         >
           Cumplimiento
         </text>
-        {/* Removed value/budget text per client request */}
-        {/* Removed indicator circles per client request */}
+        <text
+          x={cx} y={cy + 120}
+          fontSize="18" fill="#6B7280"
+          textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
+        >
+          ${value.toFixed(1)}M de ${budget.toFixed(1)}M
+        </text>
+
+        <circle cx={circleLX} cy={circleY} r={circleR} fill="#3983F6" />
+        <text
+          x={circleLX} y={circleY + 8}
+          fontSize="32" fontWeight="900" fill="white"
+          textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
+          style={{ fontFeatureSettings: "'tnum'" }}
+        >
+          ${value.toFixed(1)}M
+        </text>
+        <text
+          x={circleLX} y={circleY + circleR + 22}
+          fontSize="14" fontWeight="700" fill="#374151"
+          textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
+        >
+          Prima Neta
+        </text>
+
+        <circle cx={circleRX} cy={circleY} r={circleR} fill={crecimiento < 0 ? '#E62800' : '#60A63A'} />
+        <text
+          x={circleRX} y={circleY + 8}
+          fontSize="32" fontWeight="900" fill="white"
+          textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
+          style={{ fontFeatureSettings: "'tnum'" }}
+        >
+          {crecimiento < 0 ? "↓" : "↑"}{Math.abs(crecimiento)}%
+        </text>
+        <text
+          x={circleRX} y={circleY + circleR + 22}
+          fontSize="14" fontWeight="700" fill="#374151"
+          textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
+        >
+          Crecimiento
+        </text>
       </svg>
     </div>
   )
