@@ -223,12 +223,12 @@ export default function CompromisosPage() {
               <table className="hidden md:table w-full border-collapse text-xs">
                 <thead>
                   <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
-                    <th className="px-2 py-2.5 text-left text-xs font-semibold uppercase tracking-wider">Vendedor</th>
-                    <th className="px-2 py-2.5 text-center text-xs font-semibold uppercase tracking-wider">Meta</th>
-                    <th className="px-2 py-2.5 text-center text-xs font-semibold uppercase tracking-wider">Prima Neta</th>
-                    <th className="px-2 py-2.5 text-center text-xs font-semibold uppercase tracking-wider">Diferencia</th>
-                    <th className="px-2 py-2.5 text-center text-xs font-semibold uppercase tracking-wider">% Avance</th>
-                    <th className="px-2 py-2.5 text-center text-xs font-semibold uppercase tracking-wider">Sem.</th>
+                    <th className="px-2 py-1.5 text-left text-xs font-semibold uppercase tracking-wider">Vendedor</th>
+                    <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">Meta</th>
+                    <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">Prima Neta</th>
+                    <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">Diferencia</th>
+                    <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">% Avance</th>
+                    <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">Sem.</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -242,14 +242,14 @@ export default function CompromisosPage() {
                     const diferencia = r.primaActual - r.meta
                     return (
                       <tr key={r.vendedor} className={`vendedor-row border-b border-[#E5E7EB] ${isOtros ? 'bg-gray-100' : idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFBFC]'}`}>
-                        <td className="px-2 py-3 text-left text-sm font-semibold text-[#111]">{r.vendedor}</td>
-                        <td className="px-2 py-3 text-center text-sm text-gray-600 font-medium tabular-nums">{fmt(r.meta)}</td>
-                        <td className="px-2 py-3 text-center text-sm font-medium tabular-nums">{fmt(r.primaActual)}</td>
-                        <td className={`px-2 py-3 text-center text-sm font-medium tabular-nums ${semaforoColor}`}>
+                        <td className="px-2 py-1.5 text-left text-xs font-semibold text-[#111]">{r.vendedor}</td>
+                        <td className="px-2 py-1.5 text-center text-xs text-gray-600 font-medium tabular-nums">{fmt(r.meta)}</td>
+                        <td className="px-2 py-1.5 text-center text-xs font-medium tabular-nums">{fmt(r.primaActual)}</td>
+                        <td className={`px-2 py-1.5 text-center text-xs font-medium tabular-nums ${semaforoColor}`}>
                           {diferencia < 0 ? `(${fmt(Math.abs(diferencia))})` : fmt(diferencia)}
                         </td>
-                        <td className={`px-2 py-3 text-center text-sm font-medium tabular-nums ${semaforoColor}`}>{r.pctAvance.toFixed(1)}%</td>
-                        <td className="px-2 py-3 text-center"><Semaforo status={status} /></td>
+                        <td className={`px-2 py-1.5 text-center text-xs font-medium tabular-nums ${semaforoColor}`}>{r.pctAvance.toFixed(1)}%</td>
+                        <td className="px-2 py-1.5 text-center"><Semaforo status={status} /></td>
                       </tr>
                     )
                   })}
@@ -258,14 +258,14 @@ export default function CompromisosPage() {
                     const totalDif = totalActual - totalMeta
                     return (
                       <tr className="total-row bg-[#041224] text-white border-b-2 border-b-[#E62800]">
-                        <td className="px-2 py-3 text-sm font-bold text-left">Total</td>
-                        <td className="px-2 py-3 text-center text-sm font-bold tabular-nums">{fmt(totalMeta)}</td>
-                        <td className="px-2 py-3 text-center text-sm font-bold tabular-nums">{fmt(totalActual)}</td>
-                        <td className="px-2 py-3 text-center text-sm font-bold tabular-nums">
+                        <td className="px-2 py-1.5 text-xs font-bold text-left">Total</td>
+                        <td className="px-2 py-1.5 text-center text-xs font-bold tabular-nums">{fmt(totalMeta)}</td>
+                        <td className="px-2 py-1.5 text-center text-xs font-bold tabular-nums">{fmt(totalActual)}</td>
+                        <td className="px-2 py-1.5 text-center text-xs font-bold tabular-nums">
                           {totalDif < 0 ? `(${fmt(Math.abs(totalDif))})` : fmt(totalDif)}
                         </td>
-                        <td className="px-2 py-3 text-center text-sm font-bold tabular-nums">{totalPct.toFixed(1)}%</td>
-                        <td className="px-2 py-3 text-center"><Semaforo status={totalStatus} /></td>
+                        <td className="px-2 py-1.5 text-center text-xs font-bold tabular-nums">{totalPct.toFixed(1)}%</td>
+                        <td className="px-2 py-1.5 text-center"><Semaforo status={totalStatus} /></td>
                       </tr>
                     )
                   })()}
@@ -279,56 +279,6 @@ export default function CompromisosPage() {
                 parentLabel="Compromisos de Venta"
                 loading={loading}
               />
-            </div>
-          </div>
-
-          {/* Row 2: Top 5 table + chart */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[#041224] mb-1">Top 5 Vendedores (Prima Neta)</p>
-              {/* Mobile: compact list */}
-              <div className="md:hidden space-y-1">
-                {top5Compromisos.map((r, i) => (
-                  <div key={r.vendedor} className="flex justify-between items-center border-b border-gray-100 py-1.5">
-                    <span className="text-xs"><span className="text-gray-500 mr-1.5 tabular-nums">#{i+1}</span>{r.vendedor}</span>
-                    <span className="text-xs font-medium text-[#374151] tabular-nums">{fmt(r.primaActual)}</span>
-                  </div>
-                ))}
-              </div>
-              {/* Desktop: table */}
-              <table className="hidden md:table w-full border-collapse text-xs">
-                <thead>
-                  <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
-                    <th className="px-2 py-2.5 text-center w-6 text-xs font-semibold uppercase tracking-wider">#</th>
-                    <th className="px-2 py-2.5 text-left text-xs font-semibold uppercase tracking-wider">Vendedor</th>
-                    <th className="px-2 py-2.5 text-center text-xs font-semibold uppercase tracking-wider">Prima Neta</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {top5Compromisos.map((r, i) => (
-                    <tr key={r.vendedor} className={`border-b border-[#E5E7EB] ${i % 2 === 0 ? 'bg-white' : 'bg-[#FAFBFC]'}`}>
-                      <td className="px-2 py-3 text-center text-sm text-gray-800 tabular-nums">{i + 1}</td>
-                      <td className="px-2 py-3 text-left text-sm font-semibold text-[#111]">{r.vendedor}</td>
-                      <td className="px-2 py-3 text-center text-sm font-medium tabular-nums">{fmt(r.primaActual)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-3 flex flex-col" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-              <p className="text-xs font-semibold uppercase tracking-wider text-[#1E3A5F] mb-2">Top 5</p>
-              <div className="flex-1">
-                <PremiumBarChart data={topBarData} barHeight={22} showGrid={false} colorFn={(idx) => {
-                  const shades = [
-                    { from: '#1D4ED8', to: '#2563EB' },
-                    { from: '#2563EB', to: '#3B82F6' },
-                    { from: '#3B82F6', to: '#60A5FA' },
-                    { from: '#60A5FA', to: '#93C5FD' },
-                    { from: '#93C5FD', to: '#BFDBFE' },
-                  ]
-                  return shades[idx] || shades[4]
-                }} />
-              </div>
             </div>
           </div>
 
