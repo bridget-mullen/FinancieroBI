@@ -204,7 +204,7 @@ export default function Home() {
                         </td>
                         <td className="px-2 py-2 text-right font-medium text-gray-900 tabular-nums">{fmt(l.primaNeta)}</td>
                         <td className="px-2 py-2 text-right text-gray-500 tabular-nums">{fmt(l.anioAnterior)}</td>
-                        <td className="px-2 py-2 text-right font-medium text-gray-700 tabular-nums">{fmt(l.presupuesto)}</td>
+                        <td className="px-2 py-2 text-right font-medium text-emerald-600 tabular-nums">{fmt(l.presupuesto)}</td>
                         <td className={`px-2 py-2 text-right font-medium tabular-nums ${getSemaforoColor(l.primaNeta - l.presupuesto)}`}>
                           {diff < 0 ? `(${fmt(Math.abs(diff))})` : fmt(diff)}
                         </td>
