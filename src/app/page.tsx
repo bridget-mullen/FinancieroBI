@@ -154,17 +154,17 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ═══ DESKTOP LAYOUT (unchanged) ═══ */}
-        <div className="hidden md:flex gap-3 flex-1 mt-0">
+        {/* ═══ DESKTOP LAYOUT ═══ */}
+        <div className="hidden md:flex gap-6 flex-1 mt-0">
           {/* Left column: Gauge */}
-          <div className="w-[55%] flex items-center justify-center">
+          <div className="w-[50%] flex items-center justify-center">
             <div className="w-full">
               <Gauge value={total / 1e6} prevYear={totalAA / 1e6} budget={totalPpto / 1e6} cumplimiento={cumpl} crecimiento={crec} />
             </div>
           </div>
 
           {/* Right column: Table + Chart */}
-          <div className="w-[45%] flex flex-col gap-1 justify-center mt-6">
+          <div className="w-[50%] flex flex-col gap-1 justify-center mt-6">
             <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
               <table className="w-full text-xs min-w-[480px]">
                 <thead>

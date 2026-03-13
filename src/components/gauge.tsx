@@ -21,28 +21,44 @@ export function Gauge({ value, prevYear = 0, budget = 129.5, clickable = true, c
 
   const outerR = 340
   const innerR = outerR * 0.75
-  const outerGrayR = outerR + 5
   const labelR = outerR + 32
 
-  // Dynamic needle position based on cumplimiento (% of budget achieved)
-  // Clamp between 0 and ~120% for visual purposes
-  const needlePct = Math.min(Math.max(cumplimiento / 100, 0), 1.2)
+  // Business logic constants (in millions)
+  const CURRENT_VALUE = 98.5 // Current prima neta
+  const BUDGET = 129.5 // Budget target
+  const MAX_SCALE = 136 // 129.5 * 1.05 = ~136 for 5% green overflow zone
 
-  // Semáforo zone thresholds:
-  // RED zone: 0% to (prevYear / budget * 100)%
-  // YELLOW zone: from red threshold to 100%
-  // GREEN zone: above 100%
-  const redThreshold = budget > 0 ? (prevYear / budget) : 0.5 // fraction of arc for red zone
-  const yellowThreshold = 1.0 // 100% = end of yellow, start of green
+  // Arc zone thresholds as fractions of MAX_SCALE (136M)
+  // Zone 1 (Red): $0 to $98.5M → 98.5/136 = 0.724
+  // Zone 2 (Yellow): $98.5M to $129.5M → 129.5/136 = 0.952
+  // Zone 3 (Green): $129.5M to $136M → 1.0
+  const redEndPct = CURRENT_VALUE / MAX_SCALE // 0.724
+  const yellowEndPct = BUDGET / MAX_SCALE // 0.952
+  const greenEndPct = 1.0
 
-  // 5 clean labels outside the arc (scaled to 120% max for green zone visibility)
-  const maxScale = 1.2 // Show up to 120% on gauge
+  // Premium colors
+  const COLORS = {
+    red: '#8B1A1A', // deep burgundy/tinto elegante
+    yellow: '#B8860B', // dark goldenrod/ámbar dorado
+    green: '#1B6B4A', // deep emerald/verde esmeralda oscuro
+    needle: '#2D3748', // warm charcoal
+    navy: '#0A1628', // deep navy for circles
+    text: '#0A1628', // primary text
+    textMuted: '#6B7280',
+    textLight: '#9CA3AF',
+  }
+
+  // Needle position: hardcoded to $98.5M on 0-136M scale
+  const needlePct = CURRENT_VALUE / MAX_SCALE // 0.724
+
+  // 6 tick labels along the arc exterior
   const arcLabels = [
-    { pct: 0, label: "$0M" },
-    { pct: 0.25 * maxScale, label: `$${Math.round(budget * 0.25)}M` },
-    { pct: 0.5 * maxScale, label: `$${Math.round(budget * 0.5)}M` },
-    { pct: 0.75 * maxScale, label: `$${Math.round(budget * 0.75)}M` },
-    { pct: 1 * maxScale, label: `$${Math.round(budget * 10) / 10}M` },
+    { pct: 0 / MAX_SCALE, label: "$0M" },
+    { pct: 25 / MAX_SCALE, label: "$25M" },
+    { pct: 50 / MAX_SCALE, label: "$50M" },
+    { pct: 75 / MAX_SCALE, label: "$75M" },
+    { pct: 98.5 / MAX_SCALE, label: "$98.5M" },
+    { pct: 129.5 / MAX_SCALE, label: "$129.5M" },
   ]
 
   function polarToXY(angleDeg: number, r: number): [number, number] {
@@ -68,22 +84,13 @@ export function Gauge({ value, prevYear = 0, budget = 129.5, clickable = true, c
     ].join(" ")
   }
 
-  // Create the three zone arcs (as fractions of the full arc)
-  // The gauge goes from 0 to 120% (maxScale), so we need to scale zones
-  const redEndPct = Math.min(redThreshold / maxScale, 1)
-  const yellowEndPct = Math.min(yellowThreshold / maxScale, 1)
-  const greenEndPct = 1 // Full arc
-
+  // Create the three zone arcs
   const redArc = createArcPath(0, redEndPct, outerR, innerR)
   const yellowArc = createArcPath(redEndPct, yellowEndPct, outerR, innerR)
   const greenArc = createArcPath(yellowEndPct, greenEndPct, outerR, innerR)
 
-  const [gL_x, gL_y] = polarToXY(180, outerGrayR)
-  const [gR_x, gR_y] = polarToXY(0, outerGrayR)
-  const grayArc = `M ${gL_x} ${gL_y} A ${outerGrayR} ${outerGrayR} 0 0 1 ${gR_x} ${gR_y}`
-
-  // Dynamic needle angle based on actual cumplimiento
-  const needleAngleDeg = 180 - (needlePct / maxScale) * 180
+  // Needle geometry
+  const needleAngleDeg = 180 - needlePct * 180
   const needleLen = outerR - 8
   const [tipX, tipY] = polarToXY(needleAngleDeg, needleLen)
 
@@ -97,13 +104,18 @@ export function Gauge({ value, prevYear = 0, budget = 129.5, clickable = true, c
   const tailLen = 20
   const [tailX, tailY] = polarToXY(needleAngleDeg + 180, tailLen)
 
+  // Tick marks
   const tickR1 = outerR + 2
   const tickR2 = outerR + 12
 
+  // Bottom circles (Mickey ears)
   const circleR = 62
   const circleY = cy + 200
   const circleLX = cx - 120
   const circleRX = cx + 120
+
+  // Drop shadow filter ID
+  const shadowId = `shadow-${uniqueId}`
 
   const content = (
     <div style={{ width: "100%", position: "relative" }}>
@@ -112,23 +124,41 @@ export function Gauge({ value, prevYear = 0, budget = 129.5, clickable = true, c
         viewBox={`0 0 ${W} ${H}`}
         style={{ display: "block" }}
       >
-        <path d={grayArc} fill="none" stroke="#D0D0D0" strokeWidth={2} />
+        {/* Drop shadow filter for circles */}
+        <defs>
+          <filter id={shadowId} x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="rgba(0,0,0,0.2)" />
+          </filter>
+          {/* Gradient definitions for subtle zone transitions */}
+          <linearGradient id={`redGrad-${uniqueId}`} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#7A1515" />
+            <stop offset="100%" stopColor="#8B1A1A" />
+          </linearGradient>
+          <linearGradient id={`yellowGrad-${uniqueId}`} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#A67807" />
+            <stop offset="100%" stopColor="#B8860B" />
+          </linearGradient>
+          <linearGradient id={`greenGrad-${uniqueId}`} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#165C3F" />
+            <stop offset="100%" stopColor="#1B6B4A" />
+          </linearGradient>
+        </defs>
 
-        {/* Semáforo zones - solid colors, no gradients */}
-        <path d={redArc} fill="#E62800" />
-        <path d={yellowArc} fill="#F9DC5C" />
-        <path d={greenArc} fill="#60A63A" />
+        {/* Arc zones with premium colors */}
+        <path d={redArc} fill={COLORS.red} />
+        <path d={yellowArc} fill={COLORS.yellow} />
+        <path d={greenArc} fill={COLORS.green} />
 
         {/* Tick marks + labels OUTSIDE */}
         {arcLabels.map((tick, i) => {
-          const angleDeg = 180 - (tick.pct / maxScale) * 180
+          const angleDeg = 180 - tick.pct * 180
           const [t1x, t1y] = polarToXY(angleDeg, tickR1)
           const [t2x, t2y] = polarToXY(angleDeg, tickR2)
           const [lx, ly] = polarToXY(angleDeg, labelR)
           // Anchor: left labels start, right labels end, middle ones middle
           const anchor = tick.pct < 0.15 ? "start" : tick.pct > 0.85 ? "end" : "middle"
           // Push edge labels below the arc baseline so they don't overlap
-          const yOffset = (tick.pct < 0.05 || tick.pct > 0.95) ? 20 : 0
+          const yOffset = tick.pct < 0.05 ? 20 : tick.pct > 0.9 ? 15 : 0
           return (
             <g key={i}>
               <line x1={t1x} y1={t1y} x2={t2x} y2={t2y} stroke="#9CA3AF" strokeWidth={1.5} />
@@ -145,65 +175,68 @@ export function Gauge({ value, prevYear = 0, budget = 129.5, clickable = true, c
           )
         })}
 
+        {/* Needle - warm charcoal */}
         <polygon
           points={`${tipX},${tipY} ${b1x},${b1y} ${tailX},${tailY} ${b2x},${b2y}`}
-          fill="#052F5F"
+          fill={COLORS.needle}
         />
 
-        <circle cx={cx} cy={cy} r={18} fill="#052F5F" />
+        {/* Center hub */}
+        <circle cx={cx} cy={cy} r={18} fill={COLORS.needle} />
         <circle cx={cx} cy={cy} r={11} fill="white" />
-        <circle cx={cx} cy={cy} r={5} fill="#052F5F" />
+        <circle cx={cx} cy={cy} r={5} fill={COLORS.needle} />
 
-        {/* Prominent % achievement in center */}
+        {/* Center text - big number showing current value */}
         <text
           x={cx} y={cy + 55}
-          fontSize="58" fontWeight="900" fill="#052F5F"
+          fontSize="48" fontWeight="900" fill={COLORS.text}
           textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
           style={{ fontFeatureSettings: "'tnum'" }}
         >
-          {cumplimiento}%
+          ${CURRENT_VALUE}M
         </text>
         <text
-          x={cx} y={cy + 90}
-          fontSize="21" fill="#374151"
+          x={cx} y={cy + 85}
+          fontSize="18" fill={COLORS.textMuted}
           textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
-          fontWeight="700"
         >
-          Cumplimiento
+          de ${BUDGET}M
         </text>
         <text
-          x={cx} y={cy + 120}
-          fontSize="18" fill="#6B7280"
+          x={cx} y={cy + 110}
+          fontSize="14" fill={COLORS.textLight}
           textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
         >
-          ${value.toFixed(1)}M de ${budget.toFixed(1)}M
+          Presupuesto
         </text>
 
-        <circle cx={circleLX} cy={circleY} r={circleR} fill="#3983F6" />
+        {/* Left circle - Cumplimiento (76%) */}
+        <circle cx={circleLX} cy={circleY} r={circleR} fill={COLORS.navy} filter={`url(#${shadowId})`} />
         <text
           x={circleLX} y={circleY + 8}
           fontSize="32" fontWeight="900" fill="white"
           textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
           style={{ fontFeatureSettings: "'tnum'" }}
         >
-          ${value.toFixed(1)}M
+          76%
         </text>
         <text
           x={circleLX} y={circleY + circleR + 22}
           fontSize="14" fontWeight="700" fill="#374151"
           textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
         >
-          Prima Neta
+          Cumplimiento
         </text>
 
-        <circle cx={circleRX} cy={circleY} r={circleR} fill={crecimiento < 0 ? '#E62800' : '#60A63A'} />
+        {/* Right circle - Crecimiento (↑10.8%) */}
+        <circle cx={circleRX} cy={circleY} r={circleR} fill={COLORS.green} filter={`url(#${shadowId})`} />
         <text
           x={circleRX} y={circleY + 8}
           fontSize="32" fontWeight="900" fill="white"
           textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
           style={{ fontFeatureSettings: "'tnum'" }}
         >
-          {crecimiento < 0 ? "↓" : "↑"}{Math.abs(crecimiento)}%
+          ↑10.8%
         </text>
         <text
           x={circleRX} y={circleY + circleR + 22}
