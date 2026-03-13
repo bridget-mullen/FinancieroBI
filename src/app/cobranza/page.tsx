@@ -305,7 +305,7 @@ export default function CobranzaPage() {
       <div className="hidden md:block bg-white rounded-lg border border-gray-200 overflow-hidden overflow-x-auto mb-3">
         <table className="w-full">
           <thead>
-            <tr className="bg-[#041224]">
+            <tr className="bg-[#041224] border-b-2 border-b-[#E62800]">
               <th className="text-left px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-white">Resumen por ramo</th>
               {ramos.map(r => <th key={r.nombre} className="text-center px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-white">{r.nombre}</th>)}
               <th className="text-center px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-white">Total</th>
@@ -412,7 +412,7 @@ export default function CobranzaPage() {
         <div className="overflow-x-auto">
           <table className="w-full border-separate border-spacing-0">
             <thead>
-              <tr className="bg-[#041224]">
+              <tr className="bg-[#041224] border-b-2 border-b-[#E62800]">
                 <th className="text-left px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-white min-w-[100px] sticky left-0 bg-[#041224] z-10 cursor-pointer select-none" onClick={() => handleSort('nombre')}>Compania {sortKey === 'nombre' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
                 <th className="text-center px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-white cursor-pointer select-none" onClick={() => handleSort('primaNeta')}>Prima neta {sortKey === 'primaNeta' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
                 <th className="text-center px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-white cursor-pointer select-none" onClick={() => handleSort('convenio')}>Convenio {sortKey === 'convenio' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>

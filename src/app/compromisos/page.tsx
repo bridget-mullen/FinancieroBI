@@ -228,7 +228,7 @@ export default function CompromisosPage() {
               {/* Desktop: full table */}
               <table className="hidden md:table w-full border-collapse text-xs">
                 <thead>
-                  <tr className="bg-[#6B7280] text-white">
+                  <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
                     <th className="px-2 py-1.5 text-left text-xs font-semibold uppercase tracking-wider">Vendedor</th>
                     <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">Meta</th>
                     <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">Prima Neta</th>
@@ -243,12 +243,12 @@ export default function CompromisosPage() {
                     const isOtros = r.vendedor.startsWith("Otros (")
                     const status = semaforoStatus(r.primaActual, r.meta * 0.8, r.meta)
                     // Semáforo 3-color: red if below 80%, amber if 80-99%, green if >= 100%
-                    const semaforoColor = status === 'green' ? 'text-emerald-600' : status === 'yellow' ? 'text-amber-600' : 'text-red-600'
+                    const semaforoColor = status === 'green' ? 'text-[#059669]' : status === 'yellow' ? 'text-amber-500' : 'text-[#E62800]'
                     return (
                       <tr key={r.vendedor} className={`vendedor-row border-b border-[#E5E7EB] ${isOtros ? 'bg-gray-100' : idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFBFC]'}`}>
                         <td className="px-2 py-1.5 text-left font-medium text-[#111]">{r.vendedor}</td>
-                        <td className="px-2 py-1.5 text-center text-green-600 font-semibold tabular-nums">{fmt(r.meta)}</td>
-                        <td className="px-2 py-1.5 text-center font-normal tabular-nums">{fmt(r.primaActual)}</td>
+                        <td className="px-2 py-1.5 text-center text-gray-600 font-normal tabular-nums">{fmt(r.meta)}</td>
+                        <td className="px-2 py-1.5 text-center font-normal text-xs tabular-nums">{fmt(r.primaActual)}</td>
                         <td className={`px-2 py-1.5 text-center tabular-nums ${semaforoColor}`}>{r.pctAvance.toFixed(1)}%</td>
                         <td className="px-2 py-1.5 text-center"><Semaforo status={status} /></td>
                       </tr>
@@ -257,7 +257,7 @@ export default function CompromisosPage() {
                   {!loading && data.length > 0 && (() => {
                     const totalStatus = semaforoStatus(totalActual, totalMeta * 0.8, totalMeta)
                     return (
-                      <tr className="total-row bg-[#6B7280] text-white">
+                      <tr className="total-row bg-[#041224] text-white border-b-2 border-b-[#E62800]">
                         <td className="px-2 py-1.5 font-bold text-left">Total</td>
                         <td className="px-2 py-1.5 text-center font-bold tabular-nums">{fmt(totalMeta)}</td>
                         <td className="px-2 py-1.5 text-center font-bold tabular-nums">{fmt(totalActual)}</td>
@@ -298,7 +298,7 @@ export default function CompromisosPage() {
               {/* Desktop: table */}
               <table className="hidden md:table w-full border-collapse text-xs">
                 <thead>
-                  <tr className="bg-[#6B7280] text-white">
+                  <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
                     <th className="px-2 py-1.5 text-center w-6 text-xs font-semibold uppercase tracking-wider">#</th>
                     <th className="px-2 py-1.5 text-left text-xs font-semibold uppercase tracking-wider">Vendedor</th>
                     <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">Prima Neta</th>

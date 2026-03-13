@@ -109,14 +109,14 @@ export default function CobranzaPendientePage() {
                 <tr
                   key={i}
                   className={`border-b border-[#F0F0F0] hover:bg-[#FFF5F5] transition-colors ${
-                    r.dias_vencido > 30 ? "bg-[#FEE2E2]" : i % 2 === 1 ? "bg-[#FAFAFA]" : ""
+                    i % 2 === 1 ? "bg-[#FAFBFC]" : "bg-white"
                   }`}
                 >
-                  <td className="px-2 py-1.5 text-xs font-medium text-[#111]">{r.poliza}</td>
-                  <td className="px-2 py-1.5 text-xs text-gray-600">{r.cliente}</td>
-                  <td className="px-2 py-1.5 text-xs text-gray-600">{r.gerencia}</td>
-                  <td className="px-2 py-1.5 text-right text-xs font-medium tabular-nums">{fmt(r.prima_pendiente)}</td>
-                  <td className={`px-2 py-1.5 text-right text-xs font-medium tabular-nums ${r.dias_vencido > 30 ? "text-[#E62800]" : ""}`}>
+                  <td className="px-2 py-1.5 text-xs font-normal text-[#111]">{r.poliza}</td>
+                  <td className="px-2 py-1.5 text-xs font-normal text-gray-600">{r.cliente}</td>
+                  <td className="px-2 py-1.5 text-xs font-normal text-gray-600">{r.gerencia}</td>
+                  <td className="px-2 py-1.5 text-center text-xs font-normal tabular-nums">{fmt(r.prima_pendiente)}</td>
+                  <td className={`px-2 py-1.5 text-center text-xs font-normal tabular-nums ${r.dias_vencido > 30 ? "text-[#E62800]" : ""}`}>
                     {r.dias_vencido}
                   </td>
                   <td className="px-2 py-1.5 text-center"><StatusBadge status={r.status} /></td>
