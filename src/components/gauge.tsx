@@ -178,16 +178,16 @@ export function Gauge({ value, prevYear = 0, budget = 129.5, clickable = true, c
         />
         <text
           x={rectLX + rectWidth / 2}
-          y={rectY + 32}
-          fontSize="16" fontWeight="600" fill="rgba(255,255,255,0.9)"
+          y={rectY + 30}
+          fontSize="18" fontWeight="600" fill="rgba(255,255,255,0.9)"
           textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
         >
           Cumplimiento de Presupuesto
         </text>
         <text
           x={rectLX + rectWidth / 2}
-          y={rectY + 60}
-          fontSize="28" fontWeight="900" fill="white"
+          y={rectY + 62}
+          fontSize="34" fontWeight="900" fill="white"
           textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
           style={{ fontFeatureSettings: "'tnum'" }}
         >
@@ -206,16 +206,16 @@ export function Gauge({ value, prevYear = 0, budget = 129.5, clickable = true, c
         />
         <text
           x={rectRX + rectWidth / 2}
-          y={rectY + 32}
-          fontSize="16" fontWeight="600" fill="rgba(255,255,255,0.9)"
+          y={rectY + 30}
+          fontSize="18" fontWeight="600" fill="rgba(255,255,255,0.9)"
           textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
         >
           Crecimiento
         </text>
         <text
           x={rectRX + rectWidth / 2}
-          y={rectY + 60}
-          fontSize="28" fontWeight="900" fill="white"
+          y={rectY + 62}
+          fontSize="34" fontWeight="900" fill="white"
           textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
           style={{ fontFeatureSettings: "'tnum'" }}
         >
