@@ -4,15 +4,13 @@ import { useId } from "react"
 import Link from "next/link"
 
 interface GaugeProps {
-  value: number
-  prevYear?: number
-  budget?: number
+  value: number      // actual prima in millions
+  prevYear: number   // prior year prima in millions
+  budget: number     // presupuesto in millions
   clickable?: boolean
-  cumplimiento?: number
-  crecimiento?: number
 }
 
-export function Gauge({ value, prevYear = 0, budget = 129.5, clickable = true, cumplimiento = 0, crecimiento = 0 }: GaugeProps) {
+export function Gauge({ value, prevYear, budget, clickable = true }: GaugeProps) {
   const uniqueId = useId()
   const W = 860
   const H = 720
@@ -23,42 +21,45 @@ export function Gauge({ value, prevYear = 0, budget = 129.5, clickable = true, c
   const innerR = outerR * 0.75
   const labelR = outerR + 32
 
-  // Business logic constants (in millions)
-  const CURRENT_VALUE = 98.5 // Current prima neta
-  const BUDGET = 129.5 // Budget target
-  const MAX_SCALE = 136 // 129.5 * 1.05 = ~136 for 5% green overflow zone
+  // Arc scale: 0 to budget * 1.05 (5% green overshoot)
+  const maxScale = budget * 1.05
 
-  // Arc zone thresholds as fractions of MAX_SCALE (136M)
-  // Zone 1 (Red): $0 to $98.5M → 98.5/136 = 0.724
-  // Zone 2 (Yellow): $98.5M to $129.5M → 129.5/136 = 0.952
-  // Zone 3 (Green): $129.5M to $136M → 1.0
-  const redEndPct = CURRENT_VALUE / MAX_SCALE // 0.724
-  const yellowEndPct = BUDGET / MAX_SCALE // 0.952
-  const greenEndPct = 1.0
+  // Zone boundaries as fractions of maxScale
+  // Zone 1 (Red/Below last year): 0 to prevYear
+  // Zone 2 (Yellow/Growing but below budget): prevYear to budget
+  // Zone 3 (Green/Exceeded budget): budget to maxScale
+  const redEnd = prevYear / maxScale
+  const yellowEnd = budget / maxScale
+  const greenEnd = 1.0
 
-  // Premium colors
+  // Premium corporate colors
   const COLORS = {
-    red: '#8B1A1A', // deep burgundy/tinto elegante
-    yellow: '#B8860B', // dark goldenrod/ámbar dorado
-    green: '#1B6B4A', // deep emerald/verde esmeralda oscuro
-    needle: '#2D3748', // warm charcoal
-    navy: '#0A1628', // deep navy for circles
-    text: '#0A1628', // primary text
-    textMuted: '#6B7280',
-    textLight: '#9CA3AF',
+    red: '#7C1D1D',      // deep burgundy
+    yellow: '#92710C',   // dark amber
+    green: '#1A5E3B',    // deep forest green
+    needle: '#1E293B',   // slate-800
+    text: '#1E293B',
+    textMuted: '#475569',
+    textLight: '#94A3B8',
   }
 
-  // Needle position: hardcoded to $98.5M on 0-136M scale
-  const needlePct = CURRENT_VALUE / MAX_SCALE // 0.724
+  // Needle position based on value
+  const needleFraction = Math.min(Math.max(value / maxScale, 0), 1)
 
-  // 6 tick labels along the arc exterior
+  // Cumplimiento percentage
+  const cumplimiento = Math.round((value / budget) * 100)
+
+  // Growth percentage
+  const growth = prevYear > 0 ? ((value - prevYear) / prevYear * 100) : 0
+
+  // Tick labels along the arc exterior
   const arcLabels = [
-    { pct: 0 / MAX_SCALE, label: "$0M" },
-    { pct: 25 / MAX_SCALE, label: "$25M" },
-    { pct: 50 / MAX_SCALE, label: "$50M" },
-    { pct: 75 / MAX_SCALE, label: "$75M" },
-    { pct: 98.5 / MAX_SCALE, label: "$98.5M" },
-    { pct: 129.5 / MAX_SCALE, label: "$129.5M" },
+    { pct: 0 / maxScale, label: "$0M" },
+    { pct: 25 / maxScale, label: "$25M" },
+    { pct: 50 / maxScale, label: "$50M" },
+    { pct: 75 / maxScale, label: "$75M" },
+    { pct: 100 / maxScale, label: "$100M" },
+    { pct: budget / maxScale, label: `$${budget.toFixed(1)}M` },
   ]
 
   function polarToXY(angleDeg: number, r: number): [number, number] {
@@ -85,12 +86,12 @@ export function Gauge({ value, prevYear = 0, budget = 129.5, clickable = true, c
   }
 
   // Create the three zone arcs
-  const redArc = createArcPath(0, redEndPct, outerR, innerR)
-  const yellowArc = createArcPath(redEndPct, yellowEndPct, outerR, innerR)
-  const greenArc = createArcPath(yellowEndPct, greenEndPct, outerR, innerR)
+  const redArc = createArcPath(0, redEnd, outerR, innerR)
+  const yellowArc = createArcPath(redEnd, yellowEnd, outerR, innerR)
+  const greenArc = createArcPath(yellowEnd, greenEnd, outerR, innerR)
 
   // Needle geometry
-  const needleAngleDeg = 180 - needlePct * 180
+  const needleAngleDeg = 180 - needleFraction * 180
   const needleLen = outerR - 8
   const [tipX, tipY] = polarToXY(needleAngleDeg, needleLen)
 
@@ -127,24 +128,11 @@ export function Gauge({ value, prevYear = 0, budget = 129.5, clickable = true, c
         {/* Drop shadow filter for circles */}
         <defs>
           <filter id={shadowId} x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="rgba(0,0,0,0.2)" />
+            <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="rgba(0,0,0,0.2)" />
           </filter>
-          {/* Gradient definitions for subtle zone transitions */}
-          <linearGradient id={`redGrad-${uniqueId}`} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#7A1515" />
-            <stop offset="100%" stopColor="#8B1A1A" />
-          </linearGradient>
-          <linearGradient id={`yellowGrad-${uniqueId}`} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#A67807" />
-            <stop offset="100%" stopColor="#B8860B" />
-          </linearGradient>
-          <linearGradient id={`greenGrad-${uniqueId}`} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#165C3F" />
-            <stop offset="100%" stopColor="#1B6B4A" />
-          </linearGradient>
         </defs>
 
-        {/* Arc zones with premium colors */}
+        {/* Arc zones with premium corporate colors */}
         <path d={redArc} fill={COLORS.red} />
         <path d={yellowArc} fill={COLORS.yellow} />
         <path d={greenArc} fill={COLORS.green} />
@@ -161,13 +149,13 @@ export function Gauge({ value, prevYear = 0, budget = 129.5, clickable = true, c
           const yOffset = tick.pct < 0.05 ? 20 : tick.pct > 0.9 ? 15 : 0
           return (
             <g key={i}>
-              <line x1={t1x} y1={t1y} x2={t2x} y2={t2y} stroke="#9CA3AF" strokeWidth={1.5} />
+              <line x1={t1x} y1={t1y} x2={t2x} y2={t2y} stroke="#64748B" strokeWidth={1.5} />
               <text
                 x={lx} y={ly + yOffset}
-                fontSize="15" fontWeight="700" fill="#374151"
+                fontSize="14" fontWeight="600" fill="#64748B"
                 textAnchor={anchor}
                 dominantBaseline="middle"
-                fontFamily="Calibri, Arial, sans-serif"
+                fontFamily="system-ui, -apple-system, sans-serif"
               >
                 {tick.label}
               </text>
@@ -175,7 +163,7 @@ export function Gauge({ value, prevYear = 0, budget = 129.5, clickable = true, c
           )
         })}
 
-        {/* Needle - warm charcoal */}
+        {/* Needle - slate-800 */}
         <polygon
           points={`${tipX},${tipY} ${b1x},${b1y} ${tailX},${tailY} ${b2x},${b2y}`}
           fill={COLORS.needle}
@@ -186,62 +174,69 @@ export function Gauge({ value, prevYear = 0, budget = 129.5, clickable = true, c
         <circle cx={cx} cy={cy} r={11} fill="white" />
         <circle cx={cx} cy={cy} r={5} fill={COLORS.needle} />
 
-        {/* Center text - big number showing current value */}
+        {/* Center text - cumplimiento percentage */}
         <text
-          x={cx} y={cy + 55}
-          fontSize="48" fontWeight="900" fill={COLORS.text}
-          textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
+          x={cx} y={cy + 60}
+          fontSize="52" fontWeight="900" fill={COLORS.text}
+          textAnchor="middle" fontFamily="system-ui, -apple-system, sans-serif"
           style={{ fontFeatureSettings: "'tnum'" }}
         >
-          ${CURRENT_VALUE}M
+          {cumplimiento}%
         </text>
         <text
-          x={cx} y={cy + 85}
-          fontSize="18" fill={COLORS.textMuted}
-          textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
-        >
-          de ${BUDGET}M
-        </text>
-        <text
-          x={cx} y={cy + 110}
-          fontSize="14" fill={COLORS.textLight}
-          textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
-        >
-          Presupuesto
-        </text>
-
-        {/* Left circle - Cumplimiento (76%) */}
-        <circle cx={circleLX} cy={circleY} r={circleR} fill={COLORS.navy} filter={`url(#${shadowId})`} />
-        <text
-          x={circleLX} y={circleY + 8}
-          fontSize="32" fontWeight="900" fill="white"
-          textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
-          style={{ fontFeatureSettings: "'tnum'" }}
-        >
-          76%
-        </text>
-        <text
-          x={circleLX} y={circleY + circleR + 22}
-          fontSize="14" fontWeight="700" fill="#374151"
-          textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
+          x={cx} y={cy + 88}
+          fontSize="20" fontWeight="600" fill={COLORS.textMuted}
+          textAnchor="middle" fontFamily="system-ui, -apple-system, sans-serif"
         >
           Cumplimiento
         </text>
-
-        {/* Right circle - Crecimiento (↑10.8%) */}
-        <circle cx={circleRX} cy={circleY} r={circleR} fill={COLORS.green} filter={`url(#${shadowId})`} />
         <text
-          x={circleRX} y={circleY + 8}
-          fontSize="32" fontWeight="900" fill="white"
-          textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
+          x={cx} y={cy + 115}
+          fontSize="16" fill={COLORS.textLight}
+          textAnchor="middle" fontFamily="system-ui, -apple-system, sans-serif"
           style={{ fontFeatureSettings: "'tnum'" }}
         >
-          ↑10.8%
+          ${value.toFixed(1)}M de ${budget.toFixed(1)}M
+        </text>
+
+        {/* Left circle - Prima Neta */}
+        <circle cx={circleLX} cy={circleY} r={circleR} fill={COLORS.needle} filter={`url(#${shadowId})`} />
+        <text
+          x={circleLX} y={circleY + 8}
+          fontSize="30" fontWeight="900" fill="white"
+          textAnchor="middle" fontFamily="system-ui, -apple-system, sans-serif"
+          style={{ fontFeatureSettings: "'tnum'" }}
+        >
+          ${value.toFixed(1)}M
+        </text>
+        <text
+          x={circleLX} y={circleY + circleR + 22}
+          fontSize="14" fontWeight="700" fill={COLORS.textMuted}
+          textAnchor="middle" fontFamily="system-ui, -apple-system, sans-serif"
+        >
+          Prima Neta
+        </text>
+
+        {/* Right circle - Crecimiento */}
+        <circle
+          cx={circleRX}
+          cy={circleY}
+          r={circleR}
+          fill={growth >= 0 ? COLORS.green : COLORS.red}
+          filter={`url(#${shadowId})`}
+        />
+        <text
+          x={circleRX} y={circleY + 8}
+          fontSize="30" fontWeight="900" fill="white"
+          textAnchor="middle" fontFamily="system-ui, -apple-system, sans-serif"
+          style={{ fontFeatureSettings: "'tnum'" }}
+        >
+          {growth >= 0 ? '↑' : '↓'}{Math.abs(growth).toFixed(1)}%
         </text>
         <text
           x={circleRX} y={circleY + circleR + 22}
-          fontSize="14" fontWeight="700" fill="#374151"
-          textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
+          fontSize="14" fontWeight="700" fill={COLORS.textMuted}
+          textAnchor="middle" fontFamily="system-ui, -apple-system, sans-serif"
         >
           Crecimiento
         </text>

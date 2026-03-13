@@ -58,6 +58,9 @@ export default function Home() {
     pp: +((l.presupuesto ?? 0) / 1e6).toFixed(1),
   }))
 
+  // Format date for display
+  const lastDataDate = "27/02/2026"
+
   return (
     <div className="bg-[#FAFAFA] px-3 py-4 flex flex-col">
       <div className="max-w-[1200px] mx-auto w-full flex flex-col flex-1">
@@ -74,7 +77,7 @@ export default function Home() {
         <div className="md:hidden flex flex-col gap-3">
           {/* Hero: Gauge — LARGE, fills the screen */}
           <div className="w-full mx-auto">
-            <Gauge value={total / 1e6} prevYear={totalAA / 1e6} budget={totalPpto / 1e6} cumplimiento={cumpl} crecimiento={crec} />
+            <Gauge value={total / 1e6} prevYear={totalAA / 1e6} budget={totalPpto / 1e6} />
           </div>
 
           {/* Lines list — card style, tappable */}
@@ -156,24 +159,41 @@ export default function Home() {
 
         {/* ═══ DESKTOP LAYOUT ═══ */}
         <div className="hidden md:flex gap-6 flex-1 mt-0">
-          {/* Left column: Gauge */}
-          <div className="w-[50%] flex items-center justify-center">
+          {/* Left column: Info boxes + Gauge */}
+          <div className="w-[50%] flex flex-col items-center justify-center">
+            {/* Info boxes row */}
+            <div className="flex gap-3 mb-2 w-full max-w-[420px]">
+              {/* Tipo de Cambio */}
+              <div className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm">
+                <div className="text-[10px] uppercase text-gray-400 tracking-wider font-semibold mb-1">Tipo de Cambio</div>
+                <div className="text-xs font-medium text-gray-700">USD $17.22</div>
+                <div className="text-xs font-medium text-gray-700">DOP $56.81</div>
+              </div>
+              {/* Fecha de Corte */}
+              <div className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm flex items-center justify-center">
+                <div className="text-xs text-gray-500">
+                  Datos al: <span className="font-medium text-gray-700">{lastDataDate}</span>
+                </div>
+              </div>
+            </div>
+            {/* Gauge */}
             <div className="w-full">
-              <Gauge value={total / 1e6} prevYear={totalAA / 1e6} budget={totalPpto / 1e6} cumplimiento={cumpl} crecimiento={crec} />
+              <Gauge value={total / 1e6} prevYear={totalAA / 1e6} budget={totalPpto / 1e6} />
             </div>
           </div>
 
           {/* Right column: Table + Chart */}
-          <div className="w-[50%] flex flex-col gap-1 justify-center mt-6">
-            <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
+          <div className="w-[50%] flex flex-col gap-3 justify-center mt-6">
+            {/* Table with premium styling */}
+            <div className="rounded-xl shadow-md overflow-hidden">
               <table className="w-full text-xs min-w-[480px]">
                 <thead>
-                  <tr style={{ backgroundColor: '#6B7280' }}>
-                    <th className="text-left px-1.5 py-1 text-xs font-semibold uppercase tracking-wider text-white">Línea</th>
-                    <th className="text-right px-1.5 py-1 text-xs font-semibold uppercase tracking-wider text-white">Prima Neta</th>
-                    <th className="text-right px-1.5 py-1 text-xs font-semibold uppercase tracking-wider text-white">Año Ant.</th>
-                    <th className="text-right px-1.5 py-1 text-xs font-semibold uppercase tracking-wider text-white">Presupuesto</th>
-                    <th className="text-right px-1.5 py-1 text-xs font-semibold uppercase tracking-wider text-white">Diferencia</th>
+                  <tr className="bg-[#1E293B] border-b-2 border-[#92710C]">
+                    <th className="text-left px-2 py-2 text-[11px] font-semibold uppercase tracking-wider text-white">Línea</th>
+                    <th className="text-right px-2 py-2 text-[11px] font-semibold uppercase tracking-wider text-white">Prima Neta</th>
+                    <th className="text-right px-2 py-2 text-[11px] font-semibold uppercase tracking-wider text-white">Año Ant.</th>
+                    <th className="text-right px-2 py-2 text-[11px] font-semibold uppercase tracking-wider text-white">Presupuesto</th>
+                    <th className="text-right px-2 py-2 text-[11px] font-semibold uppercase tracking-wider text-white">Diferencia</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -181,25 +201,29 @@ export default function Home() {
                     const diff = l.primaNeta - l.presupuesto
                     const link = LINEA_LINKS[l.nombre]
                     return (
-                      <tr key={l.nombre} className={`cursor-pointer transition-colors hover:bg-blue-50 ${i % 2 === 0 ? "bg-white" : "bg-gray-50/70"}`}>
-                        <td className="px-1.5 py-1 font-medium text-gray-900">
+                      <tr
+                        key={l.nombre}
+                        className={`cursor-pointer transition-colors hover:bg-[#F1F5F9] ${i % 2 === 0 ? "bg-white" : "bg-[#F8FAFC]"}`}
+                      >
+                        <td className="px-2 py-1.5 font-medium text-gray-900">
                           {link ? <Link href={link} className="hover:underline text-gray-900">{l.nombre}</Link> : l.nombre}
                         </td>
-                        <td className="px-1.5 py-1 text-right font-medium text-gray-900 tabular-nums">{fmt(l.primaNeta)}</td>
-                        <td className="px-1.5 py-1 text-right text-gray-500 tabular-nums">{fmt(l.anioAnterior)}</td>
-                        <td className="px-1.5 py-1 text-right font-medium text-gray-700 tabular-nums">{fmt(l.presupuesto)}</td>
-                        <td className={`px-1.5 py-1 text-right font-medium tabular-nums ${diff < 0 ? "text-red-600" : "text-emerald-600"}`}>
+                        <td className="px-2 py-1.5 text-right font-medium text-gray-900 tabular-nums">{fmt(l.primaNeta)}</td>
+                        <td className="px-2 py-1.5 text-right text-gray-500 tabular-nums">{fmt(l.anioAnterior)}</td>
+                        <td className="px-2 py-1.5 text-right font-medium text-gray-700 tabular-nums">{fmt(l.presupuesto)}</td>
+                        <td className={`px-2 py-1.5 text-right font-medium tabular-nums ${diff < 0 ? "text-[#991B1B]" : "text-[#166534]"}`}>
                           {diff < 0 ? `(${fmt(Math.abs(diff))})` : fmt(diff)}
                         </td>
                       </tr>
                     )
                   })}
-                  <tr className="font-bold border-t-2 border-gray-300" style={{ backgroundColor: '#6B7280', color: '#fff' }}>
-                    <td className="px-1.5 py-1 font-bold" style={{ color: '#fff' }}>Total</td>
-                    <td className="px-1.5 py-1 text-right font-bold tabular-nums" style={{ color: '#fff' }}>{fmt(total)}</td>
-                    <td className="px-1.5 py-1 text-right font-bold tabular-nums" style={{ color: '#fff' }}>{fmt(totalAA)}</td>
-                    <td className="px-1.5 py-1 text-right font-bold tabular-nums" style={{ color: '#fff' }}>{fmt(totalPpto)}</td>
-                    <td className="px-1.5 py-1 text-right font-bold tabular-nums" style={{ color: (total - totalPpto) < 0 ? '#ff6b6b' : '#4ade80' }}>
+                  {/* Total row */}
+                  <tr className="bg-[#1E293B]">
+                    <td className="px-2 py-2 font-bold text-white">Total</td>
+                    <td className="px-2 py-2 text-right font-bold tabular-nums text-white">{fmt(total)}</td>
+                    <td className="px-2 py-2 text-right font-bold tabular-nums text-white">{fmt(totalAA)}</td>
+                    <td className="px-2 py-2 text-right font-bold tabular-nums text-white">{fmt(totalPpto)}</td>
+                    <td className={`px-2 py-2 text-right font-bold tabular-nums ${(total - totalPpto) < 0 ? "text-red-400" : "text-emerald-400"}`}>
                       {(total - totalPpto) < 0 ? `(${fmt(Math.abs(total - totalPpto))})` : fmt(total - totalPpto)}
                     </td>
                   </tr>
@@ -208,7 +232,7 @@ export default function Home() {
             </div>
 
             {/* Chart */}
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm px-2 py-1.5 flex flex-col h-[280px] overflow-hidden">
+            <div className="bg-white border border-gray-200 rounded-xl shadow-sm px-3 py-2 flex flex-col h-[280px] overflow-hidden">
               <div className="flex gap-3 text-[12px] mb-1 self-start">
                 <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: '#3983F6' }}/><span className="text-gray-700 font-medium">Prima neta efectuada</span></div>
                 <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: '#9CA3AF' }}/><span className="text-gray-700 font-medium">Presupuesto</span></div>
