@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { PageTabs } from "@/components/page-tabs"
 import { PageFooter } from "@/components/page-footer"
 import { PeriodFilter } from "@/components/period-filter"
-import { getRamos, getRankedAseguradoras } from "@/lib/queries"
+import { getRamos, getRankedAseguradoras, getAseguradorasByClasificacion } from "@/lib/queries"
 
 function fmt(v: number) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(v)
@@ -82,7 +82,9 @@ function pct(val: number, base: number) {
 }
 
 // Semáforo logic: red = below año anterior, amber = between AA and convenio, green = above convenio
+// SPECIAL CASE: If convenio=0, return gray (neutral) - no target to compare against
 function getSemaforoColor(primaNeta: number, pnAA: number, convenio: number): string {
+  if (convenio === 0) return "#9CA3AF" // gray - no convenio target
   if (primaNeta >= convenio) return "#059669" // green - above convenio
   if (primaNeta >= pnAA) return "#D97706" // amber - between AA and convenio
   return "#E62800" // red - below año anterior
@@ -90,11 +92,13 @@ function getSemaforoColor(primaNeta: number, pnAA: number, convenio: number): st
 
 function SemaforoBadge({ primaNeta, pnAA, convenio, value }: { primaNeta: number; pnAA: number; convenio: number; value: string }) {
   const color = getSemaforoColor(primaNeta, pnAA, convenio)
-  const bgColor = color === "#059669" ? "bg-[#DCFCE7]" : color === "#D97706" ? "bg-[#FEF3C7]" : "bg-[#FEE2E2]"
+  const bgColor = color === "#059669" ? "bg-[#DCFCE7]" : color === "#D97706" ? "bg-[#FEF3C7]" : color === "#9CA3AF" ? "bg-[#F3F4F6]" : "bg-[#FEE2E2]"
+  // If convenio is 0, show "—" instead of misleading percentage
+  const displayValue = convenio === 0 ? "—" : value
   return (
     <td className="px-3 py-2 text-center border-b border-[#E5E7EB]">
       <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium tabular-nums ${bgColor}`} style={{ color }}>
-        {value}
+        {displayValue}
       </span>
     </td>
   )
@@ -106,7 +110,22 @@ export default function CobranzaPage() {
   const [ramos, setRamos] = useState(RAMOS)
   const [companies, setCompanies] = useState(COMPANIES)
 
+  // Feature: Clasificación Aseguradoras filter
+  const [clasificacion, setClasificacion] = useState<string>("Todas")
+  const [clasificacionAseguradoras, setClasificacionAseguradoras] = useState<string[] | null>(null)
+
   useEffect(() => { document.title = "Aseguradoras | CLK BI Dashboard" }, [])
+
+  // Update clasificación aseguradoras when filter changes
+  useEffect(() => {
+    if (clasificacion === "Todas") {
+      setClasificacionAseguradoras(null)
+    } else {
+      getAseguradorasByClasificacion(clasificacion).then(aseguradoras => {
+        setClasificacionAseguradoras(aseguradoras)
+      })
+    }
+  }, [clasificacion])
 
   const handleFilterChange = useCallback((newYear: string, newPeriodos: number[]) => {
     setYear(newYear)
@@ -137,7 +156,7 @@ export default function CobranzaPage() {
   // Load aseguradoras from Supabase when filters change
   useEffect(() => {
     let cancelled = false
-    getRankedAseguradoras(periodo, year).then(data => {
+    getRankedAseguradoras(periodo, year, clasificacion !== "Todas" ? clasificacion : undefined).then(data => {
       if (cancelled || !data) return
       // Merge real primaNeta with SEED for convenio/comparison columns
       const merged = data.map(d => {
@@ -155,7 +174,7 @@ export default function CobranzaPage() {
       if (merged.length > 0) setCompanies(merged)
     })
     return () => { cancelled = true }
-  }, [periodo, year])
+  }, [periodo, year, clasificacion])
 
   const totalPN = ramos.reduce((s, r) => s + r.pnEfectuada, 0)
   const totalPOL = ramos.reduce((s, r) => s + r.polizas, 0)
@@ -196,9 +215,24 @@ export default function CobranzaPage() {
         <PeriodFilter onFilterChange={handleFilterChange} />
       </div>
 
-      {/* Title + simplified filters */}
+      {/* Title + filters */}
       <div className="flex items-center justify-between mt-6 mb-4 flex-wrap gap-2">
-        <h1 className="text-sm font-bold text-[#041224]">Aseguradoras</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-sm font-bold text-[#041224]">Aseguradoras</h1>
+          {/* Clasificación Aseguradoras filter */}
+          <select
+            id="clasificacion-filter"
+            name="clasificacion"
+            value={clasificacion}
+            onChange={e => setClasificacion(e.target.value)}
+            className="px-2 py-1 border border-[#E5E7EB] rounded text-xs bg-white text-[#333] cursor-pointer hover:border-[#CCD1D3] transition-colors"
+          >
+            <option value="Todas">Clasificación: Todas</option>
+            <option value="Estratégica">Estratégica</option>
+            <option value="Importante">Importante</option>
+            <option value="De servicio">De servicio</option>
+          </select>
+        </div>
         <span className="text-xs text-[#9CA3AF]">Actualizado: 27/02/2026</span>
       </div>
 
@@ -391,20 +425,21 @@ export default function CobranzaPage() {
         {sortedCompanies.map((c) => {
           const difConv = c.primaNeta - c.convenio
           const difAA = c.primaNeta - c.pnAA
-          const pctConv = c.convenio > 0 ? ((c.primaNeta / c.convenio - 1) * 100).toFixed(1) : "0"
+          const pctConv = c.convenio > 0 ? ((c.primaNeta / c.convenio - 1) * 100).toFixed(1) : "—"
           const semaforoColor = getSemaforoColor(c.primaNeta, c.pnAA, c.convenio)
+          const bgColor = semaforoColor === "#059669" ? "#DCFCE7" : semaforoColor === "#D97706" ? "#FEF3C7" : semaforoColor === "#9CA3AF" ? "#F3F4F6" : "#FEE2E2"
           return (
             <div key={c.nombre} className="bg-white rounded-lg border border-gray-200 px-3 py-3">
               <div className="flex justify-between items-center mb-2">
                 <span className="font-medium text-xs text-[#041224]">{c.nombre}</span>
                 <span className="text-xs font-medium tabular-nums px-2 py-0.5 rounded" style={{
                   color: semaforoColor,
-                  backgroundColor: semaforoColor === "#059669" ? "#DCFCE7" : semaforoColor === "#D97706" ? "#FEF3C7" : "#FEE2E2"
-                }}>{pctConv}%</span>
+                  backgroundColor: bgColor
+                }}>{pctConv === "—" ? "—" : `${pctConv}%`}</span>
               </div>
               <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
                 <div className="flex justify-between"><span className="text-gray-500">Prima Neta</span><span className="font-normal tabular-nums">{fmt(c.primaNeta)}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">Convenio</span><span className="font-normal tabular-nums text-gray-600">{fmt(c.convenio)}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">Convenio</span><span className="font-normal tabular-nums text-gray-600">{c.convenio > 0 ? fmt(c.convenio) : "—"}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">Año Ant.</span><span className="font-normal tabular-nums">{fmt(c.pnAA)}</span></div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Crec.</span>
@@ -450,8 +485,8 @@ export default function CobranzaPage() {
                   <tr key={c.nombre} className={`group hover:bg-[#FFF5F5] transition-colors ${rowBg}`}>
                     <td className={`px-3 py-2 text-xs font-medium text-[#041224] sticky left-0 z-10 border-b border-[#E5E7EB] ${rowBg} group-hover:bg-[#FFF5F5] transition-colors`}>{c.nombre}</td>
                     <td className="px-3 py-2 text-center text-xs font-normal tabular-nums border-b border-[#E5E7EB]">{fmt(c.primaNeta)}</td>
-                    <td className="px-3 py-2 text-center text-xs font-normal tabular-nums text-gray-600 border-b border-[#E5E7EB]">{fmt(c.convenio)}</td>
-                    <SemaforoBadge primaNeta={c.primaNeta} pnAA={c.pnAA} convenio={c.convenio} value={difConv < 0 ? `(${fmt(Math.abs(difConv))})` : fmt(difConv)} />
+                    <td className="px-3 py-2 text-center text-xs font-normal tabular-nums text-gray-600 border-b border-[#E5E7EB]">{c.convenio > 0 ? fmt(c.convenio) : <span className="text-gray-400">—</span>}</td>
+                    <SemaforoBadge primaNeta={c.primaNeta} pnAA={c.pnAA} convenio={c.convenio} value={c.convenio > 0 ? (difConv < 0 ? `(${fmt(Math.abs(difConv))})` : fmt(difConv)) : "—"} />
                     <SemaforoBadge primaNeta={c.primaNeta} pnAA={c.pnAA} convenio={c.convenio} value={`${Number(pctConvValue) >= 0 ? "+" : ""}${pctConvValue}%`} />
                     <td className="px-3 py-2 text-center text-xs font-normal tabular-nums text-[#6B7280] border-b border-[#E5E7EB]">{fmt(c.pnAA)}</td>
                     <td className={`px-3 py-2 text-center text-xs font-normal tabular-nums border-b border-[#E5E7EB]`} style={{ color: difAA < 0 ? "#E62800" : "#059669" }}>

@@ -1131,9 +1131,11 @@ function TablaDetalleContent() {
             ? filteredLineas.map(l => ({ name: l.linea, primaNeta: l.primaNeta }))
             : drillLevel === "poliza"
             ? filteredPolizas.map(p => ({ name: p.documento, primaNeta: p.primaNeta }))
+            : drillLevel === "vendedor" && tipoGroups && tipoGroups.length > 0
+            ? tipoGroups.map(g => ({ name: `${g.tipo} (${g.vendedores.length})`, primaNeta: g.totalPrimaNeta }))
             : filteredRows.map(r => ({ name: r.name, primaNeta: r.primaNeta }))
         }
-        levelLabel={levelLabels[drillLevel]}
+        levelLabel={drillLevel === "vendedor" && tipoGroups && tipoGroups.length > 0 ? "Tier de Vendedor" : levelLabels[drillLevel]}
         parentLabel={crumbs.length > 0 ? crumbs.map(c => c.label).join(" > ") : "Todas las líneas"}
         loading={loading}
       />

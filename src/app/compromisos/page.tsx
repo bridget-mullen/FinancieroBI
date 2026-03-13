@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { PageTabs } from "@/components/page-tabs"
 import { PeriodFilter } from "@/components/period-filter"
 import { getCompromisos } from "@/lib/queries"
 import type { CompromisoRow } from "@/lib/queries"
+import { DrillCharts } from "@/components/drill-charts"
 
 function fmt(v: number) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v)
@@ -161,6 +162,11 @@ export default function CompromisosPage() {
   const top5Compromisos = [...data].sort((a, b) => b.primaActual - a.primaActual).slice(0, 5)
   const topBarData = top5Compromisos.map(r => ({ name: shortName(r.vendedor), value: r.primaActual }))
 
+  // Data for DrillCharts component - distribution by vendedor
+  const chartRows = useMemo(() => {
+    return allDisplayRows.map(r => ({ name: r.vendedor, primaNeta: r.primaActual }))
+  }, [allDisplayRows])
+
   return (
     <div className="bg-[#FAFAFA] px-3 py-4">
       <div className="max-w-[1200px] mx-auto w-full flex flex-col">
@@ -183,6 +189,7 @@ export default function CompromisosPage() {
                 ) : allDisplayRows.map((r, idx) => {
                   const isOtros = r.vendedor.startsWith("Otros (")
                   const status = semaforoStatus(r.primaActual, r.meta * 0.8, r.meta)
+                  const diferencia = r.primaActual - r.meta
                   return (
                     <div key={r.vendedor} className={`vendedor-row border border-gray-100 rounded-lg px-3 py-1.5 ${isOtros ? "bg-gray-100" : ""}`}>
                       <div className="flex justify-between items-center mb-0.5">
@@ -194,7 +201,10 @@ export default function CompromisosPage() {
                       </div>
                       <div className="flex justify-between text-xs text-gray-500">
                         <span>PN: <span className="text-gray-900 font-medium tabular-nums">{fmt(r.primaActual)}</span></span>
-                        <span>Meta: <span className="text-[#059669] font-semibold tabular-nums">{fmt(r.meta)}</span></span>
+                        <span>Meta: <span className="text-gray-600 font-normal tabular-nums">{fmt(r.meta)}</span></span>
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-500 mt-0.5">
+                        <span>Dif: <span className="tabular-nums" style={{ color: semaforoColorFromStatus(status) }}>{diferencia < 0 ? `(${fmt(Math.abs(diferencia))})` : fmt(diferencia)}</span></span>
                       </div>
                     </div>
                   )
@@ -216,23 +226,28 @@ export default function CompromisosPage() {
                     <th className="px-2 py-1.5 text-left text-xs font-semibold uppercase tracking-wider">Vendedor</th>
                     <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">Meta</th>
                     <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">Prima Neta</th>
-                    <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">%</th>
+                    <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">Diferencia</th>
+                    <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">% Avance</th>
                     <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">Sem.</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td colSpan={5} className="px-2 py-2 text-center text-gray-400 text-xs">Cargando...</td></tr>
+                    <tr><td colSpan={6} className="px-2 py-2 text-center text-gray-400 text-xs">Cargando...</td></tr>
                   ) : allDisplayRows.map((r, idx) => {
                     const isOtros = r.vendedor.startsWith("Otros (")
                     const status = semaforoStatus(r.primaActual, r.meta * 0.8, r.meta)
                     // Semáforo 3-color: red if below 80%, amber if 80-99%, green if >= 100%
                     const semaforoColor = status === 'green' ? 'text-[#059669]' : status === 'yellow' ? 'text-amber-500' : 'text-[#E62800]'
+                    const diferencia = r.primaActual - r.meta
                     return (
                       <tr key={r.vendedor} className={`vendedor-row border-b border-[#E5E7EB] ${isOtros ? 'bg-gray-100' : idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFBFC]'}`}>
                         <td className="px-2 py-1.5 text-left font-medium text-[#111]">{r.vendedor}</td>
                         <td className="px-2 py-1.5 text-center text-gray-600 font-normal tabular-nums">{fmt(r.meta)}</td>
                         <td className="px-2 py-1.5 text-center font-normal text-xs tabular-nums">{fmt(r.primaActual)}</td>
+                        <td className={`px-2 py-1.5 text-center font-normal text-xs tabular-nums ${semaforoColor}`}>
+                          {diferencia < 0 ? `(${fmt(Math.abs(diferencia))})` : fmt(diferencia)}
+                        </td>
                         <td className={`px-2 py-1.5 text-center tabular-nums ${semaforoColor}`}>{r.pctAvance.toFixed(1)}%</td>
                         <td className="px-2 py-1.5 text-center"><Semaforo status={status} /></td>
                       </tr>
@@ -240,11 +255,15 @@ export default function CompromisosPage() {
                   })}
                   {!loading && data.length > 0 && (() => {
                     const totalStatus = semaforoStatus(totalActual, totalMeta * 0.8, totalMeta)
+                    const totalDif = totalActual - totalMeta
                     return (
                       <tr className="total-row bg-[#041224] text-white border-b-2 border-b-[#E62800]">
                         <td className="px-2 py-1.5 font-bold text-left">Total</td>
                         <td className="px-2 py-1.5 text-center font-bold tabular-nums">{fmt(totalMeta)}</td>
                         <td className="px-2 py-1.5 text-center font-bold tabular-nums">{fmt(totalActual)}</td>
+                        <td className="px-2 py-1.5 text-center font-bold tabular-nums">
+                          {totalDif < 0 ? `(${fmt(Math.abs(totalDif))})` : fmt(totalDif)}
+                        </td>
                         <td className="px-2 py-1.5 text-center font-bold tabular-nums">{totalPct.toFixed(1)}%</td>
                         <td className="px-2 py-1.5 text-center"><Semaforo status={totalStatus} /></td>
                       </tr>
@@ -253,16 +272,13 @@ export default function CompromisosPage() {
                 </tbody>
               </table>
             </div>
-            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-3 flex flex-col" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-              <p className="text-xs font-semibold uppercase tracking-wider text-[#041224] mb-2">Prima Neta por Vendedor</p>
-              <div className="flex-1">
-                <PremiumBarChart data={barData} barHeight={20} colorFn={(idx) => {
-                  const total = barData.length || 1
-                  const intensity = 1 - (idx / total) * 0.5
-                  const r = Math.round(57 * intensity), g = Math.round(131 * intensity), b = Math.round(246 * intensity)
-                  return { from: `rgb(${r},${g},${b})`, to: `rgb(${Math.min(r+30,255)},${Math.min(g+30,255)},${Math.min(b+30,255)})` }
-                }} />
-              </div>
+            <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+              <DrillCharts
+                rows={chartRows}
+                levelLabel="Vendedor"
+                parentLabel="Compromisos de Venta"
+                loading={loading}
+              />
             </div>
           </div>
 
