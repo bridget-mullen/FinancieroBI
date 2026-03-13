@@ -152,31 +152,31 @@ export function Gauge({ value, prevYear = 0, budget = 129.5, clickable = true, c
         <circle cx={cx} cy={cy} r={11} fill="white" />
         <circle cx={cx} cy={cy} r={5} fill="#052F5F" />
 
-        {/* Prominent % achievement in center - positioned between hub and indicator circles */}
+        {/* Prominent Prima Neta value in center - positioned between hub and indicator circles */}
         <text
           x={cx} y={cy + 120}
           fontSize="58" fontWeight="900" fill="#052F5F"
           textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
           style={{ fontFeatureSettings: "'tnum'" }}
         >
-          {cumplimiento}%
+          ${value.toFixed(1)}M
         </text>
 
-        <circle cx={circleLX} cy={circleY} r={circleR} fill="#3983F6" />
+        <circle cx={circleLX} cy={circleY} r={circleR} fill="#E62800" />
         <text
           x={circleLX} y={circleY + 8}
           fontSize="32" fontWeight="900" fill="white"
           textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
           style={{ fontFeatureSettings: "'tnum'" }}
         >
-          ${value.toFixed(1)}M
+          {cumplimiento}%
         </text>
         <text
           x={circleLX} y={circleY + circleR + 22}
           fontSize="14" fontWeight="700" fill="#374151"
           textAnchor="middle" fontFamily="Calibri, Arial, sans-serif"
         >
-          Prima Neta
+          Cumplimiento de Presupuesto
         </text>
 
         <circle cx={circleRX} cy={circleY} r={circleR} fill={crecimiento < 0 ? '#E62800' : '#60A63A'} />
