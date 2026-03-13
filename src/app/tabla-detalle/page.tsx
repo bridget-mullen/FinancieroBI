@@ -622,14 +622,14 @@ function TablaDetalleContent() {
               <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
                 <th className="w-6 px-1 py-1.5"></th>
                 <th className="text-left px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">Línea de negocio</th>
-                <th className="text-right px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">Prima neta</th>
-                <th className="text-right px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">Presupuesto</th>
-                <th className="text-right px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">Diferencia</th>
-                <th className="text-right px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">% Dif ppto</th>
-                <th className="text-right px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">{cmpLabel.col}</th>
-                <th className="text-right px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">{cmpLabel.difCol}</th>
-                <th className="text-right px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">{cmpLabel.pctCol}</th>
-                <th className="text-right px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">Pendiente</th>
+                <th className="text-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">Prima neta</th>
+                <th className="text-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">Presupuesto</th>
+                <th className="text-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">Diferencia</th>
+                <th className="text-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">% Dif ppto</th>
+                <th className="text-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">{cmpLabel.col}</th>
+                <th className="text-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">{cmpLabel.difCol}</th>
+                <th className="text-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">{cmpLabel.pctCol}</th>
+                <th className="text-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">Pendiente</th>
               </tr>
             ) : drillLevel === "poliza" ? (
               <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
@@ -639,20 +639,20 @@ function TablaDetalleContent() {
                 <th className="text-left px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">Subramo</th>
                 <th className="text-left px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">F. Liquidación</th>
                 <th className="text-left px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">F. Lím. Pago</th>
-                <th className="text-right px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">Prima neta</th>
+                <th className="text-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">Prima neta</th>
               </tr>
             ) : (
               <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
                 <th className="w-6 px-1 py-1.5"></th>
                 <th className="text-left px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">{levelLabels[drillLevel]}</th>
-                <th className="text-right px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">Prima neta</th>
-                <th className="text-right px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">Presupuesto</th>
-                <th className="text-right px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">Diferencia</th>
-                <th className="text-right px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">% Dif ppto</th>
-                <th className="text-right px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">{cmpLabel.col}</th>
-                <th className="text-right px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">{cmpLabel.difCol}</th>
-                <th className="text-right px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">{cmpLabel.pctCol}</th>
-                <th className="text-right px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">Pendiente</th>
+                <th className="text-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">Prima neta</th>
+                <th className="text-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">Presupuesto</th>
+                <th className="text-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">Diferencia</th>
+                <th className="text-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">% Dif ppto</th>
+                <th className="text-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">{cmpLabel.col}</th>
+                <th className="text-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">{cmpLabel.difCol}</th>
+                <th className="text-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">{cmpLabel.pctCol}</th>
+                <th className="text-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">Pendiente</th>
               </tr>
             )}
           </thead>
