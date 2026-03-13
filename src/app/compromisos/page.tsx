@@ -271,21 +271,74 @@ export default function CompromisosPage() {
               <p className="text-xs font-semibold uppercase tracking-wider text-[#041224] mb-2">Distribución por Vendedor</p>
               <div className="flex-1">
                 <PremiumBarChart data={barData} barHeight={18} showGrid={false} colorFn={(idx) => {
-                  return { from: '#041224', to: '#1E3A5F' }
+                  const palette = [
+                    { from: '#041224', to: '#1E3A5F' },
+                    { from: '#1E3A5F', to: '#3B6B9A' },
+                    { from: '#E62800', to: '#EF4444' },
+                    { from: '#059669', to: '#10B981' },
+                    { from: '#D97706', to: '#F59E0B' },
+                    { from: '#7C3AED', to: '#8B5CF6' },
+                    { from: '#0891B2', to: '#06B6D4' },
+                    { from: '#BE185D', to: '#EC4899' },
+                    { from: '#4338CA', to: '#6366F1' },
+                    { from: '#047857', to: '#34D399' },
+                    { from: '#9CA3AF', to: '#D1D5DB' },
+                  ]
+                  return palette[idx % palette.length]
                 }} />
               </div>
             </div>
           </div>
 
-          {/* Top 10 Vendedores — bar chart */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 p-3" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-            <p className="text-xs font-semibold uppercase tracking-wider text-[#041224] mb-2">Top 10 Vendedores — Prima Neta</p>
-            <div style={{ maxWidth: 700 }}>
-              <PremiumBarChart data={[...data].sort((a,b) => b.primaActual - a.primaActual).slice(0, 10).map(r => ({ name: shortName(r.vendedor), value: r.primaActual, pct: r.pctAvance }))} barHeight={22} showGrid colorFn={(idx, pct) => {
-                if (pct !== undefined && pct >= 100) return { from: '#059669', to: '#10B981' }
-                if (pct !== undefined && pct >= 80) return { from: '#D97706', to: '#F59E0B' }
-                return { from: '#E62800', to: '#EF4444' }
-              }} />
+          {/* Top 10 Vendedores — table + chart */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#041224] mb-2">Top 10 Vendedores — Prima Neta</p>
+              <table className="w-full border-collapse text-xs">
+                <thead>
+                  <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
+                    <th className="px-2 py-1.5 text-center w-6 text-xs font-semibold uppercase tracking-wider">#</th>
+                    <th className="px-2 py-1.5 text-left text-xs font-semibold uppercase tracking-wider">Vendedor</th>
+                    <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">Prima Neta</th>
+                    <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">% Avance</th>
+                    <th className="px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wider">Sem.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...data].sort((a,b) => b.primaActual - a.primaActual).slice(0, 10).map((r, i) => {
+                    const status = semaforoStatus(r.primaActual, r.meta * 0.8, r.meta)
+                    return (
+                      <tr key={r.vendedor} className={`border-b border-[#E5E7EB] ${i % 2 === 0 ? 'bg-white' : 'bg-[#FAFBFC]'}`}>
+                        <td className="px-2 py-1.5 text-center text-xs tabular-nums text-gray-500">{i + 1}</td>
+                        <td className="px-2 py-1.5 text-left text-xs font-semibold text-[#111]">{shortName(r.vendedor)}</td>
+                        <td className="px-2 py-1.5 text-center text-xs font-medium tabular-nums">{fmt(r.primaActual)}</td>
+                        <td className="px-2 py-1.5 text-center text-xs font-medium tabular-nums" style={{ color: semaforoColorFromStatus(status) }}>{r.pctAvance.toFixed(1)}%</td>
+                        <td className="px-2 py-1.5 text-center"><Semaforo status={status} /></td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-3 flex flex-col" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#041224] mb-2">Top 10 — Gráfica</p>
+              <div className="flex-1">
+                <PremiumBarChart data={[...data].sort((a,b) => b.primaActual - a.primaActual).slice(0, 10).map(r => ({ name: shortName(r.vendedor), value: r.primaActual, pct: r.pctAvance }))} barHeight={22} showGrid colorFn={(idx, pct) => {
+                  const palette = [
+                    { from: '#041224', to: '#1E3A5F' },
+                    { from: '#1E3A5F', to: '#3B6B9A' },
+                    { from: '#E62800', to: '#EF4444' },
+                    { from: '#059669', to: '#10B981' },
+                    { from: '#D97706', to: '#F59E0B' },
+                    { from: '#7C3AED', to: '#8B5CF6' },
+                    { from: '#0891B2', to: '#06B6D4' },
+                    { from: '#BE185D', to: '#EC4899' },
+                    { from: '#4338CA', to: '#6366F1' },
+                    { from: '#047857', to: '#34D399' },
+                  ]
+                  return palette[idx % palette.length]
+                }} />
+              </div>
             </div>
           </div>
 
