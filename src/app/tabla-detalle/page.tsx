@@ -633,21 +633,27 @@ function TablaDetalleContent() {
                   const difYoy = l.difYoY
                   const isAlert = l.presupuesto > 0 && l.pctDifPpto <= ALERT_THRESHOLD
                   const isCritical = l.presupuesto > 0 && l.pctDifPpto < -15
+                  // Semáforo: RED if below last year, AMBER if between, GREEN if at/above budget
+                  const semaforoColor = l.primaNeta >= l.presupuesto
+                    ? "text-emerald-600"
+                    : l.primaNeta >= l.pnAnioAnt
+                    ? "text-amber-600"
+                    : "text-red-600"
                   return (
-                    <tr key={l.linea} id={toSlug(l.linea)} className={`group border-b border-[#F0F0F0] cursor-pointer transition-all duration-150 hover:bg-[#FFF5F5] ${isAlert ? "bg-[#FFF3F3]" : isCritical ? "bg-[#FFF2F2]" : idx % 2 === 1 ? "bg-[#FAFAFA]" : "bg-white"}`}
+                    <tr key={l.linea} id={toSlug(l.linea)} className={`group border-b border-[#F0F0F0] cursor-pointer transition-all duration-150 hover:bg-[#FFF5F5] ${isAlert ? "bg-[#FFF3F3]" : isCritical ? "bg-[#FFF2F2]" : idx % 2 === 1 ? "bg-[#FAFBFC]" : "bg-white"}`}
                       onClick={() => drill("gerencia", l.linea, { linea: l.linea })}>
-                      <td className="px-1 py-1.5 text-center">
+                      <td className="px-1 py-2 text-center">
                         <ChevronRight className="w-3.5 h-3.5 text-[#E62800] inline transition-transform group-hover:scale-125 group-hover:translate-x-1" />
                       </td>
-                      <td className="px-3 py-1.5 font-medium text-[#111] text-left">{l.linea}</td>
-                      <td className="px-3 py-1.5 text-right font-medium tabular-nums">{fmt(l.primaNeta)}</td>
-                      <td className="px-3 py-1.5 text-right tabular-nums text-gray-500">{l.presupuesto ? fmt(l.presupuesto) : ""}</td>
-                      <td className={`px-3 py-1.5 text-right font-medium tabular-nums ${dif < 0 ? "text-red-500" : ""}`}>{l.presupuesto ? (dif < 0 ? `(${fmt(Math.abs(dif))})` : fmt(dif)) : ""}</td>
-                      <td className={`px-3 py-1.5 text-right tabular-nums ${l.pctDifPpto < 0 ? "text-red-500" : l.pctDifPpto > 0 ? "text-green-600" : ""}`}>{l.pctDifPpto ? `${l.pctDifPpto > 0 ? "+" : ""}${l.pctDifPpto}%` : ""}</td>
-                      <td className="px-3 py-1.5 text-right tabular-nums text-gray-500">{l.pnAnioAnt ? fmt(l.pnAnioAnt) : ""}</td>
-                      <td className={`px-3 py-1.5 text-right font-medium tabular-nums ${difYoy < 0 ? "text-red-500" : ""}`}>{l.pnAnioAnt ? (difYoy < 0 ? `(${fmt(Math.abs(difYoy))})` : fmt(difYoy)) : ""}</td>
-                      <td className={`px-3 py-1.5 text-right tabular-nums ${l.pctDifYoY < 0 ? "text-red-500" : l.pctDifYoY > 0 ? "text-green-600" : ""}`}>{l.pctDifYoY ? `${l.pctDifYoY > 0 ? "+" : ""}${l.pctDifYoY}%` : ""}</td>
-                      <td className="px-3 py-1.5 text-right tabular-nums text-gray-500">
+                      <td className="px-3 py-2 font-medium text-[#111] text-left">{l.linea}</td>
+                      <td className="px-3 py-2 text-right font-normal tabular-nums">{fmt(l.primaNeta)}</td>
+                      <td className="px-3 py-2 text-right tabular-nums text-green-600 font-semibold">{l.presupuesto ? fmt(l.presupuesto) : ""}</td>
+                      <td className={`px-3 py-2 text-right font-normal tabular-nums ${semaforoColor}`}>{l.presupuesto ? (dif < 0 ? `(${fmt(Math.abs(dif))})` : fmt(dif)) : ""}</td>
+                      <td className={`px-3 py-2 text-right tabular-nums ${semaforoColor}`}>{l.pctDifPpto ? `${l.pctDifPpto > 0 ? "+" : ""}${l.pctDifPpto}%` : ""}</td>
+                      <td className="px-3 py-2 text-right tabular-nums text-gray-800">{l.pnAnioAnt ? fmt(l.pnAnioAnt) : ""}</td>
+                      <td className={`px-3 py-2 text-right font-normal tabular-nums ${difYoy < 0 ? "text-red-500" : ""}`}>{l.pnAnioAnt ? (difYoy < 0 ? `(${fmt(Math.abs(difYoy))})` : fmt(difYoy)) : ""}</td>
+                      <td className={`px-3 py-2 text-right tabular-nums ${l.pctDifYoY < 0 ? "text-red-500" : l.pctDifYoY > 0 ? "text-green-600" : ""}`}>{l.pctDifYoY ? `${l.pctDifYoY > 0 ? "+" : ""}${l.pctDifYoY}%` : ""}</td>
+                      <td className="px-3 py-2 text-right tabular-nums text-gray-500">
                         {l.pendiente ? fmt(l.pendiente) : ""}
                       </td>
                     </tr>
