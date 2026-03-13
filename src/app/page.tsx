@@ -85,6 +85,12 @@ export default function Home() {
                 const diff = l.primaNeta - l.presupuesto
                 const pct = l.presupuesto > 0 ? Math.round((diff / l.presupuesto) * 100) : 0
                 const link = LINEA_LINKS[l.nombre]
+                // Semáforo logic: red if below last year, amber if between last year and budget, green if at/above budget
+                const semaforo = l.primaNeta < l.anioAnterior
+                  ? "text-red-600"
+                  : l.primaNeta < l.presupuesto
+                    ? "text-amber-600"
+                    : "text-emerald-600"
                 const card = (
                   <div className="bg-white rounded-xl border border-gray-200 px-3 py-3 shadow-sm active:bg-gray-50 transition-colors">
                     <div className="flex justify-between items-center">
@@ -95,11 +101,11 @@ export default function Home() {
                         </div>
                         <div className="flex items-center gap-3">
                           <span className="text-base font-bold text-[#041224] tabular-nums">{fmtShort(l.primaNeta)}</span>
-                          <span className="text-[11px] text-gray-400 tabular-nums">/ {fmtShort(l.presupuesto)}</span>
+                          <span className="text-[11px] text-emerald-600 tabular-nums">/ {fmtShort(l.presupuesto)}</span>
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0 ml-2">
-                        <div className={`text-sm font-medium tabular-nums ${pct < 0 ? "text-red-600" : "text-emerald-600"}`}>
+                        <div className={`text-sm font-medium tabular-nums ${semaforo}`}>
                           {pct > 0 ? "+" : ""}{pct}%
                         </div>
                         <div className="text-[10px] text-gray-400">vs ppto</div>
@@ -111,7 +117,7 @@ export default function Home() {
                         className="h-full rounded-full transition-all duration-500"
                         style={{
                           width: `${Math.min(Math.max((l.primaNeta / l.presupuesto) * 100, 0), 100)}%`,
-                          backgroundColor: pct >= 0 ? '#10B981' : pct > -20 ? '#F59E0B' : '#EF4444'
+                          backgroundColor: l.primaNeta < l.anioAnterior ? '#EF4444' : l.primaNeta < l.presupuesto ? '#F59E0B' : '#10B981'
                         }}
                       />
                     </div>
@@ -180,26 +186,33 @@ export default function Home() {
                   {lineas.map((l, i) => {
                     const diff = l.primaNeta - l.presupuesto
                     const link = LINEA_LINKS[l.nombre]
+                    // Semáforo logic: red if below last year, amber if between last year and budget, green if at/above budget
+                    const diffColor = l.primaNeta < l.anioAnterior
+                      ? "text-red-600"
+                      : l.primaNeta < l.presupuesto
+                        ? "text-amber-600"
+                        : "text-emerald-600"
                     return (
                       <tr key={l.nombre} className={`cursor-pointer transition-colors hover:bg-blue-50 ${i % 2 === 0 ? "bg-white" : "bg-gray-50/70"}`}>
-                        <td className="px-1.5 py-1 font-medium text-gray-900">
+                        <td className="px-1.5 py-1.5 font-normal text-gray-900">
                           {link ? <Link href={link} className="hover:underline text-gray-900">{l.nombre}</Link> : l.nombre}
                         </td>
-                        <td className="px-1.5 py-1 text-right font-medium text-gray-900 tabular-nums">{fmt(l.primaNeta)}</td>
-                        <td className="px-1.5 py-1 text-right text-gray-500 tabular-nums">{fmt(l.anioAnterior)}</td>
-                        <td className="px-1.5 py-1 text-right font-medium text-gray-700 tabular-nums">{fmt(l.presupuesto)}</td>
-                        <td className={`px-1.5 py-1 text-right font-medium tabular-nums ${diff < 0 ? "text-red-600" : "text-emerald-600"}`}>
+                        <td className="px-1.5 py-1.5 text-right font-normal text-gray-900 tabular-nums">{fmt(l.primaNeta)}</td>
+                        <td className="px-1.5 py-1.5 text-right text-gray-500 tabular-nums">{fmt(l.anioAnterior)}</td>
+                        <td className="px-1.5 py-1.5 text-right font-normal text-emerald-600 tabular-nums">{fmt(l.presupuesto)}</td>
+                        <td className={`px-1.5 py-1.5 text-right font-normal tabular-nums ${diffColor}`}>
                           {diff < 0 ? `(${fmt(Math.abs(diff))})` : fmt(diff)}
                         </td>
                       </tr>
                     )
                   })}
+                  {/* Total row with semáforo logic */}
                   <tr className="font-bold border-t-2 border-gray-300" style={{ backgroundColor: '#6B7280', color: '#fff' }}>
-                    <td className="px-1.5 py-1 font-bold" style={{ color: '#fff' }}>Total</td>
-                    <td className="px-1.5 py-1 text-right font-bold tabular-nums" style={{ color: '#fff' }}>{fmt(total)}</td>
-                    <td className="px-1.5 py-1 text-right font-bold tabular-nums" style={{ color: '#fff' }}>{fmt(totalAA)}</td>
-                    <td className="px-1.5 py-1 text-right font-bold tabular-nums" style={{ color: '#fff' }}>{fmt(totalPpto)}</td>
-                    <td className="px-1.5 py-1 text-right font-bold tabular-nums" style={{ color: (total - totalPpto) < 0 ? '#ff6b6b' : '#4ade80' }}>
+                    <td className="px-1.5 py-1.5 font-bold" style={{ color: '#fff' }}>Total</td>
+                    <td className="px-1.5 py-1.5 text-right font-bold tabular-nums" style={{ color: '#fff' }}>{fmt(total)}</td>
+                    <td className="px-1.5 py-1.5 text-right font-bold tabular-nums" style={{ color: '#fff' }}>{fmt(totalAA)}</td>
+                    <td className="px-1.5 py-1.5 text-right font-bold tabular-nums" style={{ color: '#fff' }}>{fmt(totalPpto)}</td>
+                    <td className="px-1.5 py-1.5 text-right font-bold tabular-nums" style={{ color: total < totalAA ? '#ff6b6b' : total < totalPpto ? '#fbbf24' : '#4ade80' }}>
                       {(total - totalPpto) < 0 ? `(${fmt(Math.abs(total - totalPpto))})` : fmt(total - totalPpto)}
                     </td>
                   </tr>
