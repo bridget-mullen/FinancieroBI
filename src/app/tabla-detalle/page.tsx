@@ -405,6 +405,21 @@ function TablaDetalleContent() {
     return { rows: [...top10, otrosRow], otrosCount: rest.length }
   }
 
+  // Top 10 + Otros for vendedores within a tier group
+  const computeTop10VendedoresInTier = (vendedores: VendedorByTipoRow[]): { vendedores: VendedorByTipoRow[]; otrosCount: number } => {
+    if (vendedores.length <= 10) return { vendedores, otrosCount: 0 }
+    const sorted = [...vendedores].sort((a, b) => b.primaNeta - a.primaNeta)
+    const top10 = sorted.slice(0, 10)
+    const rest = sorted.slice(10)
+    const sumPN = rest.reduce((s, v) => s + v.primaNeta, 0)
+    const otrosVendedor: VendedorByTipoRow = {
+      vendedor: `Otros (${rest.length})`,
+      tipo: vendedores[0]?.tipo ?? "",
+      primaNeta: sumPN
+    }
+    return { vendedores: [...top10, otrosVendedor], otrosCount: rest.length }
+  }
+
   // Column label for current level
   const levelLabels: Record<DrillLevel, string> = {
     linea: "Línea de negocio", gerencia: "Gerencia", vendedor: "Vendedor",
@@ -870,6 +885,8 @@ function TablaDetalleContent() {
                       return next
                     })
                   }
+                  // Apply Top 10 + Otros within each tier
+                  const { vendedores: displayVendedores } = computeTop10VendedoresInTier(group.vendedores)
                   return (
                     <React.Fragment key={group.tipo}>
                       {/* Tier group header row */}
@@ -877,44 +894,47 @@ function TablaDetalleContent() {
                         className={`bg-[#F3F4F6] border-b border-[#E5E7EB] cursor-pointer hover:bg-[#E5E7EB] transition-colors ${gIdx % 2 === 1 ? "" : ""}`}
                         onClick={toggleTipo}
                       >
-                        <td className="px-1 py-2 text-center w-6">
+                        <td className="px-1 py-1.5 text-center w-6">
                           <ChevronDown className={`w-3.5 h-3.5 text-[#041224] inline transition-transform ${isExpanded ? "" : "-rotate-90"}`} />
                         </td>
-                        <td className="px-3 py-2 font-semibold text-[#111] text-left">
+                        <td className="px-3 py-1.5 text-xs font-semibold text-[#111] text-left">
                           Vendedores {group.tipo} <span className="text-[#666] font-normal">({group.vendedores.length})</span>
                         </td>
-                        <td className="px-3 py-2 text-right tabular-nums font-semibold">{fmt(group.total)}</td>
-                        <td className="px-3 py-2 text-right tabular-nums text-gray-400">—</td>
-                        <td className="px-3 py-2 text-right tabular-nums text-gray-400">—</td>
-                        <td className="px-3 py-2 text-right tabular-nums text-gray-400">—</td>
-                        <td className="px-3 py-2 text-right tabular-nums text-gray-400">—</td>
-                        <td className="px-3 py-2 text-right tabular-nums text-gray-400">—</td>
-                        <td className="px-3 py-2 text-right tabular-nums text-gray-400">—</td>
-                        <td className="px-3 py-2 text-right tabular-nums text-gray-400">—</td>
+                        <td className="px-3 py-1.5 text-right tabular-nums text-xs font-semibold">{fmt(group.total)}</td>
+                        <td className="px-3 py-1.5 text-right tabular-nums text-xs text-gray-400 font-normal">—</td>
+                        <td className="px-3 py-1.5 text-right tabular-nums text-xs text-gray-400 font-normal">—</td>
+                        <td className="px-3 py-1.5 text-right tabular-nums text-xs text-gray-400 font-normal">—</td>
+                        <td className="px-3 py-1.5 text-right tabular-nums text-xs text-gray-400 font-normal">—</td>
+                        <td className="px-3 py-1.5 text-right tabular-nums text-xs text-gray-400 font-normal">—</td>
+                        <td className="px-3 py-1.5 text-right tabular-nums text-xs text-gray-400 font-normal">—</td>
+                        <td className="px-3 py-1.5 text-right tabular-nums text-xs text-gray-400 font-normal">—</td>
                       </tr>
-                      {/* Individual vendedor rows within tier (when expanded) */}
-                      {isExpanded && group.vendedores.map((v, vIdx) => (
-                        <tr
-                          key={v.vendedor}
-                          className={`group border-b border-[#F0F0F0] cursor-pointer transition-all duration-150 hover:bg-[#FFF5F5] ${vIdx % 2 === 1 ? "bg-[#FAFBFC]" : "bg-white"}`}
-                          onClick={() => drill("grupo", v.vendedor, { ...sel, vendedor: v.vendedor })}
-                        >
-                          <td className="px-1 py-2 text-center w-6">
-                            <ChevronRight className="w-3.5 h-3.5 text-[#E62800] inline transition-transform group-hover:scale-110 group-hover:translate-x-0.5" />
-                          </td>
-                          <td className="pl-8 pr-3 py-2 font-medium text-[#111] text-left">{v.vendedor}</td>
-                          <td className={`px-3 py-2 text-right tabular-nums font-normal ${v.primaNeta < 0 ? "text-red-500" : ""}`}>
-                            {v.primaNeta < 0 ? `(${fmt(Math.abs(v.primaNeta))})` : fmt(v.primaNeta)}
-                          </td>
-                          <td className="px-3 py-2 text-right tabular-nums text-gray-300">—</td>
-                          <td className="px-3 py-2 text-right tabular-nums text-gray-300">—</td>
-                          <td className="px-3 py-2 text-right tabular-nums text-gray-300">—</td>
-                          <td className="px-3 py-2 text-right tabular-nums text-gray-300">—</td>
-                          <td className="px-3 py-2 text-right tabular-nums text-gray-300">—</td>
-                          <td className="px-3 py-2 text-right tabular-nums text-gray-300">—</td>
-                          <td className="px-3 py-2 text-right tabular-nums text-gray-300">—</td>
-                        </tr>
-                      ))}
+                      {/* Individual vendedor rows within tier (when expanded) - with Top 10 limit */}
+                      {isExpanded && displayVendedores.map((v, vIdx) => {
+                        const isOtros = v.vendedor.startsWith("Otros (")
+                        return (
+                          <tr
+                            key={v.vendedor}
+                            className={`group border-b border-[#F0F0F0] ${isOtros ? "" : "cursor-pointer"} transition-all duration-150 hover:bg-[#FFF5F5] ${isOtros ? "bg-gray-100" : vIdx % 2 === 1 ? "bg-[#FAFBFC]" : "bg-white"}`}
+                            onClick={() => !isOtros && drill("grupo", v.vendedor, { ...sel, vendedor: v.vendedor })}
+                          >
+                            <td className="px-1 py-1.5 text-center w-6">
+                              {!isOtros && <ChevronRight className="w-3.5 h-3.5 text-[#E62800] inline transition-transform group-hover:scale-110 group-hover:translate-x-0.5" />}
+                            </td>
+                            <td className="pl-8 pr-3 py-1.5 text-xs font-medium text-[#111] text-left">{v.vendedor}</td>
+                            <td className={`px-3 py-1.5 text-right tabular-nums text-xs font-normal ${v.primaNeta < 0 ? "text-red-500" : ""}`}>
+                              {v.primaNeta < 0 ? `(${fmt(Math.abs(v.primaNeta))})` : fmt(v.primaNeta)}
+                            </td>
+                            <td className="px-3 py-1.5 text-right tabular-nums text-xs text-gray-300 font-normal">—</td>
+                            <td className="px-3 py-1.5 text-right tabular-nums text-xs text-gray-300 font-normal">—</td>
+                            <td className="px-3 py-1.5 text-right tabular-nums text-xs text-gray-300 font-normal">—</td>
+                            <td className="px-3 py-1.5 text-right tabular-nums text-xs text-gray-300 font-normal">—</td>
+                            <td className="px-3 py-1.5 text-right tabular-nums text-xs text-gray-300 font-normal">—</td>
+                            <td className="px-3 py-1.5 text-right tabular-nums text-xs text-gray-300 font-normal">—</td>
+                            <td className="px-3 py-1.5 text-right tabular-nums text-xs text-gray-300 font-normal">—</td>
+                          </tr>
+                        )
+                      })}
                     </React.Fragment>
                   )
                 })}
@@ -970,20 +990,20 @@ function TablaDetalleContent() {
                     <tr key={r.name}
                       className={`group border-b border-[#F0F0F0] ${nextLevel ? "cursor-pointer" : ""} transition-all duration-150 ${isOtros ? "bg-gray-100" : idx % 2 === 1 ? "bg-[#FAFBFC]" : "bg-white"} hover:bg-[#FFF5F5]`}
                       onClick={() => nextLevel && selKey && drill(nextLevel, r.name, { ...sel, [selKey]: r.name })}>
-                      <td className="px-1 py-2 text-center w-6">
+                      <td className="px-1 py-1.5 text-center w-6">
                         {nextLevel && <ChevronRight className="w-3.5 h-3.5 text-[#E62800] inline transition-transform group-hover:scale-110 group-hover:translate-x-0.5" />}
                       </td>
-                      <td className="px-3 py-2 font-medium text-[#111] text-left">{r.name}</td>
-                      <td className={`px-3 py-2 text-right tabular-nums font-normal ${r.primaNeta < 0 ? "text-red-500" : ""}`}>
+                      <td className="px-3 py-1.5 text-xs font-medium text-[#111] text-left">{r.name}</td>
+                      <td className={`px-3 py-1.5 text-right tabular-nums text-xs font-normal ${r.primaNeta < 0 ? "text-red-500" : ""}`}>
                         {r.primaNeta < 0 ? `(${fmt(Math.abs(r.primaNeta))})` : fmt(r.primaNeta)}
                       </td>
-                      <td className="px-3 py-2 text-right tabular-nums text-green-600 font-semibold">{r.presupuesto !== null ? fmt(r.presupuesto) : <span className="text-gray-300 font-normal">—</span>}</td>
-                      <td className={`px-3 py-2 text-right tabular-nums font-normal ${semaforoColor}`}>{r.diferencia !== null ? (r.diferencia < 0 ? `(${fmt(Math.abs(r.diferencia))})` : fmt(r.diferencia)) : <span className="text-gray-300">—</span>}</td>
-                      <td className={`px-3 py-2 text-right tabular-nums ${semaforoColor}`}>{r.pctDifPpto !== null ? `${r.pctDifPpto > 0 ? "+" : ""}${r.pctDifPpto}%` : <span className="text-gray-300">—</span>}</td>
-                      <td className="px-3 py-2 text-right tabular-nums text-gray-800">{r.pnAnioAnt !== null ? fmt(r.pnAnioAnt) : <span className="text-gray-300">—</span>}</td>
-                      <td className={`px-3 py-2 text-right tabular-nums font-normal ${r.difYoY === null ? "" : r.difYoY < 0 ? "text-red-500" : ""}`}>{r.difYoY !== null ? (r.difYoY < 0 ? `(${fmt(Math.abs(r.difYoY))})` : fmt(r.difYoY)) : <span className="text-gray-300">—</span>}</td>
-                      <td className={`px-3 py-2 text-right tabular-nums ${r.pctDifYoY === null ? "" : r.pctDifYoY < 0 ? "text-red-500" : r.pctDifYoY > 0 ? "text-green-600" : ""}`}>{r.pctDifYoY !== null ? `${r.pctDifYoY > 0 ? "+" : ""}${r.pctDifYoY}%` : <span className="text-gray-300">—</span>}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">
+                      <td className="px-3 py-1.5 text-right tabular-nums text-xs text-green-600 font-semibold">{r.presupuesto !== null ? fmt(r.presupuesto) : <span className="text-gray-300 font-normal">—</span>}</td>
+                      <td className={`px-3 py-1.5 text-right tabular-nums text-xs font-normal ${semaforoColor}`}>{r.diferencia !== null ? (r.diferencia < 0 ? `(${fmt(Math.abs(r.diferencia))})` : fmt(r.diferencia)) : <span className="text-gray-300">—</span>}</td>
+                      <td className={`px-3 py-1.5 text-right tabular-nums text-xs ${semaforoColor}`}>{r.pctDifPpto !== null ? `${r.pctDifPpto > 0 ? "+" : ""}${r.pctDifPpto}%` : <span className="text-gray-300">—</span>}</td>
+                      <td className="px-3 py-1.5 text-right tabular-nums text-xs text-gray-800">{r.pnAnioAnt !== null ? fmt(r.pnAnioAnt) : <span className="text-gray-300">—</span>}</td>
+                      <td className={`px-3 py-1.5 text-right tabular-nums text-xs font-normal ${r.difYoY === null ? "" : r.difYoY < 0 ? "text-red-500" : ""}`}>{r.difYoY !== null ? (r.difYoY < 0 ? `(${fmt(Math.abs(r.difYoY))})` : fmt(r.difYoY)) : <span className="text-gray-300">—</span>}</td>
+                      <td className={`px-3 py-1.5 text-right tabular-nums text-xs ${r.pctDifYoY === null ? "" : r.pctDifYoY < 0 ? "text-red-500" : r.pctDifYoY > 0 ? "text-green-600" : ""}`}>{r.pctDifYoY !== null ? `${r.pctDifYoY > 0 ? "+" : ""}${r.pctDifYoY}%` : <span className="text-gray-300">—</span>}</td>
+                      <td className="px-3 py-1.5 text-right tabular-nums text-xs">
                         {r.pendiente !== null ? fmt(r.pendiente) : <span className="text-gray-300">—</span>}
                       </td>
                     </tr>
