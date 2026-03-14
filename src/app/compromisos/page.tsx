@@ -116,7 +116,8 @@ function PremiumBarChart({ data, colorFn, barHeight = 18, showGrid = true }: {
 
 
 /* Vertical Column Chart */
-const COLUMN_COLORS = ['#041224','#1E3A5F','#E62800','#059669','#D97706','#7C3AED','#0891B2','#BE185D','#4338CA','#047857','#9CA3AF']
+// Very distinct colors: navy, red, green, amber, purple, cyan, pink, indigo, brown, gray
+const COLUMN_COLORS = ['#041224','#E62800','#059669','#D97706','#7C3AED','#0891B2','#BE185D','#4338CA','#B45309','#6B7280']
 
 function VerticalBarChart({ data }: { data: { name: string; value: number; pct?: number }[] }) {
   if (!data.length) return null
@@ -157,12 +158,12 @@ function VerticalBarChart({ data }: { data: { name: string; value: number; pct?:
   )
 }
 
-// Top 10 + Otros aggregation
-function computeTop10WithOtros(items: CompromisoRow[]): { rows: CompromisoRow[]; otrosCount: number; otrosRow: CompromisoRow | null } {
-  if (items.length <= 10) return { rows: items, otrosCount: 0, otrosRow: null }
+// Top 9 + Otros aggregation for CHARTS (tables still show all rows)
+function computeTop9WithOtros(items: CompromisoRow[]): { rows: CompromisoRow[]; otrosCount: number; otrosRow: CompromisoRow | null } {
+  if (items.length <= 9) return { rows: items, otrosCount: 0, otrosRow: null }
   const sorted = [...items].sort((a, b) => b.primaActual - a.primaActual)
-  const top10 = sorted.slice(0, 10)
-  const rest = sorted.slice(10)
+  const top9 = sorted.slice(0, 9)
+  const rest = sorted.slice(9)
   const sumMeta = rest.reduce((s, r) => s + r.meta, 0)
   const sumActual = rest.reduce((s, r) => s + r.primaActual, 0)
   const pctAvance = sumMeta > 0 ? Math.round((sumActual / sumMeta) * 1000) / 10 : 0
@@ -172,7 +173,7 @@ function computeTop10WithOtros(items: CompromisoRow[]): { rows: CompromisoRow[];
     primaActual: sumActual,
     pctAvance
   }
-  return { rows: top10, otrosCount: rest.length, otrosRow }
+  return { rows: top9, otrosCount: rest.length, otrosRow }
 }
 
 export default function CompromisosPage() {
@@ -195,14 +196,25 @@ export default function CompromisosPage() {
   const totalActual = data.reduce((s, r) => s + r.primaActual, 0)
   const totalPct = totalMeta > 0 ? Math.round((totalActual / totalMeta) * 1000) / 10 : 0
 
-  // Apply Top 10 + Otros
-  const { rows: displayRows, otrosCount, otrosRow } = computeTop10WithOtros(data)
-  const allDisplayRows = otrosRow ? [...displayRows, otrosRow] : displayRows
+  // TABLE shows ALL data
+  const tableRows = data
 
-  const barData = allDisplayRows.map(r => ({ name: shortName(r.vendedor), value: r.primaActual, pct: r.pctAvance }))
-  // Top 5 from compromisos data (sorted by prima actual, desc)
-  const top5Compromisos = [...data].sort((a, b) => b.primaActual - a.primaActual).slice(0, 5)
-  const topBarData = top5Compromisos.map(r => ({ name: shortName(r.vendedor), value: r.primaActual }))
+  // CHART shows Top 9 + Otros
+  const { rows: chartTop9, otrosRow } = computeTop9WithOtros(data)
+  const chartRows = otrosRow ? [...chartTop9, otrosRow] : chartTop9
+  const barData = chartRows.map(r => ({ name: shortName(r.vendedor), value: r.primaActual, pct: r.pctAvance }))
+
+  // Top 9 + Otros for second chart (same logic)
+  const sortedData = [...data].sort((a, b) => b.primaActual - a.primaActual)
+  const top9ForChart = sortedData.slice(0, 9)
+  const restForChart = sortedData.slice(9)
+  const otrosForTop9 = restForChart.length > 0 ? {
+    vendedor: `Otros (${restForChart.length})`,
+    primaActual: restForChart.reduce((s, r) => s + r.primaActual, 0),
+    meta: restForChart.reduce((s, r) => s + r.meta, 0),
+    pctAvance: 0
+  } : null
+  const top9ChartData = otrosForTop9 ? [...top9ForChart, otrosForTop9] : top9ForChart
 
 
   return (
@@ -220,16 +232,15 @@ export default function CompromisosPage() {
           {/* Row 1: Compromisos table + chart */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="bg-white rounded-xl shadow-md border border-gray-100 p-3">
-              {/* Mobile: card layout */}
+              {/* Mobile: card layout - shows ALL rows */}
               <div className="md:hidden space-y-1.5">
                 {loading ? (
                   <p className="text-center text-gray-400 py-4 text-xs">Cargando...</p>
-                ) : allDisplayRows.map((r, idx) => {
-                  const isOtros = r.vendedor.startsWith("Otros (")
+                ) : tableRows.map((r, idx) => {
                   const status = semaforoStatus(r.primaActual, r.meta * 0.8, r.meta)
                   const diferencia = r.primaActual - r.meta
                   return (
-                    <div key={r.vendedor} className={`vendedor-row border border-gray-100 rounded-lg px-3 py-1.5 ${isOtros ? "bg-gray-100" : ""}`}>
+                    <div key={r.vendedor} className="vendedor-row border border-gray-100 rounded-lg px-3 py-1.5">
                       <div className="flex justify-between items-center mb-0.5">
                         <span className="text-xs font-medium text-[#374151]">{r.vendedor}</span>
                         <span className="flex items-center gap-1.5">
@@ -257,7 +268,7 @@ export default function CompromisosPage() {
                   )
                 })()}
               </div>
-              {/* Desktop: full table */}
+              {/* Desktop: full table - shows ALL rows */}
               <table className="hidden md:table w-full border-collapse text-xs">
                 <thead>
                   <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
@@ -272,14 +283,13 @@ export default function CompromisosPage() {
                 <tbody>
                   {loading ? (
                     <tr><td colSpan={6} className="px-2 py-2 text-center text-gray-400 text-xs">Cargando...</td></tr>
-                  ) : allDisplayRows.map((r, idx) => {
-                    const isOtros = r.vendedor.startsWith("Otros (")
+                  ) : tableRows.map((r, idx) => {
                     const status = semaforoStatus(r.primaActual, r.meta * 0.8, r.meta)
                     // Semáforo 3-color: red if below 80%, amber if 80-99%, green if >= 100%
                     const semaforoColor = status === 'green' ? 'text-[#059669]' : status === 'yellow' ? 'text-amber-500' : 'text-[#E62800]'
                     const diferencia = r.primaActual - r.meta
                     return (
-                      <tr key={r.vendedor} className={`vendedor-row border-b border-[#E5E7EB] ${isOtros ? 'bg-gray-100' : idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFBFC]'}`}>
+                      <tr key={r.vendedor} className={`vendedor-row border-b border-[#E5E7EB] ${idx % 2 === 0 ? 'bg-white' : 'bg-[#FAFBFC]'}`}>
                         <td className="px-2 py-1.5 text-left text-xs font-semibold text-[#111]">{r.vendedor}</td>
                         <td className="px-2 py-1.5 text-center text-xs text-gray-600 font-medium tabular-nums">{fmt(r.meta)}</td>
                         <td className="px-2 py-1.5 text-center text-xs font-medium tabular-nums">{fmt(r.primaActual)}</td>
@@ -311,7 +321,7 @@ export default function CompromisosPage() {
               </table>
             </div>
             <div className="bg-white rounded-xl shadow-md border border-gray-100 p-3 flex flex-col" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-              <p className="text-xs font-semibold uppercase tracking-wider text-[#041224] mb-2">Distribución por Vendedor</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#041224] mb-2">Distribución — Top 9 + Otros</p>
               <VerticalBarChart data={barData} />
             </div>
           </div>
@@ -347,8 +357,8 @@ export default function CompromisosPage() {
               </table>
             </div>
             <div className="bg-white rounded-xl shadow-md border border-gray-100 p-3 flex flex-col" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-              <p className="text-xs font-semibold uppercase tracking-wider text-[#041224] mb-2">Top 10 — Gráfica</p>
-              <VerticalBarChart data={[...data].sort((a,b) => b.primaActual - a.primaActual).slice(0, 10).map(r => ({ name: shortName(r.vendedor), value: r.primaActual, pct: r.pctAvance }))} />
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#041224] mb-2">Top 9 + Otros — Gráfica</p>
+              <VerticalBarChart data={top9ChartData.map(r => ({ name: shortName(r.vendedor), value: r.primaActual, pct: r.pctAvance }))} />
             </div>
           </div>
 
