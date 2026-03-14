@@ -886,7 +886,7 @@ function TablaDetalleContent() {
       </div>
 
       {/* DESKTOP TABLE VIEW — Abraham: scroll interno, adaptive max-height only when many rows */}
-      <div ref={tableRef} className="hidden md:block bi-card overflow-hidden overflow-x-auto overflow-y-auto w-full" style={{ maxHeight: manyRows ? '60vh' : 'none' }}>
+      <div ref={tableRef} className="hidden md:block bi-card overflow-x-auto overflow-y-auto w-full" style={{ maxHeight: manyRows ? '50vh' : 'none' }}>
         <table className="w-full text-xs">
           <thead className="sticky top-0 z-20">
             {drillLevel === "linea" ? (
