@@ -533,14 +533,14 @@ function TablaDetalleContent() {
   const totalRowsDifYoyPct = totalRows.pnAnioAnt > 0 ? ((totalRowsDifYoy / totalRows.pnAnioAnt) * 100).toFixed(2) : ""
 
   // Detect which optional columns have data (for levels 2-5) — hide empty columns
-  // Check BOTH rows AND totals: a column is visible if ANY row has data OR the total has data
-  const hasPresupuesto = drillLevel === 'linea' || filteredRows.some(r => r.presupuesto !== null) || totalRows.presupuesto > 0
-  const hasDiferencia = drillLevel === 'linea' || filteredRows.some(r => r.diferencia !== null) || totalRows.presupuesto > 0
-  const hasPctDifPpto = drillLevel === 'linea' || filteredRows.some(r => r.pctDifPpto !== null) || totalRows.presupuesto > 0
-  const hasPnAnioAnt = drillLevel === 'linea' || filteredRows.some(r => r.pnAnioAnt !== null) || totalRows.pnAnioAnt > 0
-  const hasDifYoY = drillLevel === 'linea' || filteredRows.some(r => r.difYoY !== null) || totalRows.pnAnioAnt > 0
-  const hasPctDifYoY = drillLevel === 'linea' || filteredRows.some(r => r.pctDifYoY !== null) || totalRows.pnAnioAnt > 0
-  const hasPendiente = drillLevel === 'linea' || filteredRows.some(r => r.pendiente !== null) || totalRows.pendiente > 0
+  // Column visibility depends ONLY on whether individual rows have data
+  const hasPresupuesto = drillLevel === 'linea' || filteredRows.some(r => r.presupuesto !== null)
+  const hasDiferencia = drillLevel === 'linea' || filteredRows.some(r => r.diferencia !== null)
+  const hasPctDifPpto = drillLevel === 'linea' || filteredRows.some(r => r.pctDifPpto !== null)
+  const hasPnAnioAnt = drillLevel === 'linea' || filteredRows.some(r => r.pnAnioAnt !== null)
+  const hasDifYoY = drillLevel === 'linea' || filteredRows.some(r => r.difYoY !== null)
+  const hasPctDifYoY = drillLevel === 'linea' || filteredRows.some(r => r.pctDifYoY !== null)
+  const hasPendiente = drillLevel === 'linea' || filteredRows.some(r => r.pendiente !== null)
   const visibleColCount = 3 + [hasPresupuesto, hasDiferencia, hasPctDifPpto, hasPnAnioAnt, hasDifYoY, hasPctDifYoY, hasPendiente].filter(Boolean).length
   const polizaTotal = filteredPolizas.reduce((s, p) => s + p.primaNeta, 0)
 
