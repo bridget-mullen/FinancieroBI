@@ -24,8 +24,8 @@ function fmtFull(v: number) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v)
 }
 
-// Brand palette — each linea de negocio has a distinct, visible color
-const COLORS = ["#059669", "#1565C0", "#4FC3F7", "#FF8F00", "#9E9E9E", "#E62800", "#7E57C2", "#FFB74D", "#10B981", "#78909C", "#5C6BC0", "#8D6E63"]
+// Brand palette — high-contrast colors for maximum distinction between neighbors
+const COLORS = ['#041224', '#E62800', '#059669', '#1565C0', '#FF8F00', '#7E57C2', '#00897B', '#D81B60', '#FFB300', '#78909C', '#5C6BC0', '#8D6E63']
 
 // Donut chart using SVG
 function DonutChart({ data, total, label }: { data: { name: string; value: number; color: string }[]; total: number; label: string }) {
@@ -64,10 +64,10 @@ function DonutChart({ data, total, label }: { data: { name: string; value: numbe
           )
         })}
         {/* Center text */}
-        <text x={center} y={center - 6} textAnchor="middle" className="text-[11px] font-semibold" fill="#052F5F">{fmt(total)}</text>
-        <text x={center} y={center + 10} textAnchor="middle" className="text-[9px]" fill="#9ca3af">Total</text>
+        <text x={center} y={center - 6} textAnchor="middle" className="text-[13px] font-semibold" fill="#052F5F">{fmt(total)}</text>
+        <text x={center} y={center + 10} textAnchor="middle" className="text-[11px]" fill="#9ca3af">Total</text>
       </svg>
-      <span className="text-[11px] font-medium text-[#052F5F] mt-1">{label}</span>
+      <span className="text-[13px] font-medium text-[#052F5F] mt-1">{label}</span>
     </div>
   )
 }
@@ -75,13 +75,13 @@ function DonutChart({ data, total, label }: { data: { name: string; value: numbe
 // Horizontal bar chart
 function HBarChart({ data, maxValue }: { data: { name: string; value: number; pct: number; color: string }[]; maxValue: number }) {
   return (
-    <div className="flex flex-col gap-1.5 w-full">
+    <div className="flex flex-col gap-2 w-full">
       {data.map((d, i) => (
         <div key={i} className="flex items-center gap-2 group">
-          <div className="w-[140px] text-[11px] text-gray-700 truncate text-right flex-shrink-0" title={d.name}>
+          <div className="w-[140px] text-[13px] text-gray-700 truncate text-right flex-shrink-0" title={d.name}>
             {d.name}
           </div>
-          <div className="flex-1 h-[22px] bg-gray-100 rounded overflow-hidden relative">
+          <div className="flex-1 h-[26px] bg-gray-100 rounded overflow-hidden relative">
             <div
               className="h-full rounded transition-all duration-700 ease-out flex items-center"
               style={{
@@ -90,18 +90,18 @@ function HBarChart({ data, maxValue }: { data: { name: string; value: number; pc
               }}
             >
               {d.pct >= 8 && (
-                <span className="text-[10px] text-white font-semibold px-2 whitespace-nowrap">
+                <span className="text-[12px] text-white font-bold px-2 whitespace-nowrap">
                   {fmt(d.value)}
                 </span>
               )}
             </div>
             {d.pct < 8 && (
-              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500 font-medium">
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[12px] text-gray-500 font-medium">
                 {fmt(d.value)}
               </span>
             )}
           </div>
-          <div className="w-[42px] text-right text-[11px] font-semibold flex-shrink-0" style={{ color: d.color }}>
+          <div className="w-[42px] text-right text-[13px] font-bold flex-shrink-0" style={{ color: d.color }}>
             {d.pct.toFixed(1)}%
           </div>
         </div>
@@ -120,13 +120,13 @@ function PctGrid({ data }: { data: { name: string; pct: number; value: number; c
           className="bg-white rounded-lg border border-gray-100 px-3 py-2.5 flex flex-col items-center transition-all duration-300 hover:shadow-md hover:border-gray-200"
           style={{ borderLeftColor: d.color, borderLeftWidth: 3 }}
         >
-          <span className="text-[20px] font-bold tabular-nums" style={{ color: d.color }}>
+          <span className="text-[22px] font-bold tabular-nums" style={{ color: d.color }}>
             {d.pct.toFixed(1)}%
           </span>
-          <span className="text-[10px] text-gray-400 mt-0.5 text-center leading-tight truncate w-full" title={d.name}>
+          <span className="text-[11px] text-gray-400 mt-0.5 text-center leading-tight truncate w-full" title={d.name}>
             {d.name}
           </span>
-          <span className="text-[11px] font-medium text-gray-600 mt-0.5">{fmt(d.value)}</span>
+          <span className="text-[13px] font-medium text-gray-600 mt-0.5">{fmt(d.value)}</span>
         </div>
       ))}
     </div>
@@ -212,7 +212,7 @@ export function DrillCharts({ rows, levelLabel, loading }: DrillChartsProps) {
         <div className="flex items-center gap-2">
           <span className="text-xs md:text-sm font-semibold text-[#052F5F]">Distribución por {levelLabel}</span>
         </div>
-        <span className="text-[10px] md:text-xs text-gray-400">{items.length} registros · Total: {fmtFull(total)}</span>
+        <span className="text-xs text-gray-400">{items.length} registros · Total: {fmtFull(total)}</span>
       </div>
 
       {/* ═══ MOBILE: compact donut + inline legend with values ═══ */}
@@ -252,7 +252,7 @@ export function DrillCharts({ rows, levelLabel, loading }: DrillChartsProps) {
             {/* Legend */}
             <div className="mt-2 flex flex-col gap-1">
               {donutData.slice(0, 6).map((d, i) => (
-                <div key={i} className="flex items-center gap-1.5 text-[10px]">
+                <div key={i} className="flex items-center gap-1.5 text-[12px]">
                   <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: d.color }} />
                   <span className="text-gray-600 truncate max-w-[110px]" title={d.name}>{d.name}</span>
                 </div>
