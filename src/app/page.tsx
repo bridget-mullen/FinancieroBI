@@ -193,10 +193,10 @@ export default function Home() {
                         <td className="px-2 py-1.5 text-xs font-semibold text-gray-900">
                           {link ? <Link href={link} className="hover:underline text-gray-900">{l.nombre}</Link> : l.nombre}
                         </td>
-                        <td className="px-2 py-1.5 text-center text-xs font-medium text-gray-900 tabular-nums">{fmt(l.primaNeta)}</td>
-                        <td className="px-2 py-1.5 text-center text-xs font-medium text-gray-800 tabular-nums">{fmt(l.anioAnterior)}</td>
-                        <td className="px-2 py-1.5 text-center text-xs font-medium text-gray-600 tabular-nums">{fmt(l.presupuesto)}</td>
-                        <td className={`px-2 py-1.5 text-center text-xs tabular-nums ${diffColor} ${diff < 0 ? 'font-bold' : 'font-medium'}`}>
+                        <td className="px-2 py-1.5 text-center text-xs font-bold text-gray-900 tabular-nums">{fmt(l.primaNeta)}</td>
+                        <td className="px-2 py-1.5 text-center text-xs font-bold text-gray-800 tabular-nums">{fmt(l.anioAnterior)}</td>
+                        <td className="px-2 py-1.5 text-center text-xs font-bold text-gray-800 tabular-nums">{fmt(l.presupuesto)}</td>
+                        <td className={`px-2 py-1.5 text-center text-xs tabular-nums ${diffColor} ${diff < 0 ? 'font-bold' : 'font-bold'}`}>
                           {diff < 0 ? `(${fmt(Math.abs(diff))})` : fmt(diff)}
                         </td>
                       </tr>
