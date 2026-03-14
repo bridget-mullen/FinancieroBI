@@ -357,24 +357,24 @@ export default function CobranzaPage() {
           </thead>
           <tbody>
             <tr className="border-b border-[#E5E7EB] bg-white hover:bg-[#FFF5F5] transition-colors">
-              <td className="px-3 py-3 text-sm font-semibold text-[#041224]">PN efectuada</td>
-              {ramos.map(r => <td key={r.nombre} className="px-3 py-3 text-center text-sm font-medium tabular-nums">{fmt(r.pnEfectuada)}</td>)}
-              <td className="px-3 py-3 text-center text-sm font-bold tabular-nums">{fmt(totalPN)}</td>
+              <td className="px-3 py-2 text-sm font-semibold text-[#041224]">PN efectuada</td>
+              {ramos.map(r => <td key={r.nombre} className="px-3 py-2 text-center text-sm font-bold tabular-nums">{fmt(r.pnEfectuada)}</td>)}
+              <td className="px-3 py-2 text-center text-sm font-bold tabular-nums">{fmt(totalPN)}</td>
             </tr>
-            <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB] hover:bg-[#FFF5F5] transition-colors">
-              <td className="px-3 py-3 text-sm font-semibold text-[#041224]">% PN efectuada</td>
-              {ramos.map(r => <td key={r.nombre} className="px-3 py-3 text-center text-sm font-medium text-[#6B7280] tabular-nums">{totalPN > 0 ? ((r.pnEfectuada / totalPN) * 100).toFixed(2) : 0}%</td>)}
-              <td className="px-3 py-3 text-center text-sm font-bold tabular-nums">100%</td>
+            <tr className="border-b border-[#E5E7EB] bg-[#F7F8F9] hover:bg-[#FFF5F5] transition-colors">
+              <td className="px-3 py-2 text-sm font-semibold text-[#041224]">% PN efectuada</td>
+              {ramos.map(r => <td key={r.nombre} className="px-3 py-2 text-center text-sm font-bold text-[#6B7280] tabular-nums">{totalPN > 0 ? ((r.pnEfectuada / totalPN) * 100).toFixed(2) : 0}%</td>)}
+              <td className="px-3 py-2 text-center text-sm font-bold tabular-nums">100%</td>
             </tr>
             <tr className="border-b border-[#E5E7EB] bg-white hover:bg-[#FFF5F5] transition-colors">
-              <td className="px-3 py-3 text-sm font-semibold text-[#041224]">No. polizas</td>
-              {ramos.map(r => <td key={r.nombre} className="px-3 py-3 text-center text-sm font-medium tabular-nums">{new Intl.NumberFormat("es-MX").format(r.polizas)}</td>)}
-              <td className="px-3 py-3 text-center text-sm font-bold tabular-nums">{new Intl.NumberFormat("es-MX").format(totalPOL)}</td>
+              <td className="px-3 py-2 text-sm font-semibold text-[#041224]">No. polizas</td>
+              {ramos.map(r => <td key={r.nombre} className="px-3 py-2 text-center text-sm font-bold tabular-nums">{new Intl.NumberFormat("es-MX").format(r.polizas)}</td>)}
+              <td className="px-3 py-2 text-center text-sm font-bold tabular-nums">{new Intl.NumberFormat("es-MX").format(totalPOL)}</td>
             </tr>
             <tr className="bg-[#041224] text-white">
-              <td className="px-3 py-3 text-sm font-bold">Total</td>
-              {ramos.map(r => <td key={r.nombre} className="px-3 py-3 text-center text-sm font-bold tabular-nums">{fmt(r.pnEfectuada)}</td>)}
-              <td className="px-3 py-3 text-center text-sm font-bold tabular-nums">{fmt(totalPN)}</td>
+              <td className="px-3 py-2 text-sm font-bold">Total</td>
+              {ramos.map(r => <td key={r.nombre} className="px-3 py-2 text-center text-sm font-bold tabular-nums">{fmt(r.pnEfectuada)}</td>)}
+              <td className="px-3 py-2 text-center text-sm font-bold tabular-nums">{fmt(totalPN)}</td>
             </tr>
           </tbody>
         </table>
@@ -477,24 +477,24 @@ export default function CobranzaPage() {
                 const pctConvValue = c.convenio > 0 ? ((c.primaNeta / c.convenio - 1) * 100).toFixed(2) : "0.00"
                 const pctAAValue = c.pnAA > 0 ? ((c.primaNeta / c.pnAA - 1) * 100).toFixed(2) : "0.00"
                 const isQualitas = c.nombre === "QUALITAS"
-                const rowBg = isQualitas ? "bg-[#F0FDF4]" : idx % 2 === 0 ? "bg-white" : "bg-[#F9FAFB]"
+                const rowBg = isQualitas ? "bg-[#F0FDF4]" : idx % 2 === 0 ? "bg-white" : "bg-[#F7F8F9]"
                 return (
                   <tr key={c.nombre} className={`group hover:bg-[#FFF5F5] transition-colors ${rowBg}`}>
-                    <td className={`px-3 py-1.5 text-xs font-semibold text-[#041224] border-b border-[#E5E7EB] ${rowBg} group-hover:bg-[#FFF5F5] transition-colors`}>{c.nombre}</td>
-                    <td className="px-3 py-1.5 text-center text-xs font-medium tabular-nums border-b border-[#E5E7EB]">{fmt(c.primaNeta)}</td>
-                    <td className="px-3 py-1.5 text-center text-xs font-medium tabular-nums text-gray-600 border-b border-[#E5E7EB]">{c.convenio > 0 ? fmt(c.convenio) : <span className="text-gray-400">—</span>}</td>
-                    <td className="px-3 py-1.5 text-center border-b border-[#E5E7EB]">
+                    <td className={`px-3 py-2 text-sm font-semibold text-[#041224] border-b border-[#E5E7EB] ${rowBg} group-hover:bg-[#FFF5F5] transition-colors`}>{c.nombre}</td>
+                    <td className="px-3 py-2 text-center text-sm font-bold tabular-nums border-b border-[#E5E7EB]">{fmt(c.primaNeta)}</td>
+                    <td className="px-3 py-2 text-center text-sm font-bold tabular-nums text-gray-600 border-b border-[#E5E7EB]">{c.convenio > 0 ? fmt(c.convenio) : <span className="text-gray-400">—</span>}</td>
+                    <td className="px-3 py-2 text-center border-b border-[#E5E7EB]">
                       {c.convenio > 0 ? (
-                        <span className={`text-xs font-medium tabular-nums ${Number(pctConvValue) < 0 ? "text-[#E62800]" : "text-[#059669]"}`}>
+                        <span className={`text-sm font-bold tabular-nums ${Number(pctConvValue) < 0 ? "text-[#E62800]" : "text-[#059669]"}`}>
                           {Number(pctConvValue) >= 0 ? "+" : ""}{pctConvValue}%
                         </span>
                       ) : (
-                        <span className="text-xs text-gray-400">—</span>
+                        <span className="text-sm text-gray-400">—</span>
                       )}
                     </td>
-                    <td className="px-3 py-1.5 text-center text-xs font-medium tabular-nums text-[#6B7280] border-b border-[#E5E7EB]">{fmt(c.pnAA)}</td>
-                    <td className="px-3 py-1.5 text-center border-b border-[#E5E7EB]">
-                      <span className={`text-xs font-medium tabular-nums ${difAA < 0 ? "text-[#E62800]" : "text-[#059669]"}`}>
+                    <td className="px-3 py-2 text-center text-sm font-bold tabular-nums text-[#6B7280] border-b border-[#E5E7EB]">{fmt(c.pnAA)}</td>
+                    <td className="px-3 py-2 text-center border-b border-[#E5E7EB]">
+                      <span className={`text-sm font-bold tabular-nums ${difAA < 0 ? "text-[#E62800]" : "text-[#059669]"}`}>
                         {Number(pctAAValue) >= 0 ? "+" : ""}{pctAAValue}%
                       </span>
                     </td>
@@ -503,12 +503,12 @@ export default function CobranzaPage() {
               })}
               {/* TOTAL */}
               <tr className="bg-[#041224] text-white">
-                <td className="px-3 py-1.5 text-xs font-bold bg-[#041224]">TOTAL</td>
-                <td className="px-3 py-1.5 text-center text-xs font-bold tabular-nums">{fmt(compTotals.primaNeta)}</td>
-                <td className="px-3 py-1.5 text-center text-xs font-bold tabular-nums">{fmt(compTotals.convenio)}</td>
-                <td className="px-3 py-1.5 text-center text-xs font-bold tabular-nums">{pct(compTotals.primaNeta, compTotals.convenio).toFixed(2)}%</td>
-                <td className="px-3 py-1.5 text-center text-xs font-bold tabular-nums">{fmt(compTotals.pnAA)}</td>
-                <td className="px-3 py-1.5 text-center text-xs font-bold tabular-nums">{pct(compTotals.primaNeta, compTotals.pnAA).toFixed(2)}%</td>
+                <td className="px-3 py-2 text-sm font-bold bg-[#041224]">TOTAL</td>
+                <td className="px-3 py-2 text-center text-sm font-bold tabular-nums">{fmt(compTotals.primaNeta)}</td>
+                <td className="px-3 py-2 text-center text-sm font-bold tabular-nums">{fmt(compTotals.convenio)}</td>
+                <td className="px-3 py-2 text-center text-sm font-bold tabular-nums">{pct(compTotals.primaNeta, compTotals.convenio).toFixed(2)}%</td>
+                <td className="px-3 py-2 text-center text-sm font-bold tabular-nums">{fmt(compTotals.pnAA)}</td>
+                <td className="px-3 py-2 text-center text-sm font-bold tabular-nums">{pct(compTotals.primaNeta, compTotals.pnAA).toFixed(2)}%</td>
               </tr>
             </tbody>
           </table>
