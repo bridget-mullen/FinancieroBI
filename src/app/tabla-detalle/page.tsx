@@ -517,6 +517,8 @@ function TablaDetalleContent() {
     : { rows: filteredRows, otrosCount: 0 }
   const filteredPolizas = filterSearch(polizas, "documento")
   const rowTotal = filteredRows.reduce((s, r) => s + r.primaNeta, 0)
+  // Determine if table has many rows (for adaptive max-height)
+  const manyRows = drillLevel === 'poliza' ? filteredPolizas.length > 15 : drillLevel !== 'linea' && displayRows.length > 15
 
   // Compute totals for levels 2-5 (same pattern as totalLineas)
   const totalRows = {
@@ -883,8 +885,8 @@ function TablaDetalleContent() {
         )}
       </div>
 
-      {/* DESKTOP TABLE VIEW — Abraham: scroll interno max-height: 70vh, sticky header + sticky first column */}
-      <div ref={tableRef} className="hidden md:block bi-card overflow-hidden overflow-x-auto max-h-[70vh] overflow-y-auto w-full">
+      {/* DESKTOP TABLE VIEW — Abraham: scroll interno, adaptive max-height only when many rows */}
+      <div ref={tableRef} className="hidden md:block bi-card overflow-hidden overflow-x-auto overflow-y-auto w-full" style={{ maxHeight: manyRows ? '60vh' : 'none' }}>
         <table className="w-full text-xs">
           <thead className="sticky top-0 z-20">
             {drillLevel === "linea" ? (
