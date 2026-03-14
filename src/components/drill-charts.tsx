@@ -142,19 +142,19 @@ export function DrillCharts({ rows, levelLabel, loading }: DrillChartsProps) {
 
     const total = nonZeroRows.reduce((s, r) => s + Math.abs(r.primaNeta), 0)
 
-    // Sort by value descending and take top 10
+    // Sort by value descending and take top 9 (Abraham: "1,2,3,4,5,6,7,8,9 y el décimo que sea otros")
     const sorted = [...nonZeroRows].sort((a, b) => Math.abs(b.primaNeta) - Math.abs(a.primaNeta))
-    const top10 = sorted.slice(0, 10)
-    const rest = sorted.slice(10)
+    const top9 = sorted.slice(0, 9)
+    const rest = sorted.slice(9)
 
-    let items = top10.map((r, i) => ({
+    let items = top9.map((r, i) => ({
       name: r.name,
       value: Math.abs(r.primaNeta),
       pct: total > 0 ? (Math.abs(r.primaNeta) / total) * 100 : 0,
       color: COLORS[i % COLORS.length],
     }))
 
-    // Group rest as 'Otros' if there are more than 10 items
+    // Group rest as 'Otros' if there are more than 9 items
     if (rest.length > 0) {
       const othersValue = rest.reduce((s, r) => s + Math.abs(r.primaNeta), 0)
       items.push({

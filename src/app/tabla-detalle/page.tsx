@@ -273,8 +273,9 @@ function TablaDetalleContent() {
         const pnAnioAntTotal = (data ?? []).reduce((s, d) => s + d.pnAnioAnt, 0)
         setRows((data ?? []).map(d => toRowWithYoY(d.gerencia, d.primaNeta, d.pnAnioAnt, pnAnioAntTotal, lineaPpto, lineaPendiente)))
       } else if (level === "vendedor") {
-        // Feature 1: For Franquicias/Promotorías, use tipo grouper with FULL data (all 9 columns)
-        if (usesTipoGrouper(newSel.linea || "")) {
+        // Feature 1: For Franquicias/Promotorías, use tipo grouper ONLY if groupByTipo is ON
+        // Default: show flat vendedor list (Abraham: "Que haya algún botón que le ponga yo agrupar por tipo")
+        if (usesTipoGrouper(newSel.linea || "") && groupByTipo) {
           const data = await getVendedoresWithTipo(
             newSel.gerencia!,
             newSel.linea!,
@@ -287,7 +288,7 @@ function TablaDetalleContent() {
           setTipoGroups(data)
           setRows([]) // Clear regular rows
         } else {
-          // Other líneas: show vendedores directly
+          // All líneas: show vendedores directly (default behavior)
           const data = await getVendedores(newSel.gerencia!, newSel.linea!, periodo, year, clasificacionAseguradoras)
           const pnAnioAntTotal = (data ?? []).reduce((s, d) => s + d.pnAnioAnt, 0)
           const currentTotal = (data ?? []).reduce((s, d) => s + d.primaNeta, 0)
@@ -383,8 +384,48 @@ function TablaDetalleContent() {
     return items.filter(item => String((item as any)[key]).toLowerCase().includes(search.toLowerCase()))
   }
 
-  // Top 10 + Otros aggregation for drill levels 2-5
+  // Top 9 + Otros aggregation for CHARTS ONLY (Abraham: "1,2,3,4,5,6,7,8,9 y el décimo que sea otros")
+  // Table shows ALL rows with scroll
+  const computeTop9WithOtrosForChart = (items: DrillRow[]): DrillRow[] => {
+    if (items.length <= 9) return items
+    // Sort by primaNeta descending and take top 9
+    const sorted = [...items].sort((a, b) => b.primaNeta - a.primaNeta)
+    const top9 = sorted.slice(0, 9)
+    const rest = sorted.slice(9)
+    // Sum numeric columns from rest
+    const sumPN = rest.reduce((s, r) => s + r.primaNeta, 0)
+    const sumPpto = rest.reduce((s, r) => s + (r.presupuesto ?? 0), 0)
+    const sumPnAA = rest.reduce((s, r) => s + (r.pnAnioAnt ?? 0), 0)
+    const sumPend = rest.reduce((s, r) => s + (r.pendiente ?? 0), 0)
+    const sumDif = sumPpto > 0 ? sumPN - sumPpto : null
+    const pctDif = sumPpto > 0 && sumDif !== null ? Math.round((sumDif / sumPpto) * 1000) / 10 : null
+    const sumDifYoY = sumPnAA > 0 ? sumPN - sumPnAA : null
+    const pctDifYoY = sumPnAA > 0 && sumDifYoY !== null ? Math.round((sumDifYoY / sumPnAA) * 10000) / 100 : null
+    const otrosRow: DrillRow = {
+      name: `Otros (${rest.length})`,
+      primaNeta: sumPN,
+      presupuesto: sumPpto > 0 ? sumPpto : null,
+      diferencia: sumDif,
+      pctDifPpto: pctDif,
+      pnAnioAnt: sumPnAA > 0 ? sumPnAA : null,
+      difYoY: sumDifYoY,
+      pctDifYoY: pctDifYoY,
+      pendiente: sumPend > 0 ? sumPend : null
+    }
+    return [...top9, otrosRow]
+  }
+
+  // Toggle state for "Agrupar por tipo" button (Abraham: default OFF, show flat vendedores)
+  const [groupByTipo, setGroupByTipo] = useState(false)
+
+  // Top 10 + Otros aggregation for drill levels 2-5 — TABLE still shows ALL rows with scroll
   const computeTop10WithOtros = (items: DrillRow[]): { rows: DrillRow[]; otrosCount: number } => {
+    // TABLE shows ALL rows — no truncation, user scrolls
+    return { rows: items, otrosCount: 0 }
+  }
+
+  // Keep the old logic for reference (used nowhere now, table shows all)
+  const _computeTop10WithOtrosLegacy = (items: DrillRow[]): { rows: DrillRow[]; otrosCount: number } => {
     if (items.length <= 10) return { rows: items, otrosCount: 0 }
     // Sort by primaNeta descending and take top 10
     const sorted = [...items].sort((a, b) => b.primaNeta - a.primaNeta)
@@ -412,6 +453,9 @@ function TablaDetalleContent() {
     }
     return { rows: [...top10, otrosRow], otrosCount: rest.length }
   }
+
+  // Helper: check if línea should skip grupo (only Corporate and Tradicional use grupo)
+  const lineaUsesGrupo = (linea: string) => linea === "Corporate" || linea === "Cartera Tradicional"
 
   // Top 10 + Otros for vendedores within a tier group (full row data)
   const computeTop10VendedoresInTier = (vendedores: VendedorFullRow[]): { vendedores: VendedorFullRow[]; otrosCount: number } => {
@@ -584,6 +628,26 @@ function TablaDetalleContent() {
           <option value="De servicio">De servicio</option>
         </select>
 
+        {/* Feature 5: Agrupar por tipo toggle — only show for Franquicias/Promotorías at vendedor level */}
+        {drillLevel === "vendedor" && usesTipoGrouper(sel.linea || "") && (
+          <button
+            onClick={() => {
+              setGroupByTipo(!groupByTipo)
+              // Re-drill to apply the new grouping
+              if (sel.gerencia && sel.linea) {
+                drill("vendedor", sel.gerencia, { linea: sel.linea, gerencia: sel.gerencia })
+              }
+            }}
+            className={`px-2 py-1 rounded text-xs font-medium border transition-colors ${
+              groupByTipo
+                ? "bg-[#041224] text-white border-[#041224]"
+                : "bg-white text-[#333] border-[#E5E7EB] hover:border-[#CCD1D3]"
+            }`}
+          >
+            {groupByTipo ? "✓ Agrupado por tipo" : "Agrupar por tipo"}
+          </button>
+        )}
+
         <div className="relative ml-auto">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
           <input
@@ -738,11 +802,13 @@ function TablaDetalleContent() {
                   {/* Vendedores within tier — shows individual vendedor data */}
                   {isExpanded && displayVendedores.map((v) => {
                     const isOtros = v.vendedor.startsWith("Otros (")
+                    // Skip grupo for Franquicias/Promotorías (only Corporate and Tradicional use grupo)
+                    const nextLevelFromVendedor = lineaUsesGrupo(sel.linea || "") ? "grupo" : "cliente"
                     return (
                       <div
                         key={v.vendedor}
                         className={`ml-4 rounded-lg border border-gray-200 px-3 py-2 shadow-sm ${isOtros ? "bg-gray-100" : "bg-white active:bg-gray-50"}`}
-                        onClick={() => !isOtros && drill("grupo", v.vendedor, { ...sel, vendedor: v.vendedor })}
+                        onClick={() => !isOtros && drill(nextLevelFromVendedor as DrillLevel, v.vendedor, { ...sel, vendedor: v.vendedor })}
                       >
                         <div className="flex justify-between items-center mb-1">
                           <span className="font-bold text-sm text-[#111] flex items-center gap-1 truncate">
@@ -774,7 +840,14 @@ function TablaDetalleContent() {
               <p className="text-center text-[#888] py-8">Sin datos para este periodo</p>
             ) : displayRows.map((r) => {
               const isOtros = r.name.startsWith("Otros (")
-              const nextLevel: DrillLevel | null = isOtros ? null : (drillLevel === "gerencia" ? "vendedor" : drillLevel === "vendedor" ? "grupo" : drillLevel === "grupo" ? "cliente" : drillLevel === "cliente" ? "poliza" : null)
+              // Skip grupo for non-Corporate/Tradicional lines (Abraham: "Corporate y tradicional es importante el grupo")
+              const skipGrupo = drillLevel === "vendedor" && !lineaUsesGrupo(sel.linea || "")
+              const nextLevel: DrillLevel | null = isOtros ? null : (
+                drillLevel === "gerencia" ? "vendedor" :
+                drillLevel === "vendedor" ? (skipGrupo ? "cliente" : "grupo") :
+                drillLevel === "grupo" ? "cliente" :
+                drillLevel === "cliente" ? "poliza" : null
+              )
               const selKey = isOtros ? null : (drillLevel === "gerencia" ? "gerencia" : drillLevel === "vendedor" ? "vendedor" : drillLevel === "grupo" ? "grupo" : drillLevel === "cliente" ? "cliente" : null)
               return (
                 <div key={r.name} className={`rounded-lg border border-gray-200 px-3 py-2 shadow-sm ${isOtros ? "bg-gray-100" : "bg-white active:bg-gray-50"}`}
@@ -798,45 +871,45 @@ function TablaDetalleContent() {
         )}
       </div>
 
-      {/* DESKTOP TABLE VIEW */}
-      <div ref={tableRef} className="hidden md:block bi-card overflow-hidden overflow-x-auto max-h-[70vh] overflow-y-auto w-full">
+      {/* DESKTOP TABLE VIEW — Abraham: scroll interno max-height: 500px, sticky header + sticky first column */}
+      <div ref={tableRef} className="hidden md:block bi-card overflow-hidden overflow-x-auto max-h-[500px] overflow-y-auto w-full">
         <table className="w-full text-xs">
-          <thead className="sticky top-0 z-10">
+          <thead className="sticky top-0 z-20">
             {drillLevel === "linea" ? (
               <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
-                <th className="w-6 px-1 py-2.5"></th>
-                <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">Línea de negocio</th>
-                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">Prima neta</th>
-                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">Presupuesto</th>
-                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">Diferencia</th>
-                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">% Dif ppto</th>
-                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">{cmpLabel.col}</th>
-                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">{cmpLabel.difCol}</th>
-                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">{cmpLabel.pctCol}</th>
-                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">Pendiente</th>
+                <th className="w-6 px-1 py-2.5 sticky left-0 z-30 bg-[#041224]"></th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wider sticky left-6 z-30 bg-[#041224]">Línea de negocio</th>
+                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider bg-[#041224]">Prima neta</th>
+                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider bg-[#041224]">Presupuesto</th>
+                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider bg-[#041224]">Diferencia</th>
+                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider bg-[#041224]">% Dif ppto</th>
+                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider bg-[#041224]">{cmpLabel.col}</th>
+                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider bg-[#041224]">{cmpLabel.difCol}</th>
+                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider bg-[#041224]">{cmpLabel.pctCol}</th>
+                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider bg-[#041224]">Pendiente</th>
               </tr>
             ) : drillLevel === "poliza" ? (
               <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
-                <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">Documento</th>
-                <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">Aseguradora</th>
-                <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">Ramo</th>
-                <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">Subramo</th>
-                <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">F. Liquidación</th>
-                <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">F. Lím. Pago</th>
-                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">Prima neta</th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wider sticky left-0 z-30 bg-[#041224]">Documento</th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wider bg-[#041224]">Aseguradora</th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wider bg-[#041224]">Ramo</th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wider bg-[#041224]">Subramo</th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wider bg-[#041224]">F. Liquidación</th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wider bg-[#041224]">F. Lím. Pago</th>
+                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider bg-[#041224]">Prima neta</th>
               </tr>
             ) : (
               <tr className="bg-[#041224] text-white border-b-2 border-b-[#E62800]">
-                <th className="w-6 px-1 py-2.5"></th>
-                <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">{levelLabels[drillLevel]}</th>
-                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">Prima neta</th>
-                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">Presupuesto</th>
-                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">Diferencia</th>
-                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">% Dif ppto</th>
-                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">{cmpLabel.col}</th>
-                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">{cmpLabel.difCol}</th>
-                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">{cmpLabel.pctCol}</th>
-                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider">Pendiente</th>
+                <th className="w-6 px-1 py-2.5 sticky left-0 z-30 bg-[#041224]"></th>
+                <th className="text-left px-3 py-2.5 text-xs font-semibold uppercase tracking-wider sticky left-6 z-30 bg-[#041224]">{levelLabels[drillLevel]}</th>
+                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider bg-[#041224]">Prima neta</th>
+                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider bg-[#041224]">Presupuesto</th>
+                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider bg-[#041224]">Diferencia</th>
+                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider bg-[#041224]">% Dif ppto</th>
+                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider bg-[#041224]">{cmpLabel.col}</th>
+                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider bg-[#041224]">{cmpLabel.difCol}</th>
+                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider bg-[#041224]">{cmpLabel.pctCol}</th>
+                <th className="text-center px-3 py-2.5 text-xs font-semibold uppercase tracking-wider bg-[#041224]">Pendiente</th>
               </tr>
             )}
           </thead>
@@ -856,13 +929,14 @@ function TablaDetalleContent() {
                     : l.primaNeta >= l.pnAnioAnt
                     ? "text-amber-500"
                     : "text-[#E62800]"
+                  const rowBg = idx % 2 === 1 ? "bg-[#FAFBFC]" : "bg-white"
                   return (
-                    <tr key={l.linea} id={toSlug(l.linea)} className={`group border-b border-[#F0F0F0] cursor-pointer transition-all duration-150 hover:bg-[#FFF5F5] ${idx % 2 === 1 ? "bg-[#FAFBFC]" : "bg-white"}`}
+                    <tr key={l.linea} id={toSlug(l.linea)} className={`group border-b border-[#F0F0F0] cursor-pointer transition-all duration-150 hover:bg-[#FFF5F5] ${rowBg}`}
                       onClick={() => drill("gerencia", l.linea, { linea: l.linea })}>
-                      <td className="px-1 py-3 text-center">
+                      <td className={`px-1 py-3 text-center sticky left-0 z-10 ${rowBg} group-hover:bg-[#FFF5F5]`}>
                         <ChevronRight className="w-3.5 h-3.5 text-[#E62800] inline transition-transform group-hover:scale-125 group-hover:translate-x-1" />
                       </td>
-                      <td className="px-3 py-3 text-sm font-semibold text-[#111] text-left">{l.linea}</td>
+                      <td className={`px-3 py-3 text-sm font-semibold text-[#111] text-left sticky left-6 z-10 ${rowBg} group-hover:bg-[#FFF5F5]`}>{l.linea}</td>
                       <td className="px-3 py-3 text-center text-sm font-medium tabular-nums">{fmt(l.primaNeta)}</td>
                       <td className="px-3 py-3 text-center tabular-nums text-sm text-gray-600 font-medium">{l.presupuesto ? fmt(l.presupuesto) : ""}</td>
                       <td className={`px-3 py-3 text-center text-sm font-medium tabular-nums ${semaforoColor}`}>{l.presupuesto ? (dif < 0 ? `(${fmt(Math.abs(dif))})` : fmt(dif)) : ""}</td>
@@ -876,9 +950,9 @@ function TablaDetalleContent() {
                     </tr>
                   )
                 })}
-                <tr className="bg-[#041224] text-white border-t-2 cursor-default">
-                  <td className="px-1 py-3"></td>
-                  <td className="px-3 py-3 text-sm font-bold text-left">Total</td>
+                <tr className="bg-[#041224] text-white border-t-2 cursor-default sticky bottom-0 z-10">
+                  <td className="px-1 py-3 sticky left-0 z-10 bg-[#041224]"></td>
+                  <td className="px-3 py-3 text-sm font-bold text-left sticky left-6 z-10 bg-[#041224]">Total</td>
                   <td className="px-3 py-3 text-right text-sm font-bold tabular-nums">{fmt(totalLineas.primaNeta)}</td>
                   <td className="px-3 py-3 text-right text-sm font-bold tabular-nums">{totalLineas.presupuesto ? fmt(totalLineas.presupuesto) : ""}</td>
                   <td className="px-3 py-3 text-right text-sm font-bold tabular-nums">{totalLineas.presupuesto ? (totalDif < 0 ? `(${fmt(Math.abs(totalDif))})` : fmt(totalDif)) : ""}</td>
@@ -895,19 +969,22 @@ function TablaDetalleContent() {
               <>
                 {filteredPolizas.length === 0 ? (
                   <tr><td colSpan={7} className="px-3 py-8 text-center text-[#888]">Datos en integración</td></tr>
-                ) : filteredPolizas.map((p, idx) => (
-                  <tr key={`${p.documento}-${idx}`} className={`border-b border-[#F0F0F0] hover:bg-[#FFF5F5] ${idx % 2 === 1 ? "bg-[#FAFBFC]" : "bg-white"}`}>
-                    <td className="px-3 py-3 font-medium text-sm text-[#111] text-left">{p.documento}</td>
-                    <td className="px-3 py-3 text-sm text-[#333] text-left">{p.aseguradora}</td>
-                    <td className="px-3 py-3 text-sm text-[#333] text-left">{p.ramo}</td>
-                    <td className="px-3 py-3 text-sm text-[#666] text-left">{p.subramo}</td>
-                    <td className="px-3 py-3 text-sm text-[#666] text-left tabular-nums">{fmtDate(p.fechaLiquidacion)}</td>
-                    <td className="px-3 py-3 text-sm text-[#666] text-left tabular-nums">{fmtDate(p.fechaLimPago)}</td>
-                    <td className={`px-3 py-3 text-center text-sm font-medium tabular-nums ${p.primaNeta < 0 ? "text-[#E62800]" : ""}`}>{p.primaNeta < 0 ? `(${fmt(Math.abs(p.primaNeta))})` : fmt(p.primaNeta)}</td>
-                  </tr>
-                ))}
-                <tr className="bg-[#041224] text-white border-t-2 cursor-default">
-                  <td className="px-3 py-3 text-sm font-bold" colSpan={6}>Total</td>
+                ) : filteredPolizas.map((p, idx) => {
+                  const rowBg = idx % 2 === 1 ? "bg-[#FAFBFC]" : "bg-white"
+                  return (
+                    <tr key={`${p.documento}-${idx}`} className={`group border-b border-[#F0F0F0] hover:bg-[#FFF5F5] ${rowBg}`}>
+                      <td className={`px-3 py-3 font-medium text-sm text-[#111] text-left sticky left-0 z-10 ${rowBg} group-hover:bg-[#FFF5F5]`}>{p.documento}</td>
+                      <td className="px-3 py-3 text-sm text-[#333] text-left">{p.aseguradora}</td>
+                      <td className="px-3 py-3 text-sm text-[#333] text-left">{p.ramo}</td>
+                      <td className="px-3 py-3 text-sm text-[#666] text-left">{p.subramo}</td>
+                      <td className="px-3 py-3 text-sm text-[#666] text-left tabular-nums">{fmtDate(p.fechaLiquidacion)}</td>
+                      <td className="px-3 py-3 text-sm text-[#666] text-left tabular-nums">{fmtDate(p.fechaLimPago)}</td>
+                      <td className={`px-3 py-3 text-center text-sm font-medium tabular-nums ${p.primaNeta < 0 ? "text-[#E62800]" : ""}`}>{p.primaNeta < 0 ? `(${fmt(Math.abs(p.primaNeta))})` : fmt(p.primaNeta)}</td>
+                    </tr>
+                  )
+                })}
+                <tr className="bg-[#041224] text-white border-t-2 cursor-default sticky bottom-0 z-10">
+                  <td className="px-3 py-3 text-sm font-bold sticky left-0 z-10 bg-[#041224]" colSpan={6}>Total</td>
                   <td className="px-3 py-3 text-right text-sm font-bold tabular-nums">{fmt(polizaTotal)}</td>
                 </tr>
               </>
@@ -939,13 +1016,13 @@ function TablaDetalleContent() {
                     <React.Fragment key={group.tipo}>
                       {/* Tier group header row — shows SUMMED data for all 9 columns */}
                       <tr
-                        className={`bg-[#F3F4F6] border-b border-[#E5E7EB] cursor-pointer hover:bg-[#E5E7EB] transition-colors ${gIdx % 2 === 1 ? "" : ""}`}
+                        className="group bg-[#F3F4F6] border-b border-[#E5E7EB] cursor-pointer hover:bg-[#E5E7EB] transition-colors"
                         onClick={toggleTipo}
                       >
-                        <td className="px-1 py-3 text-center w-6">
+                        <td className="px-1 py-3 text-center w-6 sticky left-0 z-10 bg-[#F3F4F6] group-hover:bg-[#E5E7EB]">
                           <ChevronDown className={`w-3.5 h-3.5 text-[#041224] inline transition-transform ${isExpanded ? "" : "-rotate-90"}`} />
                         </td>
-                        <td className="px-3 py-3 text-sm font-semibold text-[#111] text-left">
+                        <td className="px-3 py-3 text-sm font-semibold text-[#111] text-left sticky left-6 z-10 bg-[#F3F4F6] group-hover:bg-[#E5E7EB]">
                           Vendedores {group.tipo} <span className="text-[#666] font-normal">({group.vendedores.length})</span>
                         </td>
                         <td className="px-3 py-3 text-center tabular-nums text-sm font-semibold">{fmt(group.totalPrimaNeta)}</td>
@@ -974,6 +1051,8 @@ function TablaDetalleContent() {
                       {/* Individual vendedor rows within tier (when expanded) — FULL 9 COLUMNS */}
                       {isExpanded && displayVendedores.map((v, vIdx) => {
                         const isOtros = v.vendedor.startsWith("Otros (")
+                        // Skip grupo for Franquicias/Promotorías (only Corporate and Tradicional use grupo)
+                        const nextLevelFromVendedor = lineaUsesGrupo(sel.linea || "") ? "grupo" : "cliente"
                         // Vendedor semáforo color
                         const vSemaforoColor = v.presupuesto !== null && v.pnAnioAnt > 0
                           ? (v.primaNeta >= v.presupuesto
@@ -982,16 +1061,17 @@ function TablaDetalleContent() {
                               ? "text-amber-500"
                               : "text-[#E62800]")
                           : (v.diferencia !== null && v.diferencia < 0 ? "text-[#E62800]" : "")
+                        const vRowBg = isOtros ? "bg-gray-100" : vIdx % 2 === 1 ? "bg-[#FAFBFC]" : "bg-white"
                         return (
                           <tr
                             key={v.vendedor}
-                            className={`group border-b border-[#F0F0F0] ${isOtros ? "" : "cursor-pointer"} transition-all duration-150 hover:bg-[#FFF5F5] ${isOtros ? "bg-gray-100" : vIdx % 2 === 1 ? "bg-[#FAFBFC]" : "bg-white"}`}
-                            onClick={() => !isOtros && drill("grupo", v.vendedor, { ...sel, vendedor: v.vendedor })}
+                            className={`group border-b border-[#F0F0F0] ${isOtros ? "" : "cursor-pointer"} transition-all duration-150 hover:bg-[#FFF5F5] ${vRowBg}`}
+                            onClick={() => !isOtros && drill(nextLevelFromVendedor as DrillLevel, v.vendedor, { ...sel, vendedor: v.vendedor })}
                           >
-                            <td className="px-1 py-3 text-center w-6">
+                            <td className={`px-1 py-3 text-center w-6 sticky left-0 z-10 ${vRowBg} group-hover:bg-[#FFF5F5]`}>
                               {!isOtros && <ChevronRight className="w-3.5 h-3.5 text-[#E62800] inline transition-transform group-hover:scale-110 group-hover:translate-x-0.5" />}
                             </td>
-                            <td className="pl-8 pr-3 py-3 text-sm font-medium text-[#111] text-left">{v.vendedor}</td>
+                            <td className={`pl-8 pr-3 py-3 text-sm font-medium text-[#111] text-left sticky left-6 z-10 ${vRowBg} group-hover:bg-[#FFF5F5]`}>{v.vendedor}</td>
                             <td className={`px-3 py-3 text-center tabular-nums text-sm font-medium ${v.primaNeta < 0 ? "text-[#E62800]" : ""}`}>
                               {v.primaNeta < 0 ? `(${fmt(Math.abs(v.primaNeta))})` : fmt(v.primaNeta)}
                             </td>
@@ -1033,9 +1113,9 @@ function TablaDetalleContent() {
                   const grandDifYoY = grandTotalPnAA > 0 ? grandTotalPN - grandTotalPnAA : null
                   const grandPctDifYoY = grandTotalPnAA > 0 && grandDifYoY !== null ? Math.round((grandDifYoY / grandTotalPnAA) * 10000) / 100 : null
                   return (
-                    <tr className="bg-[#041224] text-white border-t-2 cursor-default">
-                      <td className="px-1 py-3 w-6"></td>
-                      <td className="px-3 py-3 text-sm font-bold text-left">Total</td>
+                    <tr className="bg-[#041224] text-white border-t-2 cursor-default sticky bottom-0 z-10">
+                      <td className="px-1 py-3 w-6 sticky left-0 z-10 bg-[#041224]"></td>
+                      <td className="px-3 py-3 text-sm font-bold text-left sticky left-6 z-10 bg-[#041224]">Total</td>
                       <td className="px-3 py-3 text-right text-sm font-bold tabular-nums">{fmt(grandTotalPN)}</td>
                       <td className="px-3 py-3 text-right text-sm font-bold tabular-nums">{grandTotalPpto > 0 ? fmt(grandTotalPpto) : <span className="text-white/50">—</span>}</td>
                       <td className="px-3 py-3 text-right text-sm font-bold tabular-nums">{grandDif !== null ? (grandDif < 0 ? `(${fmt(Math.abs(grandDif))})` : fmt(grandDif)) : <span className="text-white/50">—</span>}</td>
@@ -1062,9 +1142,11 @@ function TablaDetalleContent() {
                   </td></tr>
                 ) : displayRows.map((r, idx) => {
                   const isOtros = r.name.startsWith("Otros (")
+                  // Skip grupo for non-Corporate/Tradicional lines (Abraham: "Corporate y tradicional es importante el grupo")
+                  const skipGrupo = drillLevel === "vendedor" && !lineaUsesGrupo(sel.linea || "")
                   const nextLevel: DrillLevel | null = isOtros ? null : (
                     drillLevel === "gerencia" ? "vendedor" :
-                    drillLevel === "vendedor" ? "grupo" :
+                    drillLevel === "vendedor" ? (skipGrupo ? "cliente" : "grupo") :
                     drillLevel === "grupo" ? "cliente" :
                     drillLevel === "cliente" ? "poliza" : null
                   )
@@ -1083,14 +1165,15 @@ function TablaDetalleContent() {
                         : "text-[#E62800]")
                     : (r.diferencia !== null && r.diferencia < 0 ? "text-[#E62800]" : "")
 
+                  const rRowBg = isOtros ? "bg-gray-100" : idx % 2 === 1 ? "bg-[#FAFBFC]" : "bg-white"
                   return (
                     <tr key={r.name}
-                      className={`group border-b border-[#F0F0F0] ${nextLevel ? "cursor-pointer" : ""} transition-all duration-150 ${isOtros ? "bg-gray-100" : idx % 2 === 1 ? "bg-[#FAFBFC]" : "bg-white"} hover:bg-[#FFF5F5]`}
+                      className={`group border-b border-[#F0F0F0] ${nextLevel ? "cursor-pointer" : ""} transition-all duration-150 ${rRowBg} hover:bg-[#FFF5F5]`}
                       onClick={() => nextLevel && selKey && drill(nextLevel, r.name, { ...sel, [selKey]: r.name })}>
-                      <td className="px-1 py-3 text-center w-6">
+                      <td className={`px-1 py-3 text-center w-6 sticky left-0 z-10 ${rRowBg} group-hover:bg-[#FFF5F5]`}>
                         {nextLevel && <ChevronRight className="w-3.5 h-3.5 text-[#E62800] inline transition-transform group-hover:scale-110 group-hover:translate-x-0.5" />}
                       </td>
-                      <td className="px-3 py-3 text-sm font-semibold text-[#111] text-left">{r.name}</td>
+                      <td className={`px-3 py-3 text-sm font-semibold text-[#111] text-left sticky left-6 z-10 ${rRowBg} group-hover:bg-[#FFF5F5]`}>{r.name}</td>
                       <td className={`px-3 py-3 text-center tabular-nums text-sm font-medium ${r.primaNeta < 0 ? "text-[#E62800]" : ""}`}>
                         {r.primaNeta < 0 ? `(${fmt(Math.abs(r.primaNeta))})` : fmt(r.primaNeta)}
                       </td>
@@ -1106,9 +1189,9 @@ function TablaDetalleContent() {
                     </tr>
                   )
                 })}
-                <tr className="bg-[#041224] text-white border-t-2 cursor-default">
-                  <td className="px-1 py-3 w-6"></td>
-                  <td className="px-3 py-3 text-sm font-bold text-left">Total</td>
+                <tr className="bg-[#041224] text-white border-t-2 cursor-default sticky bottom-0 z-10">
+                  <td className="px-1 py-3 w-6 sticky left-0 z-10 bg-[#041224]"></td>
+                  <td className="px-3 py-3 text-sm font-bold text-left sticky left-6 z-10 bg-[#041224]">Total</td>
                   <td className="px-3 py-3 text-right text-sm font-bold tabular-nums">{fmt(rowTotal)}</td>
                   <td className="px-3 py-3 text-right text-sm text-white/50 tabular-nums">—</td>
                   <td className="px-3 py-3 text-right text-sm text-white/50 tabular-nums">—</td>
