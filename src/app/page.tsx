@@ -68,7 +68,7 @@ export default function Home() {
         </div>
 
         {/* Title */}
-        <h1 className="text-lg md:text-xl font-bold tracking-wide text-gray-800 mt-4 md:mt-6 mb-3 pb-1 border-b border-gray-200">PRIMA NETA COBRADA</h1>
+        <h1 className="text-lg md:text-xl font-bold tracking-wide text-gray-800 mt-3 md:mt-4 mb-2 pb-1 border-b border-gray-200">PRIMA NETA COBRADA</h1>
 
         {/* ═══ MOBILE LAYOUT ═══ */}
         <div className="md:hidden flex flex-col gap-3">
@@ -172,7 +172,7 @@ export default function Home() {
             </div>
 
             {/* Right column: Table */}
-            <div className="w-[45%] flex flex-col gap-1 justify-center mt-6">
+            <div className="w-[45%] flex flex-col gap-1 justify-center mt-3">
               <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
                 <table className="w-full text-xs min-w-[480px]">
                   <thead>

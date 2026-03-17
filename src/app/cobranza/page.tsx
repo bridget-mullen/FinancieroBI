@@ -210,15 +210,15 @@ export default function CobranzaPage() {
   }), { primaNeta: 0, convenio: 0, pnAA: 0, pendiente: 0, pnCia: 0, difCia: 0 })
 
   return (
-    <div className="bg-[#F3F4F6] px-4 py-6">
+    <div className="bg-[#F3F4F6] px-3 py-4">
       <div className="max-w-[1200px] mx-auto w-full">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-3 pt-4 md:pt-6 w-full gap-2 md:gap-0">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-2 pt-3 md:pt-4 w-full gap-2 md:gap-0">
         <PageTabs />
         <PeriodFilter onFilterChange={handleFilterChange} />
       </div>
 
       {/* Title + filters */}
-      <div className="flex items-center justify-between mt-6 mb-4 flex-wrap gap-2">
+      <div className="flex items-center justify-between mt-3 mb-2 flex-wrap gap-2">
         <div className="flex items-center gap-3">
           <h1 className="text-sm font-bold text-[#041224]">Aseguradoras</h1>
           {/* Clasificación Aseguradoras filter */}
@@ -244,9 +244,9 @@ export default function CobranzaPage() {
         const growthPct = compTotals.pnAA > 0 ? ((compTotals.primaNeta - compTotals.pnAA) / compTotals.pnAA) * 100 : 0
         const growthColor = growthPct >= 0 ? "#059669" : "#E62800"
         return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-4">
         {/* Card 1 — Meta convenio */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4 flex flex-col">
+        <div className="bg-white rounded-lg border border-gray-200 p-3 flex flex-col">
           <p className="text-[#9CA3AF] text-xs font-semibold uppercase tracking-wider mb-2">Meta convenio</p>
           <DonutChart value={metaPct} objetivo={90} color="#E62800" size={120} tooltipLines={[`Avance: ${metaPct}%`, `Objetivo: 90%`, `PN: ${fmtM(compTotals.primaNeta)}`, `Convenio: ${fmtM(compTotals.convenio)}`]} />
           <div className="mt-3 space-y-1.5">
@@ -261,7 +261,7 @@ export default function CobranzaPage() {
         </div>
 
         {/* Card 2 — Acumulado */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4 flex flex-col">
+        <div className="bg-white rounded-lg border border-gray-200 p-3 flex flex-col">
           <p className="text-[#9CA3AF] text-xs font-semibold uppercase tracking-wider mb-2">Acumulado</p>
           <DonutChart value={metaPct} objetivo={90} color="#041224" size={120} tooltipLines={[`Acumulado: ${metaPct}%`, `Objetivo: 90%`, `Acum. PN: ${fmtM(compTotals.primaNeta)}`, `Conv. acum: ${fmtM(compTotals.convenio)}`]} />
           <div className="mt-3 space-y-1.5">
@@ -276,7 +276,7 @@ export default function CobranzaPage() {
         </div>
 
         {/* Card 3 — Meta anual */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4 flex flex-col items-center">
+        <div className="bg-white rounded-lg border border-gray-200 p-3 flex flex-col items-center">
           <p className="text-[#9CA3AF] text-xs font-semibold uppercase tracking-wider mb-2 self-start">Meta anual</p>
           <p className="text-2xl font-bold text-[#041224] tabular-nums mb-3">{metaPct}%</p>
           <div className="w-full group relative">
@@ -313,7 +313,7 @@ export default function CobranzaPage() {
       })()}
 
       {/* Resumen por ramo — MOBILE: cards */}
-      <div className="md:hidden space-y-2 mb-6">
+      <div className="md:hidden space-y-2 mb-4">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-[#041224] mb-2">Resumen por Ramo</h3>
         {ramos.map(r => {
           const pctVal = totalPN > 0 ? ((r.pnEfectuada / totalPN) * 100) : 0
@@ -346,7 +346,7 @@ export default function CobranzaPage() {
       </div>
 
       {/* Resumen por ramo — DESKTOP: table */}
-      <div className="hidden md:block bg-white rounded-lg border border-gray-200 overflow-hidden overflow-x-auto mb-6">
+      <div className="hidden md:block bg-white rounded-lg border border-gray-200 overflow-hidden overflow-x-auto mb-4">
         <table className="w-full">
           <thead>
             <tr className="bg-[#041224] border-b-2 border-b-[#E62800]">
@@ -381,8 +381,8 @@ export default function CobranzaPage() {
       </div>
 
       {/* Distribucion por ramo — stacked bar (works on all sizes) */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-[#041224] mb-3">Distribucion por ramo</h2>
+      <div className="bg-white rounded-lg border border-gray-200 p-3 mb-4">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-[#041224] mb-2">Distribucion por ramo</h2>
         <div>
           <div className="h-7 w-full rounded-lg overflow-hidden flex gap-[2px]">
             {ramos.map((r) => (
@@ -422,7 +422,7 @@ export default function CobranzaPage() {
 
       {/* Detalle por compania */}
       {/* Mobile cards */}
-      <div className="md:hidden space-y-2 mb-4">
+      <div className="md:hidden space-y-2 mb-3">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-[#041224] mb-2">Detalle por Compañía</h3>
         {sortedCompanies.map((c) => {
           const difConv = c.primaNeta - c.convenio
