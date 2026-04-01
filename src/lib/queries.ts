@@ -1,19 +1,21 @@
 import { supabase } from "./supabase"
 
 /**
- * Fetch ALL rows from a Supabase query using pagination.
- * Supabase anon key caps at 1000 rows per request, so we paginate with .range().
- * IMPORTANT: .range() on a Supabase query builder is safe to call multiple times.
+ * Fetch ALL rows using pagination with a query factory.
+ * CRITICAL: We use a factory function (not a reused builder) because
+ * Supabase JS query builders are mutable and break when reused across .range() calls.
+ * The factory creates a fresh builder for each page request.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function fetchAll(queryBuilder: any, pageSize = 1000): Promise<Record<string, unknown>[]> {
+async function fetchAll(queryFactory: () => any, pageSize = 1000): Promise<Record<string, unknown>[]> {
   const allRows: Record<string, unknown>[] = []
   let from = 0
   const maxRows = 200000 // safety cap
   // eslint-disable-next-line no-constant-condition
   while (from < maxRows) {
     const to = from + pageSize - 1
-    const { data, error } = await queryBuilder.range(from, to)
+    // Create a FRESH query builder for each page
+    const { data, error } = await queryFactory().range(from, to)
     if (error) {
       console.error("fetchAll page error at offset", from, error.message)
       break
@@ -103,15 +105,16 @@ function groupBySum(rows: Record<string, unknown>[], key: string): Record<string
  */
 export async function getLineasNegocio(periodo?: number, año?: string): Promise<{ linea: string; primaNeta: number }[] | null> {
   try {
-    let query = supabase
-      .from("dashboard_data")
-      .select("LBussinesNombre, PrimaNeta, TCPago, Descuento, FLiquidacion")
+    const makeQuery = () => {
+      let q = supabase
+        .from("dashboard_data")
+        .select("LBussinesNombre, PrimaNeta, TCPago, Descuento, FLiquidacion")
+      if (periodo) q = q.eq("mes", periodo)
+      if (año) q = q.eq("anio", parseInt(año))
+      return q
+    }
 
-    if (periodo) query = query.eq("mes", periodo)
-    if (año) query = query.eq("anio", parseInt(año))
-
-    // Use pagination to fetch ALL rows for accurate aggregation
-    const allData = await fetchAll(query)
+    const allData = await fetchAll(makeQuery)
     if (!allData.length) return null
 
     const grouped = groupBySum(allData, "LBussinesNombre")
@@ -138,7 +141,7 @@ export async function getLineasWithYoY(
     const priorYear = currentYear - 1
 
     // Build month filter: support multiple periodos
-    const buildQuery = (yr: number) => {
+    const makeQuery = (yr: number) => () => {
       let q = supabase
         .from("dashboard_data")
         .select("LBussinesNombre, PrimaNeta, TCPago, Descuento, FLiquidacion")
@@ -150,8 +153,8 @@ export async function getLineasWithYoY(
     }
 
     const [currentRows, priorRows] = await Promise.all([
-      fetchAll(buildQuery(currentYear)),
-      fetchAll(buildQuery(priorYear)),
+      fetchAll(makeQuery(currentYear)),
+      fetchAll(makeQuery(priorYear)),
     ])
 
     const groupedCurrent = groupBySum(currentRows, "LBussinesNombre")
@@ -536,12 +539,15 @@ export async function getRankedVendedores(
   año?: string
 ): Promise<{ vendedor: string; primaNeta: number }[] | null> {
   try {
-    let query = supabase
-      .from("dashboard_data")
-      .select("VendNombre, PrimaNeta, TCPago, Descuento, FLiquidacion")
-    if (periodo) query = query.eq("mes", periodo)
-    if (año) query = query.eq("anio", parseInt(año))
-    const allData = await fetchAll(query)
+    const makeQuery = () => {
+      let q = supabase
+        .from("dashboard_data")
+        .select("VendNombre, PrimaNeta, TCPago, Descuento, FLiquidacion")
+      if (periodo) q = q.eq("mes", periodo)
+      if (año) q = q.eq("anio", parseInt(año))
+      return q
+    }
+    const allData = await fetchAll(makeQuery)
     if (!allData.length) return null
     const grouped = groupBySum(allData, "VendNombre")
     return Object.entries(grouped)
@@ -559,12 +565,15 @@ export async function getRankedAseguradoras(
   clasificacion?: string
 ): Promise<{ aseguradora: string; primaNeta: number }[] | null> {
   try {
-    let query = supabase
-      .from("dashboard_data")
-      .select("CiaAbreviacion, PrimaNeta, TCPago, Descuento, FLiquidacion")
-    if (periodo) query = query.eq("mes", periodo)
-    if (año) query = query.eq("anio", parseInt(año))
-    const allData = await fetchAll(query)
+    const makeQuery = () => {
+      let q = supabase
+        .from("dashboard_data")
+        .select("CiaAbreviacion, PrimaNeta, TCPago, Descuento, FLiquidacion")
+      if (periodo) q = q.eq("mes", periodo)
+      if (año) q = q.eq("anio", parseInt(año))
+      return q
+    }
+    const allData = await fetchAll(makeQuery)
     if (!allData.length) return null
     const grouped = groupBySum(allData, "CiaAbreviacion")
 
@@ -735,12 +744,15 @@ export async function getRamos(
   año?: string
 ): Promise<{ ramo: string; primaNeta: number; polizas: number }[] | null> {
   try {
-    let query = supabase
-      .from("dashboard_data")
-      .select("RamosNombre, PrimaNeta, TCPago, Descuento, FLiquidacion")
-    if (periodo) query = query.eq("mes", periodo)
-    if (año) query = query.eq("anio", parseInt(año))
-    const allData = await fetchAll(query)
+    const makeQuery = () => {
+      let q = supabase
+        .from("dashboard_data")
+        .select("RamosNombre, PrimaNeta, TCPago, Descuento, FLiquidacion")
+      if (periodo) q = q.eq("mes", periodo)
+      if (año) q = q.eq("anio", parseInt(año))
+      return q
+    }
+    const allData = await fetchAll(makeQuery)
     if (!allData.length) return null
     const grouped: Record<string, { prima: number; count: number }> = {}
     for (const row of allData) {
