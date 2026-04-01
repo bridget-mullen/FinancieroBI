@@ -1,17 +1,27 @@
 import { supabase } from "./supabase"
 
-// Helper: fetch ALL rows from a query using pagination (Supabase caps at ~1000 per request)
+/**
+ * Fetch ALL rows from a Supabase query using pagination.
+ * Supabase anon key caps at 1000 rows per request, so we paginate with .range().
+ * IMPORTANT: .range() on a Supabase query builder is safe to call multiple times.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function fetchAll(queryBuilder: any, pageSize = 1000): Promise<Record<string, unknown>[]> {
   const allRows: Record<string, unknown>[] = []
-  let offset = 0
+  let from = 0
+  const maxRows = 200000 // safety cap
   // eslint-disable-next-line no-constant-condition
-  while (true) {
-    const { data, error } = await queryBuilder.range(offset, offset + pageSize - 1)
-    if (error || !data || data.length === 0) break
+  while (from < maxRows) {
+    const to = from + pageSize - 1
+    const { data, error } = await queryBuilder.range(from, to)
+    if (error) {
+      console.error("fetchAll page error at offset", from, error.message)
+      break
+    }
+    if (!data || data.length === 0) break
     allRows.push(...(data as Record<string, unknown>[]))
     if (data.length < pageSize) break // last page
-    offset += pageSize
+    from += pageSize
   }
   return allRows
 }

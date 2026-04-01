@@ -49,10 +49,14 @@ export default function Home() {
   // Fetch real data from Supabase when filters change
   useEffect(() => {
     let cancelled = false
+    setLineas(SEED_LINEAS) // Reset to seed immediately to show loading state
     getLineasWithYoY(periodos, year).then(data => {
       if (!cancelled && data && data.length > 0) {
         setLineas(data)
       }
+    }).catch(() => {
+      // On error, keep seed data so UI isn't stuck
+      if (!cancelled) setLineas(SEED_LINEAS)
     })
     return () => { cancelled = true }
   }, [year, periodos])
