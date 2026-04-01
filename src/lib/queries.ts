@@ -128,50 +128,32 @@ export async function getLineasNegocio(periodo?: number, año?: string): Promise
 }
 
 /**
- * Fetch líneas with YoY comparison (current year + prior year).
- * Returns LineaRow[] compatible with the home page gauge/table.
- * Presupuesto is taken from SEED if no presupuestos table exists.
+ * Fetch líneas with YoY comparison using fast API route (no pagination needed).
+ * Uses service_role key server-side to bypass 1000 row limits.
  */
 export async function getLineasWithYoY(
   periodos?: number[],
   año?: string
 ): Promise<LineaRow[] | null> {
   try {
-    const currentYear = año ? parseInt(año) : new Date().getFullYear()
-    const priorYear = currentYear - 1
-
-    // Build month filter: support multiple periodos
-    const makeQuery = (yr: number) => () => {
-      let q = supabase
-        .from("dashboard_data")
-        .select("LBussinesNombre, PrimaNeta, TCPago, Descuento, FLiquidacion")
-        .eq("anio", yr)
-      if (periodos && periodos.length > 0) {
-        q = q.in("mes", periodos)
-      }
-      return q
-    }
-
-    const [currentRows, priorRows] = await Promise.all([
-      fetchAll(makeQuery(currentYear)),
-      fetchAll(makeQuery(priorYear)),
-    ])
-
-    const groupedCurrent = groupBySum(currentRows, "LBussinesNombre")
-    const groupedPrior = groupBySum(priorRows, "LBussinesNombre")
-
-    // Merge all líneas from both years
-    const allLineas = new Set([...Object.keys(groupedCurrent), ...Object.keys(groupedPrior)])
-
+    const year = año || new Date().getFullYear().toString()
+    const meses = periodos?.join(",") || ""
+    
+    const url = `/api/lineas?year=${year}&meses=${meses}`
+    const res = await fetch(url)
+    if (!res.ok) throw new Error(`API error: ${res.status}`)
+    
+    const data: Array<{ nombre: string; primaNeta: number; anioAnterior: number }> = await res.json()
+    
     // Map seed presupuestos by name for fallback
     const seedMap: Record<string, number> = {}
     for (const s of SEED_LINEAS) seedMap[s.nombre] = s.presupuesto
 
-    const result: LineaRow[] = Array.from(allLineas).map(nombre => ({
-      nombre,
-      primaNeta: Math.round(groupedCurrent[nombre] || 0),
-      anioAnterior: Math.round(groupedPrior[nombre] || 0),
-      presupuesto: seedMap[nombre] || 0,
+    const result: LineaRow[] = data.map(item => ({
+      nombre: item.nombre,
+      primaNeta: item.primaNeta,
+      anioAnterior: item.anioAnterior,
+      presupuesto: seedMap[item.nombre] || 0,
     }))
 
     return result.sort((a, b) => b.primaNeta - a.primaNeta)
