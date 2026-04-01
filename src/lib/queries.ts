@@ -100,6 +100,63 @@ export async function getLineasNegocio(periodo?: number, año?: string): Promise
 }
 
 /**
+ * Fetch líneas with YoY comparison (current year + prior year).
+ * Returns LineaRow[] compatible with the home page gauge/table.
+ * Presupuesto is taken from SEED if no presupuestos table exists.
+ */
+export async function getLineasWithYoY(
+  periodos?: number[],
+  año?: string
+): Promise<LineaRow[] | null> {
+  try {
+    const currentYear = año ? parseInt(año) : new Date().getFullYear()
+    const priorYear = currentYear - 1
+
+    // Build month filter: support multiple periodos
+    const buildQuery = (yr: number) => {
+      let q = supabase
+        .from("dashboard_data")
+        .select("LBussinesNombre, PrimaNeta, TCPago, Descuento, FLiquidacion")
+        .eq("anio", yr)
+      if (periodos && periodos.length > 0) {
+        q = q.in("mes", periodos)
+      }
+      return q.limit(50000)
+    }
+
+    const [currentRes, priorRes] = await Promise.all([
+      buildQuery(currentYear),
+      buildQuery(priorYear),
+    ])
+
+    if (currentRes.error && priorRes.error) return null
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const groupedCurrent = currentRes.data ? groupBySum(currentRes.data as any[], "LBussinesNombre") : {}
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const groupedPrior = priorRes.data ? groupBySum(priorRes.data as any[], "LBussinesNombre") : {}
+
+    // Merge all líneas from both years
+    const allLineas = new Set([...Object.keys(groupedCurrent), ...Object.keys(groupedPrior)])
+
+    // Map seed presupuestos by name for fallback
+    const seedMap: Record<string, number> = {}
+    for (const s of SEED_LINEAS) seedMap[s.nombre] = s.presupuesto
+
+    const result: LineaRow[] = Array.from(allLineas).map(nombre => ({
+      nombre,
+      primaNeta: Math.round(groupedCurrent[nombre] || 0),
+      anioAnterior: Math.round(groupedPrior[nombre] || 0),
+      presupuesto: seedMap[nombre] || 0,
+    }))
+
+    return result.sort((a, b) => b.primaNeta - a.primaNeta)
+  } catch {
+    return null
+  }
+}
+
+/**
  * Fetch gerencias for a given línea de negocio with YoY comparison
  */
 export interface GerenciaRow {

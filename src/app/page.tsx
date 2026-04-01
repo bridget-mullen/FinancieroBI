@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
-import { SEED_LINEAS, SEED_PRESUPUESTO, SEED_FX } from "@/lib/queries"
+import { SEED_LINEAS, SEED_PRESUPUESTO, SEED_FX, getLineasWithYoY } from "@/lib/queries"
 import type { LineaRow } from "@/lib/queries"
 import { Gauge } from "@/components/gauge"
 import { PageTabs } from "@/components/page-tabs"
@@ -45,6 +45,17 @@ export default function Home() {
     const timer = setTimeout(() => setReady(true), 500)
     return () => clearTimeout(timer)
   }, [])
+
+  // Fetch real data from Supabase when filters change
+  useEffect(() => {
+    let cancelled = false
+    getLineasWithYoY(periodos, year).then(data => {
+      if (!cancelled && data && data.length > 0) {
+        setLineas(data)
+      }
+    })
+    return () => { cancelled = true }
+  }, [year, periodos])
 
   const total = lineas.reduce((s, l) => s + l.primaNeta, 0)
   const totalPpto = lineas.reduce((s, l) => s + l.presupuesto, 0) || SEED_PRESUPUESTO
