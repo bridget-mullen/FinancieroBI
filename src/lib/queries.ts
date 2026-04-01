@@ -531,10 +531,9 @@ export async function getRankedVendedores(
       .select("VendNombre, PrimaNeta, TCPago, Descuento, FLiquidacion")
     if (periodo) query = query.eq("mes", periodo)
     if (año) query = query.eq("anio", parseInt(año))
-    const { data, error } = await query
-    if (error || !data?.length) return null
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const grouped = groupBySum(data as any[], "VendNombre")
+    const allData = await fetchAll(query)
+    if (!allData.length) return null
+    const grouped = groupBySum(allData, "VendNombre")
     return Object.entries(grouped)
       .map(([vendedor, prima]) => ({ vendedor, primaNeta: Math.round(prima) }))
       .sort((a, b) => b.primaNeta - a.primaNeta)
@@ -555,10 +554,9 @@ export async function getRankedAseguradoras(
       .select("CiaAbreviacion, PrimaNeta, TCPago, Descuento, FLiquidacion")
     if (periodo) query = query.eq("mes", periodo)
     if (año) query = query.eq("anio", parseInt(año))
-    const { data, error } = await query
-    if (error || !data?.length) return null
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const grouped = groupBySum(data as any[], "CiaAbreviacion")
+    const allData = await fetchAll(query)
+    if (!allData.length) return null
+    const grouped = groupBySum(allData, "CiaAbreviacion")
 
     // If clasificación filter is set, filter aseguradoras by ClasCia_TXT from catalogos_cias
     if (clasificacion && clasificacion !== "Todas") {
@@ -732,12 +730,10 @@ export async function getRamos(
       .select("RamosNombre, PrimaNeta, TCPago, Descuento, FLiquidacion")
     if (periodo) query = query.eq("mes", periodo)
     if (año) query = query.eq("anio", parseInt(año))
-    const { data, error } = await query
-    if (error || !data?.length) return null
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rows = data as any[]
+    const allData = await fetchAll(query)
+    if (!allData.length) return null
     const grouped: Record<string, { prima: number; count: number }> = {}
-    for (const row of rows) {
+    for (const row of allData) {
       const ramo = (row.RamosNombre as string) || "Otros"
       if (!grouped[ramo]) grouped[ramo] = { prima: 0, count: 0 }
       grouped[ramo].prima += calcPrima(row)
