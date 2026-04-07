@@ -19,32 +19,25 @@ interface CobranzaDia {
   acumulado: number
 }
 
-const SEED: CobranzaDia[] = [
-  { fecha: "2026-02-21", gerencia: "Diamond", prima_cobrada: 1245000, meta_dia: 1100000, diferencia: 145000, acumulado: 18750000 },
-  { fecha: "2026-02-22", gerencia: "Diamond", prima_cobrada: 980000, meta_dia: 1100000, diferencia: -120000, acumulado: 19730000 },
-  { fecha: "2026-02-23", gerencia: "Business", prima_cobrada: 1520000, meta_dia: 1300000, diferencia: 220000, acumulado: 21250000 },
-  { fecha: "2026-02-24", gerencia: "Partner", prima_cobrada: 870000, meta_dia: 1100000, diferencia: -230000, acumulado: 22120000 },
-  { fecha: "2026-02-25", gerencia: "Socios", prima_cobrada: 1100000, meta_dia: 1050000, diferencia: 50000, acumulado: 23220000 },
-  { fecha: "2026-02-26", gerencia: "Diamond", prima_cobrada: 1350000, meta_dia: 1100000, diferencia: 250000, acumulado: 24570000 },
-  { fecha: "2026-02-27", gerencia: "Business", prima_cobrada: 1050000, meta_dia: 1300000, diferencia: -250000, acumulado: 25620000 },
-]
-
 export default function CobranzaDiaPage() {
-  const [data, setData] = useState<CobranzaDia[]>(SEED)
+  const [data, setData] = useState<CobranzaDia[]>([])
   useEffect(() => { document.title = "Cobranza por día | CLK BI Dashboard" }, [])
 
   useEffect(() => {
     ;(async () => {
-      try {
-        const { data: rows, error } = await supabase
-          .schema("bi_dashboard")
-          .from("fact_cobranza_diaria")
-          .select("*")
-          .order("fecha", { ascending: true })
-        if (!error && rows?.length) {
-          setData(rows as unknown as CobranzaDia[])
-        }
-      } catch { /* seed fallback */ }
+      const { data: rows, error } = await supabase
+        .schema("bi_dashboard")
+        .from("fact_cobranza_diaria")
+        .select("*")
+        .order("fecha", { ascending: true })
+
+      if (error) {
+        console.error("fact_cobranza_diaria query failed", error)
+        setData([])
+        return
+      }
+
+      setData((rows ?? []) as unknown as CobranzaDia[])
     })()
   }, [])
 
@@ -69,7 +62,7 @@ export default function CobranzaDiaPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-3">
           <div className="bg-white rounded-lg border border-gray-200 border-l-4 border-l-[#E62800] p-2">
             <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Meta del día</div>
-            <div className="text-lg font-bold text-[#111] tabular-nums">{fmt(metaTotal / data.length)}</div>
+            <div className="text-lg font-bold text-[#111] tabular-nums">{fmt(data.length ? metaTotal / data.length : 0)}</div>
           </div>
           <div className="bg-white rounded-lg border border-gray-200 border-l-4 border-l-[#041224] p-2">
             <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Cobrado hoy</div>
