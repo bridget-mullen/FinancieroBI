@@ -686,26 +686,23 @@ export async function getRamos(
   año?: string
 ): Promise<{ ramo: string; primaNeta: number; polizas: number }[] | null> {
   try {
-    const months = periodo ? monthNamesFromPeriodos([periodo]) : []
+    const makeQuery = () => {
+      let q = supabase
+        .from("dashboard_data")
+        .select("RamosNombre, PrimaNeta, TCPago, Descuento, FLiquidacion")
+      if (periodo) q = q.eq("mes", periodo)
+      if (año) q = q.eq("anio", parseInt(año))
+      return q
+    }
 
-    let query = supabase
-      .schema("bi_dashboard")
-      .from("fact_primas")
-      .select("linea_negocio, prima_neta_cobrada")
-      .not("linea_negocio", "is", null)
-
-    if (año) query = query.eq("año", parseInt(año))
-    if (months.length > 0) query = query.in("mes", months)
-
-    const { data, error } = await query
-    if (error || !data?.length) return null
+    const allData = await fetchAll(makeQuery)
+    if (!allData.length) return null
 
     const grouped: Record<string, { prima: number; count: number }> = {}
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    for (const row of data as any[]) {
-      const ramo = (row.linea_negocio as string) || "Otros"
+    for (const row of allData) {
+      const ramo = (row.RamosNombre as string) || "Otros"
       if (!grouped[ramo]) grouped[ramo] = { prima: 0, count: 0 }
-      grouped[ramo].prima += (row.prima_neta_cobrada as number) || 0
+      grouped[ramo].prima += calcPrima(row)
       grouped[ramo].count += 1
     }
 
