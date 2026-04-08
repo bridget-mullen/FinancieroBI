@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
-import { SEED_LINEAS, SEED_PRESUPUESTO, SEED_FX, getLineasWithYoY } from "@/lib/queries"
+import { getLineasWithYoY, getTipoCambio } from "@/lib/queries"
 import type { LineaRow } from "@/lib/queries"
 import { Gauge } from "@/components/gauge"
 import { PageTabs } from "@/components/page-tabs"
@@ -31,7 +31,8 @@ export default function Home() {
   const [ready, setReady] = useState(false)
   const [year, setYear] = useState("2026")
   const [periodos, setPeriodos] = useState<number[]>([2])
-  const [lineas, setLineas] = useState<LineaRow[]>(SEED_LINEAS)
+  const [lineas, setLineas] = useState<LineaRow[]>([])
+  const [fx, setFx] = useState({ usd: 0, dop: 0 })
 
   const handleFilterChange = useCallback((newYear: string, newPeriodos: number[]) => {
     setYear(newYear)
@@ -49,22 +50,40 @@ export default function Home() {
   // Fetch real data from Supabase when filters change
   useEffect(() => {
     let cancelled = false
-    setLineas(SEED_LINEAS) // Reset to seed immediately to show loading state
-    getLineasWithYoY(periodos, year).then(data => {
-      if (!cancelled && data && data.length > 0) {
-        setLineas(data)
-      }
-    }).catch(() => {
-      // On error, keep seed data so UI isn't stuck
-      if (!cancelled) setLineas(SEED_LINEAS)
-    })
-    return () => { cancelled = true }
+    setLineas([])
+
+    getLineasWithYoY(periodos, year)
+      .then((data) => {
+        if (!cancelled) setLineas(data ?? [])
+      })
+      .catch(() => {
+        if (!cancelled) setLineas([])
+      })
+
+    return () => {
+      cancelled = true
+    }
   }, [year, periodos])
 
+  useEffect(() => {
+    let cancelled = false
+    getTipoCambio()
+      .then((data) => {
+        if (!cancelled && data) setFx({ usd: data.usd, dop: data.dop })
+      })
+      .catch(() => {
+        if (!cancelled) setFx({ usd: 0, dop: 0 })
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const total = lineas.reduce((s, l) => s + l.primaNeta, 0)
-  const totalPpto = lineas.reduce((s, l) => s + l.presupuesto, 0) || SEED_PRESUPUESTO
+  const totalPpto = lineas.reduce((s, l) => s + l.presupuesto, 0)
   const totalAA = lineas.reduce((s, l) => s + l.anioAnterior, 0)
-  const cumpl = Math.round((total / totalPpto) * 100)
+  const cumpl = totalPpto > 0 ? Math.round((total / totalPpto) * 100) : 0
   const crec = totalAA > 0 ? Math.round(((total - totalAA) / totalAA) * 1000) / 10 : 0
 
   const chartData = [...lineas].sort((a, b) => a.primaNeta - b.primaNeta).map(l => ({
@@ -239,8 +258,8 @@ export default function Home() {
             <div className="bg-white border border-gray-200 rounded-lg shadow-sm px-4 py-3 flex flex-col justify-center gap-2 min-w-[140px]">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Tipo de cambio</p>
               <div>
-                <p className="text-sm font-bold text-gray-800">Dólar <span className="tabular-nums">${SEED_FX.usd.toFixed(2)}</span></p>
-                <p className="text-sm font-bold text-gray-800 mt-1">Peso Dom. <span className="tabular-nums">${SEED_FX.dop.toFixed(2)}</span></p>
+                <p className="text-sm font-bold text-gray-800">Dólar <span className="tabular-nums">${fx.usd.toFixed(2)}</span></p>
+                <p className="text-sm font-bold text-gray-800 mt-1">Peso Dom. <span className="tabular-nums">${fx.dop.toFixed(2)}</span></p>
               </div>
             </div>
 

@@ -6,7 +6,7 @@ import { ChevronRight, ChevronLeft, ChevronDown, Search, Download } from "lucide
 import { PageTabs } from "@/components/page-tabs"
 import { PageFooter } from "@/components/page-footer"
 import { PeriodFilter } from "@/components/period-filter"
-import { getLineasNegocio, getGerencias, getVendedores, getGrupos, getClientes, getPolizas, globalSearch, getLastDataDate, getVendedoresWithTipo, getAseguradorasByClasificacion } from "@/lib/queries"
+import { getLineasWithYoY, getGerencias, getVendedores, getGrupos, getClientes, getPolizas, globalSearch, getLastDataDate, getVendedoresWithTipo, getAseguradorasByClasificacion } from "@/lib/queries"
 import type { SearchResult, PolizaRow, TierGroup, VendedorFullRow } from "@/lib/queries"
 import { exportExcel, exportPDF } from "@/lib/export"
 import { NLQuery } from "@/components/nl-query"
@@ -36,13 +36,6 @@ const MESES_LABELS = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Ju
 interface LineaFull {
   linea: string; primaNeta: number; presupuesto: number; diferencia: number; pctDifPpto: number; pnAnioAnt: number; difYoY: number; pctDifYoY: number; pendiente: number
 }
-const SEED: LineaFull[] = [
-  { linea: "Click Franquicias", primaNeta: 52577939, presupuesto: 68989976, diferencia: -16412037, pctDifPpto: -23.8, pnAnioAnt: 45038829, difYoY: 7539110, pctDifYoY: 16.74, pendiente: 37639869 },
-  { linea: "Click Promotorías", primaNeta: 20017383, presupuesto: 25534211, diferencia: -5516828, pctDifPpto: -21.6, pnAnioAnt: 19422359, difYoY: 595024, pctDifYoY: 3.06, pendiente: 21892390 },
-  { linea: "Corporate", primaNeta: 12708705, presupuesto: 16242717, diferencia: -3534012, pctDifPpto: -21.8, pnAnioAnt: 13539625, difYoY: -830920, pctDifYoY: -6.14, pendiente: 8763272 },
-  { linea: "Cartera Tradicional", primaNeta: 10632028, presupuesto: 12322087, diferencia: -1690059, pctDifPpto: -13.7, pnAnioAnt: 10057425, difYoY: 574603, pctDifYoY: 5.71, pendiente: 7416036 },
-  { linea: "Call Center", primaNeta: 2602364, presupuesto: 6398081, diferencia: -3795717, pctDifPpto: -59.3, pnAnioAnt: 853685, difYoY: 1748679, pctDifYoY: 204.84, pendiente: 12236199 },
-]
 
 function toSlug(name: string) {
   return name.toLowerCase().replace(/\s+/g, "-")
@@ -101,7 +94,7 @@ function TablaDetalleContent() {
   const [sel, setSel] = useState<{ linea?: string; gerencia?: string; vendedor?: string; grupo?: string; cliente?: string }>({})
 
   // Data
-  const [lineas, setLineas] = useState<LineaFull[]>(SEED)
+  const [lineas, setLineas] = useState<LineaFull[]>([])
   const [rows, setRows] = useState<DrillRow[]>([])
   const [polizas, setPolizas] = useState<PolizaRow[]>([])
   const [lastDataDate, setLastDataDate] = useState<string | null>(null)
@@ -158,7 +151,7 @@ function TablaDetalleContent() {
   // Use first selected period for queries (multi-period queries use first as primary)
   const periodo = periodos[0] ?? 2
 
-  // Load líneas from Supabase, merge with SEED for budget/comparison columns
+  // Load líneas directly from bi_dashboard.fact_primas via /api/lineas
   useEffect(() => {
     let cancelled = false
 
@@ -172,46 +165,42 @@ function TablaDetalleContent() {
 
     const load = async () => {
       try {
-        const result = await getLineasNegocio(periodo, year)
+        const result = await getLineasWithYoY(periodos, year)
         if (cancelled) return
-        if (result && result.length > 0) {
-          // Merge: iterate over SEED to preserve order, fill real primaNeta from Supabase
-          const merged: LineaFull[] = SEED.map(seed => {
-            const real = result.find(r => r.linea === seed.linea)
-            const pn = real ? real.primaNeta : 0
-            const ppto = Math.round(seed.presupuesto / 12 * Math.max(periodos.length, 1))
-            const pnAA = Math.round(seed.pnAnioAnt / 12 * Math.max(periodos.length, 1))
-            const dif = ppto > 0 ? pn - ppto : 0
-            const pctDif = ppto > 0 ? Math.round((dif / ppto) * 1000) / 10 : 0
-            const difY = pnAA > 0 ? pn - pnAA : 0
-            const pctDifY = pnAA > 0 ? Math.round((difY / pnAA) * 10000) / 100 : 0
-            const pend = seed.pendiente
-            return {
-              linea: seed.linea, primaNeta: pn, presupuesto: ppto, diferencia: dif,
-              pctDifPpto: pctDif, pnAnioAnt: pnAA, difYoY: difY, pctDifYoY: pctDifY, pendiente: pend,
-            }
-          })
-          // Also add any lines from Supabase not in SEED
-          result.forEach(r => {
-            if (!merged.find(m => m.linea === r.linea)) {
-              merged.push({ linea: r.linea, primaNeta: r.primaNeta, presupuesto: 0, diferencia: 0, pctDifPpto: 0, pnAnioAnt: 0, difYoY: 0, pctDifYoY: 0, pendiente: 0 })
-            }
-          })
-          setLineas(merged)
-        } else {
-          // Fallback to SEED if Supabase returns nothing
-          setLineas(SEED)
-        }
+
+        const mapped: LineaFull[] = (result ?? []).map((item) => {
+          const dif = item.primaNeta - item.presupuesto
+          const pctDif = item.presupuesto > 0 ? Math.round((dif / item.presupuesto) * 1000) / 10 : 0
+          const difY = item.primaNeta - item.anioAnterior
+          const pctDifY = item.anioAnterior > 0 ? Math.round((difY / item.anioAnterior) * 10000) / 100 : 0
+
+          return {
+            linea: item.nombre,
+            primaNeta: item.primaNeta,
+            presupuesto: item.presupuesto,
+            diferencia: dif,
+            pctDifPpto: pctDif,
+            pnAnioAnt: item.anioAnterior,
+            difYoY: difY,
+            pctDifYoY: pctDifY,
+            pendiente: item.pendiente || 0,
+          }
+        })
+
+        setLineas(mapped)
       } catch {
-        setLineas(SEED)
+        if (!cancelled) setLineas([])
       }
+
       if (!cancelled) setLoading(false)
     }
 
     load()
 
-    return () => { cancelled = true }
-  }, [periodo, year, periodos.length])
+    return () => {
+      cancelled = true
+    }
+  }, [periodos, year])
 
   // Helper to check if linea uses tipo vendedor grouper
   const usesTipoGrouper = (linea: string) => linea === "Click Franquicias" || linea === "Click Promotorías"
@@ -267,9 +256,9 @@ function TablaDetalleContent() {
     }
 
     // Get línea-level data for proportional calculations
-    const lineaSeed = SEED.find(s => s.linea === newSel.linea)
-    const lineaPpto = lineaSeed ? Math.round(lineaSeed.presupuesto / 12 * Math.max(periodos.length, 1)) : 0
-    const lineaPendiente = lineaSeed?.pendiente ?? 0
+    const lineaBase = lineas.find((s) => s.linea === newSel.linea)
+    const lineaPpto = lineaBase?.presupuesto ?? 0
+    const lineaPendiente = lineaBase?.pendiente ?? 0
 
     try {
       if (level === "gerencia") {

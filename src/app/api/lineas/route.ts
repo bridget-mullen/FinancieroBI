@@ -1,58 +1,37 @@
 import { createClient } from "@supabase/supabase-js"
 import { NextRequest, NextResponse } from "next/server"
 
-// Server-side Supabase client with service_role key
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-function calcPrima(row: Record<string, unknown>): number {
-  const prima = (row.PrimaNeta as number) || 0
-  const tc = (row.TCPago as number) || 1
-  const desc = parseFloat(row.Descuento as string) || 0
-  return (prima - desc) * tc
+const MONTH_NUMBER_TO_NAME: Record<number, string> = {
+  1: "Enero",
+  2: "Febrero",
+  3: "Marzo",
+  4: "Abril",
+  5: "Mayo",
+  6: "Junio",
+  7: "Julio",
+  8: "Agosto",
+  9: "Septiembre",
+  10: "Octubre",
+  11: "Noviembre",
+  12: "Diciembre",
 }
 
-async function fetchAllDashboardRows(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: any,
-  yr: number,
-  meses: number[]
-): Promise<Record<string, unknown>[]> {
-  const allRows: Record<string, unknown>[] = []
-  const pageSize = 1000
-  let from = 0
-  const maxRows = 300000 // safety cap
+function cleanEnv(value?: string): string {
+  return (value || "").replace(/\\n/g, "").trim()
+}
 
-  while (from < maxRows) {
-    const to = from + pageSize - 1
-    let q = supabase
-      .from("dashboard_data")
-      .select("LBussinesNombre, PrimaNeta, TCPago, Descuento")
-      .eq("anio", yr)
-
-    if (meses.length > 0) {
-      q = q.in("mes", meses)
-    }
-
-    const { data, error } = await q.range(from, to)
-    if (error) {
-      throw new Error(`Supabase page error (year=${yr}, from=${from}): ${error.message}`)
-    }
-
-    if (!data || data.length === 0) break
-
-    allRows.push(...(data as Record<string, unknown>[]))
-    if (data.length < pageSize) break
-    from += pageSize
-  }
-
-  return allRows
+interface FactPrimaLineaRow {
+  linea_negocio: string | null
+  prima_neta_cobrada: number | null
+  presupuesto: number | null
+  pendiente: number | null
+  ["año_anterior"]: number | null
 }
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const year = parseInt(searchParams.get("year") || "2026", 10)
-  const mesesParam = searchParams.get("meses") // comma-separated: "1,2,3"
+  const mesesParam = searchParams.get("meses")
   const meses = mesesParam
     ? mesesParam
         .split(",")
@@ -60,38 +39,66 @@ export async function GET(request: NextRequest) {
         .filter((m) => Number.isFinite(m) && m >= 1 && m <= 12)
     : []
 
+  const monthNames = meses
+    .map((m) => MONTH_NUMBER_TO_NAME[m])
+    .filter((m): m is string => Boolean(m))
+
   try {
-    if (!supabaseUrl || !serviceRoleKey) {
-      return NextResponse.json({ error: "Supabase server env not configured" }, { status: 500 })
+    const supabaseUrl = cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL)
+    // IMPORTANT:
+    // bi_dashboard is currently readable with anon key in production,
+    // while service_role key is returning permission denied for that schema.
+    const anonKey = cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    const serviceRoleKey = cleanEnv(process.env.SUPABASE_SERVICE_ROLE_KEY)
+    const apiKey = anonKey || serviceRoleKey
+
+    if (!supabaseUrl || !apiKey) {
+      return NextResponse.json(
+        { error: "Supabase env not configured (NEXT_PUBLIC_SUPABASE_URL + key)" },
+        { status: 500 }
+      )
     }
 
-    const supabase = createClient(supabaseUrl, serviceRoleKey)
+    const supabase = createClient(supabaseUrl, apiKey)
 
-    // Fetch current year + prior year with pagination (avoids row truncation)
-    const [currentRows, priorRows] = await Promise.all([
-      fetchAllDashboardRows(supabase, year, meses),
-      fetchAllDashboardRows(supabase, year - 1, meses),
-    ])
+    let query = supabase
+      .schema("bi_dashboard")
+      .from("fact_primas")
+      .select("linea_negocio, prima_neta_cobrada, año_anterior, presupuesto, pendiente")
+      .eq("año", year)
+      .is("gerencia", null)
+      .is("vendedor", null)
 
-    const groupBy = (rows: Record<string, unknown>[]) => {
-      const grouped: Record<string, number> = {}
-      for (const row of rows) {
-        const k = (row.LBussinesNombre as string) || "?"
-        grouped[k] = (grouped[k] || 0) + calcPrima(row)
-      }
-      return grouped
+    if (monthNames.length > 0) {
+      query = query.in("mes", monthNames)
     }
 
-    const currentGrouped = groupBy(currentRows)
-    const priorGrouped = groupBy(priorRows)
+    const { data, error } = await query
 
-    const allLineas = new Set([...Object.keys(currentGrouped), ...Object.keys(priorGrouped)])
+    if (error) {
+      throw new Error(`Supabase fact_primas error: ${error.message}`)
+    }
 
-    const result = Array.from(allLineas)
-      .map((nombre) => ({
+    const rows = (data || []) as unknown as FactPrimaLineaRow[]
+
+    const grouped = new Map<string, { primaNeta: number; anioAnterior: number; presupuesto: number; pendiente: number }>()
+    for (const row of rows) {
+      const nombre = row.linea_negocio || "Sin línea"
+      const current = grouped.get(nombre) || { primaNeta: 0, anioAnterior: 0, presupuesto: 0, pendiente: 0 }
+      current.primaNeta += row.prima_neta_cobrada || 0
+      current.anioAnterior += row["año_anterior"] || 0
+      current.presupuesto += row.presupuesto || 0
+      current.pendiente += row.pendiente || 0
+      grouped.set(nombre, current)
+    }
+
+    const result = Array.from(grouped.entries())
+      .map(([nombre, values]) => ({
         nombre,
-        primaNeta: Math.round(currentGrouped[nombre] || 0),
-        anioAnterior: Math.round(priorGrouped[nombre] || 0),
+        primaNeta: Math.round(values.primaNeta),
+        anioAnterior: Math.round(values.anioAnterior),
+        presupuesto: Math.round(values.presupuesto),
+        pendiente: Math.round(values.pendiente),
       }))
       .sort((a, b) => b.primaNeta - a.primaNeta)
 
