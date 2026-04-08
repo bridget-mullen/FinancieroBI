@@ -686,6 +686,30 @@ export async function getRamos(
   año?: string
 ): Promise<{ ramo: string; primaNeta: number; polizas: number }[] | null> {
   try {
+    // Preferred source: bi_dashboard.vw_ramos_prima (materialized by SQL patch in DB).
+    // Expected columns: ramo, prima_oficial, polizas, anio, periodo
+    let viewQuery = supabase
+      .schema("bi_dashboard")
+      .from("vw_ramos_prima")
+      .select("ramo, prima_oficial, polizas, anio, periodo")
+
+    if (año) viewQuery = viewQuery.eq("anio", parseInt(año))
+    if (periodo) viewQuery = viewQuery.eq("periodo", periodo)
+
+    const { data: viewData, error: viewError } = await viewQuery
+
+    if (!viewError && viewData?.length) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (viewData as any[])
+        .map((row) => ({
+          ramo: String(row.ramo || "Sin ramo"),
+          primaNeta: Math.round(Number(row.prima_oficial) || 0),
+          polizas: Number(row.polizas) || 0,
+        }))
+        .sort((a, b) => b.primaNeta - a.primaNeta)
+    }
+
+    // Fallback: if view is not yet available, try direct ramo fields in fact_primas.
     const months = periodo ? monthNamesFromPeriodos([periodo]) : []
 
     let probe = supabase
@@ -699,7 +723,6 @@ export async function getRamos(
     const { data: probeData, error: probeError } = await probe.limit(1)
     if (probeError || !probeData?.length) return null
 
-    // Prefer explicit ramo fields from bi_dashboard.fact_primas.
     const ramoCandidates = ["ramo", "ramos_nombre", "ramo_nombre", "RamosNombre", "dim_ramo", "ramo_id"]
     const probeRow = (probeData[0] || {}) as Record<string, unknown>
     const ramoField = ramoCandidates.find((field) => Object.prototype.hasOwnProperty.call(probeRow, field))
@@ -716,7 +739,6 @@ export async function getRamos(
     const { data, error } = await query
     if (error || !data?.length) return null
 
-    // Resolve ramo_id -> nombre when the dimensional table is accessible.
     const ramoNameById: Record<string, string> = {}
     if (ramoField === "ramo_id") {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
