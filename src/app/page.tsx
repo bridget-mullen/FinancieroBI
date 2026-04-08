@@ -39,7 +39,7 @@ export default function Home() {
     setPeriodos(newPeriodos)
   }, [])
 
-  const periodo = periodos[0] ?? 2
+  const periodo = periodos[periodos.length - 1] ?? 2
 
   useEffect(() => {
     document.title = "Tacómetro | CLK BI Dashboard"

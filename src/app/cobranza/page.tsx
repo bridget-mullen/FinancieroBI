@@ -127,7 +127,7 @@ export default function CobranzaPage() {
     setPeriodos(newPeriodos)
   }, [])
 
-  const periodo = periodos[0] ?? 2
+  const periodo = periodos[periodos.length - 1] ?? 2
 
   // Load ramos from Supabase when filters change
   useEffect(() => {

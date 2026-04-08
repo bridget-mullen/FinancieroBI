@@ -114,13 +114,21 @@ function monthNamesFromPeriodos(periodos?: number[]): string[] {
     .filter((m): m is string => Boolean(m))
 }
 
+// Global acumulado mode: a numeric periodo means months 1..periodo
+function monthNamesFromAcumuladoPeriodo(periodo?: number): string[] {
+  if (!periodo || !Number.isFinite(periodo)) return []
+  const last = Math.min(Math.max(Math.trunc(periodo), 1), 12)
+  const months = Array.from({ length: last }, (_, i) => i + 1)
+  return monthNamesFromPeriodos(months)
+}
+
 /**
  * Fetch prima neta cobrada grouped by línea de negocio from bi_dashboard.fact_primas
  * Periodo 1-12 maps to month names in Spanish (Enero..Diciembre)
  */
 export async function getLineasNegocio(periodo?: number, año?: string): Promise<{ linea: string; primaNeta: number }[] | null> {
   try {
-    const months = periodo ? monthNamesFromPeriodos([periodo]) : []
+    const months = monthNamesFromAcumuladoPeriodo(periodo)
 
     let query = supabase
       .schema("bi_dashboard")
@@ -194,7 +202,7 @@ export async function getGerencias(
   _clasificacionAseguradoras?: string[] | null
 ): Promise<GerenciaRow[] | null> {
   try {
-    const months = periodo ? monthNamesFromPeriodos([periodo]) : []
+    const months = monthNamesFromAcumuladoPeriodo(periodo)
 
     let query = supabase
       .schema("bi_dashboard")
@@ -240,7 +248,7 @@ export async function getVendedores(
   _clasificacionAseguradoras?: string[] | null
 ): Promise<VendedorRow[] | null> {
   try {
-    const months = periodo ? monthNamesFromPeriodos([periodo]) : []
+    const months = monthNamesFromAcumuladoPeriodo(periodo)
 
     let query = supabase
       .schema("bi_dashboard")
@@ -314,7 +322,7 @@ export async function getGrupos(
   _clasificacionAseguradoras?: string[] | null
 ): Promise<GrupoRow[] | null> {
   try {
-    const months = periodo ? monthNamesFromPeriodos([periodo]) : []
+    const months = monthNamesFromAcumuladoPeriodo(periodo)
 
     let query = supabase
       .schema("bi_dashboard")
@@ -367,7 +375,7 @@ export async function getClientes(
   _clasificacionAseguradoras?: string[] | null
 ): Promise<ClienteRow[] | null> {
   try {
-    const months = periodo ? monthNamesFromPeriodos([periodo]) : []
+    const months = monthNamesFromAcumuladoPeriodo(periodo)
     const vendedorRef = vendedor || grupo
 
     let query = supabase
@@ -461,7 +469,7 @@ export async function getRankedVendedores(
   año?: string
 ): Promise<{ vendedor: string; primaNeta: number }[] | null> {
   try {
-    const months = periodo ? monthNamesFromPeriodos([periodo]) : []
+    const months = monthNamesFromAcumuladoPeriodo(periodo)
 
     let query = supabase
       .schema("bi_dashboard")
@@ -497,7 +505,7 @@ export async function getRankedAseguradoras(
   _clasificacion?: string
 ): Promise<{ aseguradora: string; primaNeta: number }[] | null> {
   try {
-    const months = periodo ? monthNamesFromPeriodos([periodo]) : []
+    const months = monthNamesFromAcumuladoPeriodo(periodo)
 
     // bi_dashboard currently does not expose insurer-level dimension.
     // We use linea_negocio buckets as the ranking source.
@@ -607,7 +615,7 @@ export async function globalSearch(
   if (!query || query.length < 2) return []
   try {
     const search = query.trim().toLowerCase()
-    const months = periodo ? monthNamesFromPeriodos([periodo]) : []
+    const months = monthNamesFromAcumuladoPeriodo(periodo)
 
     let q = supabase
       .schema("bi_dashboard")
@@ -805,7 +813,7 @@ export async function getVendedoresByTipo(
   _clasificacionAseguradoras?: string[] | null
 ): Promise<{ tipo: string; vendedores: VendedorByTipoRow[]; total: number }[] | null> {
   try {
-    const months = periodo ? monthNamesFromPeriodos([periodo]) : []
+    const months = monthNamesFromAcumuladoPeriodo(periodo)
 
     // Fetch vendedores from bi_dashboard source
     let query = supabase
@@ -892,7 +900,7 @@ export async function getVendedoresWithTipo(
   lineaPendiente?: number
 ): Promise<TierGroup[] | null> {
   try {
-    const months = periodo ? monthNamesFromPeriodos([periodo]) : []
+    const months = monthNamesFromAcumuladoPeriodo(periodo)
 
     // 1) Current year vendedor data from bi_dashboard
     let query = supabase

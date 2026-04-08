@@ -11,6 +11,7 @@ const TABS = [
   { href: "/compromisos", label: "Vendedores" },
   { href: "/internacional", label: "Aseguradoras" },
   { href: "/corporate", label: "Corporate" },
+  { href: "/gobierno", label: "Gobierno" },
   { href: "/cobranza", label: "Convenios" },
 ]
 

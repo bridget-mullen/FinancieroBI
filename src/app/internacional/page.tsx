@@ -63,7 +63,7 @@ export default function AseguradorasPage() {
   useEffect(() => { document.title = "Aseguradoras | CLK BI Dashboard" }, [])
   useEffect(() => { getLastDataDate().then(d => setLastDataDate(d)) }, [])
 
-  const month = periodos[0] ?? 2
+  const month = periodos[periodos.length - 1] ?? 2
 
   // Fetch aseguradoras with clasificación lookup
   useEffect(() => {

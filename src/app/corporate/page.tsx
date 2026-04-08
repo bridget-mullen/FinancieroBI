@@ -104,7 +104,7 @@ export default function CorporatePage() {
     setYear(newYear)
     setPeriodos(newPeriodos)
   }, [])
-  const periodo = periodos[0] ?? 2
+  const periodo = periodos[periodos.length - 1] ?? 2
 
   // Calculate proportional presupuesto based on selected periods
   const lineaPpto = Math.round(CORPORATE_SEED.presupuesto / 12 * Math.max(periodos.length, 1))
