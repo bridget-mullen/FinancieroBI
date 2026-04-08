@@ -46,14 +46,9 @@ function DonutChart({ value, objetivo, color, size = 120, tooltipLines }: { valu
   )
 }
 
-// ── Seed Data ──
-const RAMOS = [
-  { nombre: "Vehiculos", pnEfectuada: 787742854, polizas: 160499 },
-  { nombre: "Acc. y Enf.", pnEfectuada: 276612477, polizas: 10476 },
-  { nombre: "Danos", pnEfectuada: 144378444, polizas: 6455 },
-  { nombre: "Vida", pnEfectuada: 59636744, polizas: 4202 },
-  { nombre: "Otros", pnEfectuada: 8013999, polizas: 545 },
-]
+// ── Real-data state models (no seeded fallback) ──
+type RamoRow = { nombre: string; pnEfectuada: number; polizas: number }
+const RAMOS: RamoRow[] = []
 // Semantic colors for insurance ramos - each ramo has its traditional industry color
 function ramoColor(nombre: string): string {
   const n = nombre.toLowerCase()
@@ -65,18 +60,16 @@ function ramoColor(nombre: string): string {
   return "#9CA3AF" // gray - Asistencias, Descuentos, Otros
 }
 
-const COMPANIES = [
-  { nombre: "AFIRME", primaNeta: 15109066, convenio: 15000000, pnAA: 9836221, pendiente: 44534, pnCia: 5677131, difCia: 9430936 },
-  { nombre: "AIG", primaNeta: 8200000, convenio: 9500000, pnAA: 7100000, pendiente: 120000, pnCia: 3200000, difCia: 5000000 },
-  { nombre: "ATLAS", primaNeta: 5400000, convenio: 6200000, pnAA: 4800000, pendiente: 85000, pnCia: 2100000, difCia: 3300000 },
-  { nombre: "AXA", primaNeta: 42000000, convenio: 45000000, pnAA: 38500000, pendiente: 350000, pnCia: 18000000, difCia: 24000000 },
-  { nombre: "CHUBB", primaNeta: 28500000, convenio: 30000000, pnAA: 25000000, pendiente: 200000, pnCia: 12000000, difCia: 16500000 },
-  { nombre: "GNP", primaNeta: 95000000, convenio: 98000000, pnAA: 82000000, pendiente: 500000, pnCia: 40000000, difCia: 55000000 },
-  { nombre: "HDI", primaNeta: 18000000, convenio: 20000000, pnAA: 16000000, pendiente: 150000, pnCia: 7500000, difCia: 10500000 },
-  { nombre: "MAPFRE", primaNeta: 12000000, convenio: 13000000, pnAA: 10500000, pendiente: 95000, pnCia: 5000000, difCia: 7000000 },
-  { nombre: "QUALITAS", primaNeta: 185000000, convenio: 180000000, pnAA: 160000000, pendiente: 800000, pnCia: 80000000, difCia: 105000000 },
-  { nombre: "ZURICH", primaNeta: 22000000, convenio: 24000000, pnAA: 19000000, pendiente: 180000, pnCia: 9000000, difCia: 13000000 },
-]
+type CompanyRow = {
+  nombre: string
+  primaNeta: number
+  convenio: number
+  pnAA: number
+  pendiente: number
+  pnCia: number
+  difCia: number
+}
+const COMPANIES: CompanyRow[] = []
 
 function pct(val: number, base: number) {
   if (!base) return 0
@@ -109,8 +102,8 @@ function SemaforoBadge({ primaNeta, pnAA, convenio, value }: { primaNeta: number
 export default function CobranzaPage() {
   const [year, setYear] = useState("2026")
   const [periodos, setPeriodos] = useState<number[]>([2])
-  const [ramos, setRamos] = useState(RAMOS)
-  const [companies, setCompanies] = useState(COMPANIES)
+  const [ramos, setRamos] = useState<RamoRow[]>(RAMOS)
+  const [companies, setCompanies] = useState<CompanyRow[]>(COMPANIES)
 
   // Feature: Clasificación Aseguradoras filter
   const [clasificacion, setClasificacion] = useState<string>("Todas")
@@ -140,17 +133,13 @@ export default function CobranzaPage() {
   useEffect(() => {
     let cancelled = false
     getRamos(periodo, year).then(data => {
-      if (cancelled || !data) return
-      // Merge real primaNeta with SEED polizas as fallback
-      const merged = data.map(d => {
-        const seed = RAMOS.find(s => d.ramo.includes(s.nombre) || s.nombre.includes(d.ramo))
-        return {
-          nombre: d.ramo,
-          pnEfectuada: d.primaNeta,
-          polizas: d.polizas || seed?.polizas || 0,
-        }
-      })
-      if (merged.length > 0) setRamos(merged)
+      if (cancelled) return
+      const rows = (data || []).map(d => ({
+        nombre: d.ramo,
+        pnEfectuada: d.primaNeta,
+        polizas: d.polizas || 0,
+      }))
+      setRamos(rows)
     })
     return () => { cancelled = true }
   }, [periodo, year])
@@ -159,21 +148,17 @@ export default function CobranzaPage() {
   useEffect(() => {
     let cancelled = false
     getRankedAseguradoras(periodo, year, clasificacion !== "Todas" ? clasificacion : undefined).then(data => {
-      if (cancelled || !data) return
-      // Merge real primaNeta with SEED for convenio/comparison columns
-      const merged = data.map(d => {
-        const seed = COMPANIES.find(s => s.nombre === d.aseguradora)
-        return {
-          nombre: d.aseguradora,
-          primaNeta: d.primaNeta,
-          convenio: seed?.convenio ?? 0,
-          pnAA: seed?.pnAA ?? 0,
-          pendiente: seed?.pendiente ?? 0,
-          pnCia: seed?.pnCia ?? 0,
-          difCia: seed?.difCia ?? 0,
-        }
-      })
-      if (merged.length > 0) setCompanies(merged)
+      if (cancelled) return
+      const rows = (data || []).map(d => ({
+        nombre: d.aseguradora,
+        primaNeta: d.primaNeta,
+        convenio: 0,
+        pnAA: 0,
+        pendiente: 0,
+        pnCia: 0,
+        difCia: 0,
+      }))
+      setCompanies(rows)
     })
     return () => { cancelled = true }
   }, [periodo, year, clasificacion])

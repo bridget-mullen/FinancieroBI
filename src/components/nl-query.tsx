@@ -8,13 +8,15 @@ import { supabase } from "@/lib/supabase"
 const NL_ENABLED = false
 
 const SCHEMA_CONTEXT = `
-Table: public.dashboard_data
-Columns: IDEjecut(bigint), EjecutNombre(text), FLiquidacion(text), DeptosNombre(text), IDSRamo(bigint), Sub_Ramo(text), PrimaNeta(float), Descuento(text), TCPago(float), IDCia(bigint), CiaAbreviacion(text), LBussinesNombre(text), IDDespacho(bigint), GerenciaNombre(text), Grupo(text), Documento(text), IDVend(bigint), Clave_Enroller(text), VendNombre(text), IDCli(bigint), NombreCompleto(text), TipoDocto(text), Periodo(bigint), FLimPago(text), EjecutCobNombre(text), SubGrupo(text), RamosNombre(text), CAgente(text)
-Formula: Prima Cobrada = (PrimaNeta - CAST(Descuento AS DECIMAL)) * TCPago
-LBussinesNombre values: Corporate, Cartera Tradicional
-GerenciaNombre values: Business, Diamond, Partner, Socios
+Schema: bi_dashboard
+Tables:
+- fact_primas(año, mes, linea_negocio, gerencia, vendedor, prima_neta_cobrada, presupuesto, año_anterior, pendiente)
+- fact_cobranza_diaria(fecha_pago, linea_negocio, gerencia, vendedor, prima_cobrada)
+- fact_cobranza_pendiente(fecha_vencimiento, cliente, gerencia, poliza, status, prima_pendiente)
+- dim_tipo_cambio(moneda, valor, fecha)
+- vw_ramos_prima(anio, periodo, ramo, prima_oficial, polizas)
+Mes values: Enero..Diciembre
 Periodo: 1-12 (month number)
-FLiquidacion format: M/DD/YY H:mm
 `
 
 interface NLQueryProps {

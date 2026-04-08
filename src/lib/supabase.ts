@@ -1,6 +1,24 @@
-import { createClient } from "@supabase/supabase-js"
+import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://ktqelgafkywncetxiosd.supabase.co"
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0cWVsZ2Fma3l3bmNldHhpb3NkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE0NTU5MzUsImV4cCI6MjA4NzAzMTkzNX0.X336JIssmBnacUEx6lSqj-D-aNhv5JvSqpUVupQFHkA"
+let cachedClient: SupabaseClient | null = null
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+function getSupabaseClient(): SupabaseClient {
+  if (cachedClient) return cachedClient
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error("Missing Supabase client env vars: NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY")
+  }
+
+  cachedClient = createClient(supabaseUrl, supabaseAnonKey)
+  return cachedClient
+}
+
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_target, prop, receiver) {
+    const client = getSupabaseClient() as unknown as Record<string, unknown>
+    return Reflect.get(client, prop, receiver)
+  },
+})

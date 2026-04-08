@@ -19,17 +19,6 @@ interface Pendiente {
   fecha_vencimiento: string
 }
 
-const SEED: Pendiente[] = [
-  { poliza: "POL-2026-0142", cliente: "García López María", gerencia: "Diamond", prima_pendiente: 45200, dias_vencido: 45, status: "Vencido", fecha_vencimiento: "2026-01-13" },
-  { poliza: "POL-2026-0187", cliente: "Hernández Ruiz Juan", gerencia: "Business", prima_pendiente: 128500, dias_vencido: 32, status: "Vencido", fecha_vencimiento: "2026-01-26" },
-  { poliza: "POL-2026-0213", cliente: "Martínez Sánchez Ana", gerencia: "Partner", prima_pendiente: 67800, dias_vencido: 15, status: "Por vencer", fecha_vencimiento: "2026-02-12" },
-  { poliza: "POL-2026-0298", cliente: "López Torres Pedro", gerencia: "Diamond", prima_pendiente: 234100, dias_vencido: 8, status: "Por vencer", fecha_vencimiento: "2026-02-19" },
-  { poliza: "POL-2026-0334", cliente: "Ramírez Flores Isabel", gerencia: "Socios", prima_pendiente: 89300, dias_vencido: 0, status: "Al día", fecha_vencimiento: "2026-02-27" },
-  { poliza: "POL-2026-0356", cliente: "González Díaz Roberto", gerencia: "Business", prima_pendiente: 156700, dias_vencido: 52, status: "Vencido", fecha_vencimiento: "2026-01-06" },
-  { poliza: "POL-2026-0401", cliente: "Fernández Mora Lucía", gerencia: "Partner", prima_pendiente: 42100, dias_vencido: 3, status: "Al día", fecha_vencimiento: "2026-02-24" },
-  { poliza: "POL-2026-0445", cliente: "Castillo Reyes David", gerencia: "Diamond", prima_pendiente: 310800, dias_vencido: 28, status: "Por vencer", fecha_vencimiento: "2026-01-30" },
-]
-
 function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
     "Vencido": "bg-[#E62800] text-white",
@@ -44,21 +33,24 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function CobranzaPendientePage() {
-  const [data, setData] = useState<Pendiente[]>(SEED)
+  const [data, setData] = useState<Pendiente[]>([])
   useEffect(() => { document.title = "Cobranza pendiente | CLK BI Dashboard" }, [])
 
   useEffect(() => {
     ;(async () => {
-      try {
-        const { data: rows, error } = await supabase
-          .schema("bi_dashboard")
-          .from("fact_cobranza_pendiente")
-          .select("*")
-          .order("dias_vencido", { ascending: false })
-        if (!error && rows?.length) {
-          setData(rows as unknown as Pendiente[])
-        }
-      } catch { /* seed fallback */ }
+      const { data: rows, error } = await supabase
+        .schema("bi_dashboard")
+        .from("fact_cobranza_pendiente")
+        .select("*")
+        .order("dias_vencido", { ascending: false })
+
+      if (error) {
+        console.error("fact_cobranza_pendiente query failed", error)
+        setData([])
+        return
+      }
+
+      setData((rows ?? []) as unknown as Pendiente[])
     })()
   }, [])
 
