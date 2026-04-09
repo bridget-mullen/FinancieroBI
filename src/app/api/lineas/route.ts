@@ -93,6 +93,7 @@ async function accumulateEfectuada(
     let query = supabase
       .from(tableName)
       .select("LBussinesNombre, PrimaNeta, Descuento, TCPago, Periodo")
+      .order("IDDocto", { ascending: true })
       .range(from, from + PAGE_SIZE - 1)
 
     if (meses.length > 0) {
@@ -137,6 +138,7 @@ async function accumulatePresupuesto(
     const { data, error } = await supabase
       .from(tableName)
       .select("LBussinesNombre, Presupuesto, Fecha")
+      .order("Fecha", { ascending: true })
       .range(from, from + PAGE_SIZE - 1)
 
     if (error) {
@@ -172,7 +174,8 @@ async function accumulatePendiente(
   for (let from = 0; from < 1_000_000; from += PAGE_SIZE) {
     let query = supabase
       .from("Pendiente")
-      .select("LBussinesNombre, PrimaNeta, Periodo")
+      .select("LBussinesNombre, PrimaNeta, Periodo, Documento")
+      .order("Documento", { ascending: true })
       .range(from, from + PAGE_SIZE - 1)
 
     if (meses.length > 0) {
