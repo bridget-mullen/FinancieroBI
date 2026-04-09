@@ -294,8 +294,8 @@ export async function getTipoCambio(): Promise<FxRates & { fechaActualizacion?: 
     const usdRow = rows.find((r: Record<string, unknown>) => r.moneda === "USD")
     const dopRow = rows.find((r: Record<string, unknown>) => r.moneda === "DOP")
     return {
-      usd: usdRow?.valor ?? 17.22,
-      dop: dopRow?.valor ?? 56.85,
+      usd: usdRow?.valor ?? 0,
+      dop: dopRow?.valor ?? 0,
       fechaActualizacion: usdRow?.fecha,
     }
   } catch {

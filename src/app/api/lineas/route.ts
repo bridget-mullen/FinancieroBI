@@ -30,7 +30,8 @@ interface FactPrimaLineaRow {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const year = parseInt(searchParams.get("year") || "2026", 10)
+  const fallbackYear = new Date().getFullYear().toString()
+  const year = parseInt(searchParams.get("year") || fallbackYear, 10)
   const mesesParam = searchParams.get("meses")
   const meses = mesesParam
     ? mesesParam
