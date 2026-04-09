@@ -191,7 +191,7 @@ async function accumulatePendiente(
 
     for (const row of rows) {
       const linea = lineaName(row)
-      const pendiente = toNumber(row.PimaNeta) || toNumber(row.PrimaNeta)
+      const pendiente = toNumber(row.PrimaNeta)
       target.set(linea, (target.get(linea) || 0) + pendiente)
     }
 
@@ -244,8 +244,10 @@ export async function GET(request: NextRequest) {
     // Budget table is currently expected mostly for 2026, but keep dynamic naming.
     await accumulatePresupuesto(supabase, budgetTable, meses, budgetByLine)
 
-    // Pendiente table is shared; we filter by Periodo when provided.
-    await accumulatePendiente(supabase, meses, pendingByLine)
+    // Pendiente table reflects current operational backlog; avoid projecting it to historical years.
+    if (year === new Date().getFullYear()) {
+      await accumulatePendiente(supabase, meses, pendingByLine)
+    }
 
     const lineas = new Set<string>([
       ...Array.from(currentByLine.keys()),
