@@ -177,8 +177,11 @@ function computeTop9WithOtros(items: CompromisoRow[]): { rows: CompromisoRow[]; 
 }
 
 export default function CompromisosPage() {
-  const [year, setYear] = useState("2026")
-  const [periodos, setPeriodos] = useState<number[]>([2])
+  const currentYear = String(new Date().getFullYear())
+  const currentMonth = new Date().getMonth() + 1
+
+  const [year, setYear] = useState(currentYear)
+  const [periodos, setPeriodos] = useState<number[]>([currentMonth])
   const [data, setData] = useState<CompromisoRow[]>([])
   const [loading, setLoading] = useState(true)
   // Bottom 5 removed per Angel's request

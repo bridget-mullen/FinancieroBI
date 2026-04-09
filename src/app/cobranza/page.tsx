@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { PageTabs } from "@/components/page-tabs"
 import { PageFooter } from "@/components/page-footer"
 import { PeriodFilter } from "@/components/period-filter"
-import { getRamos, getRankedAseguradoras, getAseguradorasByClasificacion } from "@/lib/queries"
+import { getRamos, getRankedAseguradoras, getAseguradorasByClasificacion, getLastDataDate } from "@/lib/queries"
 
 function fmt(v: number) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(v)
@@ -100,16 +100,21 @@ function SemaforoBadge({ primaNeta, pnAA, convenio, value }: { primaNeta: number
 }
 
 export default function CobranzaPage() {
-  const [year, setYear] = useState("2026")
-  const [periodos, setPeriodos] = useState<number[]>([2])
+  const currentYear = String(new Date().getFullYear())
+  const currentMonth = new Date().getMonth() + 1
+
+  const [year, setYear] = useState(currentYear)
+  const [periodos, setPeriodos] = useState<number[]>([currentMonth])
   const [ramos, setRamos] = useState<RamoRow[]>(RAMOS)
   const [companies, setCompanies] = useState<CompanyRow[]>(COMPANIES)
+  const [lastDataDate, setLastDataDate] = useState<string | null>(null)
 
   // Feature: Clasificación Aseguradoras filter
   const [clasificacion, setClasificacion] = useState<string>("Todas")
   const [clasificacionAseguradoras, setClasificacionAseguradoras] = useState<string[] | null>(null)
 
   useEffect(() => { document.title = "Aseguradoras | CLK BI Dashboard" }, [])
+  useEffect(() => { getLastDataDate().then(d => setLastDataDate(d)) }, [])
 
   // Update clasificación aseguradoras when filter changes
   useEffect(() => {
@@ -220,7 +225,7 @@ export default function CobranzaPage() {
             <option value="De servicio">De servicio</option>
           </select>
         </div>
-        <span className="text-xs text-[#9CA3AF]">Actualizado: 27/02/2026</span>
+        <span className="text-xs text-[#9CA3AF]">Datos al: {lastDataDate ?? "—"}</span>
       </div>
 
       {/* 3 Metric cards */}

@@ -16,6 +16,15 @@ interface PeriodFilterProps {
   defaultMonth?: number
 }
 
+const CURRENT_YEAR = new Date().getFullYear()
+
+function buildYearOptions(defaultYear?: string): string[] {
+  const baseYears = [CURRENT_YEAR, CURRENT_YEAR - 1, CURRENT_YEAR - 2].map(String)
+  if (!defaultYear) return baseYears
+  if (baseYears.includes(defaultYear)) return baseYears
+  return [defaultYear, ...baseYears].sort((a, b) => Number(b) - Number(a))
+}
+
 function monthsRange(lastMonth: number): number[] {
   const safeLast = Math.min(Math.max(lastMonth, 1), 12)
   return Array.from({ length: safeLast }, (_, i) => i + 1)
@@ -39,14 +48,17 @@ function availableMonthsForYear(year: string): number[] {
   return []
 }
 
-export function PeriodFilter({ onFilterChange, defaultYear = "2026", defaultMonth }: PeriodFilterProps) {
-  const [year, setYear] = useState(defaultYear)
+export function PeriodFilter({ onFilterChange, defaultYear, defaultMonth }: PeriodFilterProps) {
+  const yearOptions = useMemo(() => buildYearOptions(defaultYear), [defaultYear])
+  const resolvedDefaultYear = defaultYear || yearOptions[0] || String(CURRENT_YEAR)
+
+  const [year, setYear] = useState(resolvedDefaultYear)
   const [isMonthMenuOpen, setIsMonthMenuOpen] = useState(false)
 
   // Keep prop for backward compatibility; current behavior ignores defaultMonth by request
   void defaultMonth
 
-  const initialMonths = useMemo(() => availableMonthsForYear(defaultYear), [defaultYear])
+  const initialMonths = useMemo(() => availableMonthsForYear(resolvedDefaultYear), [resolvedDefaultYear])
 
   const [selectedMonths, setSelectedMonths] = useState<number[]>(initialMonths)
 
@@ -125,9 +137,9 @@ export function PeriodFilter({ onFilterChange, defaultYear = "2026", defaultMont
           onChange={e => handleYearChange(e.target.value)}
           className="border border-gray-300 rounded-md px-2 py-0.5 text-sm font-medium bg-white"
         >
-          <option>2026</option>
-          <option>2025</option>
-          <option>2024</option>
+          {yearOptions.map((optionYear) => (
+            <option key={optionYear} value={optionYear}>{optionYear}</option>
+          ))}
         </select>
       </div>
 

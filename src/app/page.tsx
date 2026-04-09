@@ -21,16 +21,20 @@ function fmtShort(v: number) {
 
 const LINEA_LINKS: Record<string, string> = {
   "Click Franquicias": "/tabla-detalle?linea=click-franquicias",
-  "Click Promotoras": "/tabla-detalle?linea=click-promotoras",
+  "Click Promotoras": "/tabla-detalle?linea=click-promotorias",
+  "Click Promotorías": "/tabla-detalle?linea=click-promotorias",
   "Corporate": "/tabla-detalle?linea=corporate",
   "Cartera Tradicional": "/tabla-detalle?linea=cartera-tradicional",
   "Call Center": "/tabla-detalle?linea=call-center",
 }
 
 export default function Home() {
+  const currentYear = String(new Date().getFullYear())
+  const currentMonth = new Date().getMonth() + 1
+
   const [ready, setReady] = useState(false)
-  const [year, setYear] = useState("2026")
-  const [periodos, setPeriodos] = useState<number[]>([2])
+  const [year, setYear] = useState(currentYear)
+  const [periodos, setPeriodos] = useState<number[]>([currentMonth])
   const [lineas, setLineas] = useState<LineaRow[]>([])
   const [fx, setFx] = useState({ usd: 0, dop: 0 })
 
@@ -98,7 +102,7 @@ export default function Home() {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-2 pt-3 md:pt-5 w-full gap-2 md:gap-0">
           <PageTabs />
-          <PeriodFilter onFilterChange={handleFilterChange} defaultYear="2026" defaultMonth={2} />
+          <PeriodFilter onFilterChange={handleFilterChange} defaultYear={currentYear} defaultMonth={currentMonth} />
         </div>
 
         {/* Title */}

@@ -18,8 +18,11 @@ function fmt(v: number) {
 type RamoItem = { ramo: string; primaNeta: number; polizas: number }
 
 export default function GobiernoPage() {
-  const [year, setYear] = useState("2026")
-  const [periodos, setPeriodos] = useState<number[]>([1, 2, 3, 4])
+  const currentYear = String(new Date().getFullYear())
+  const currentMonth = new Date().getMonth() + 1
+
+  const [year, setYear] = useState(currentYear)
+  const [periodos, setPeriodos] = useState<number[]>(Array.from({ length: currentMonth }, (_, i) => i + 1))
 
   const [totalPrima, setTotalPrima] = useState(0)
   const [totalPpto, setTotalPpto] = useState(0)

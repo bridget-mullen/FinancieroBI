@@ -38,7 +38,17 @@ interface LineaFull {
 }
 
 function toSlug(name: string) {
-  return name.toLowerCase().replace(/\s+/g, "-")
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+}
+
+function isPromotoriasLine(linea: string) {
+  const normalized = toSlug(linea)
+  return normalized === "click-promotorias" || normalized === "click-promotoras"
 }
 
 // Umbral configurable de alerta por desviación (default -20%)
@@ -62,8 +72,11 @@ export default function TablaDetallePage() {
 function TablaDetalleContent() {
   const searchParams = useSearchParams()
   const lineaParam = searchParams.get("linea")
-  const [year, setYear] = useState("2026")
-  const [periodos, setPeriodos] = useState<number[]>([2])
+  const currentYear = String(new Date().getFullYear())
+  const currentMonth = new Date().getMonth() + 1
+
+  const [year, setYear] = useState(currentYear)
+  const [periodos, setPeriodos] = useState<number[]>([currentMonth])
   const [search, setSearch] = useState("")
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
@@ -203,7 +216,7 @@ function TablaDetalleContent() {
   }, [periodos, year])
 
   // Helper to check if linea uses tipo vendedor grouper
-  const usesTipoGrouper = (linea: string) => linea === "Click Franquicias" || linea === "Click Promotorías"
+  const usesTipoGrouper = (linea: string) => linea === "Click Franquicias" || isPromotoriasLine(linea)
 
   // Generic drill function
   const drill = async (level: DrillLevel, label: string, newSel: typeof sel) => {
@@ -492,8 +505,8 @@ function TablaDetalleContent() {
   // Apply cartera filter to lineas
   const carteraFilteredLineas = lineas.filter(l => {
     if (cartera === "Todas") return true
-    if (cartera === "Promotorías") return l.linea === "Click Promotorías"
-    if (cartera === "Personal") return l.linea !== "Click Promotorías"
+    if (cartera === "Promotorías") return isPromotoriasLine(l.linea)
+    if (cartera === "Personal") return !isPromotoriasLine(l.linea)
     return true
   })
   const filteredLineas = filterSearch(carteraFilteredLineas, "linea")

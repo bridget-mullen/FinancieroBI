@@ -5,7 +5,7 @@ import { ChevronRight, ChevronLeft, Search, Download } from "lucide-react"
 import { PageTabs } from "@/components/page-tabs"
 import { PageFooter } from "@/components/page-footer"
 import { PeriodFilter } from "@/components/period-filter"
-import { getGerencias, getVendedores, getGrupos, getClientes, getPolizas, getLastDataDate } from "@/lib/queries"
+import { getGerencias, getVendedores, getGrupos, getClientes, getPolizas, getLastDataDate, getLineasWithYoY } from "@/lib/queries"
 import type { PolizaRow } from "@/lib/queries"
 import { exportExcel, exportPDF } from "@/lib/export"
 import { DrillCharts } from "@/components/drill-charts"
@@ -33,13 +33,6 @@ function fmtDate(dateStr: string): string {
 const MESES_LABELS = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
 
 const LINEA = "Corporate" // Pre-filtered
-
-// Corporate SEED data for presupuesto calculation (annual values)
-const CORPORATE_SEED = {
-  presupuesto: 16242717,
-  pnAnioAnt: 13539625,
-  pendiente: 8763272
-}
 
 type DrillLevel = "gerencia" | "vendedor" | "grupo" | "cliente" | "poliza"
 
@@ -85,8 +78,11 @@ function computeTop10WithOtros(items: DrillRow[]): { rows: DrillRow[]; otrosCoun
 }
 
 export default function CorporatePage() {
-  const [year, setYear] = useState("2026")
-  const [periodos, setPeriodos] = useState<number[]>([2])
+  const currentYear = String(new Date().getFullYear())
+  const currentMonth = new Date().getMonth() + 1
+
+  const [year, setYear] = useState(currentYear)
+  const [periodos, setPeriodos] = useState<number[]>([currentMonth])
   const [search, setSearch] = useState("")
   const [loading, setLoading] = useState(true)
   const [drillLevel, setDrillLevel] = useState<DrillLevel>("gerencia")
@@ -95,6 +91,7 @@ export default function CorporatePage() {
   const [rows, setRows] = useState<DrillRow[]>([])
   const [polizas, setPolizas] = useState<PolizaRow[]>([])
   const [lastDataDate, setLastDataDate] = useState<string | null>(null)
+  const [lineaStats, setLineaStats] = useState<{ presupuesto: number; pnAnioAnt: number; pendiente: number }>({ presupuesto: 0, pnAnioAnt: 0, pendiente: 0 })
   const tableRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => { document.title = "Corporate | CLK BI Dashboard" }, [])
@@ -106,10 +103,33 @@ export default function CorporatePage() {
   }, [])
   const periodo = periodos.length > 0 ? Math.max(...periodos) : undefined
 
-  // Calculate proportional presupuesto based on selected periods
-  const lineaPpto = Math.round(CORPORATE_SEED.presupuesto / 12 * Math.max(periodos.length, 1))
-  const lineaPnAnioAnt = Math.round(CORPORATE_SEED.pnAnioAnt / 12 * Math.max(periodos.length, 1))
-  const lineaPendiente = CORPORATE_SEED.pendiente
+  // Load real Corporate linea stats (presupuesto/pn año anterior/pendiente) from source data
+  useEffect(() => {
+    let cancelled = false
+
+    getLineasWithYoY(periodos, year)
+      .then((data) => {
+        if (cancelled) return
+        const corporate = (data ?? []).find((item) => item.nombre === LINEA)
+        setLineaStats({
+          presupuesto: corporate?.presupuesto ?? 0,
+          pnAnioAnt: corporate?.anioAnterior ?? 0,
+          pendiente: corporate?.pendiente ?? 0,
+        })
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLineaStats({ presupuesto: 0, pnAnioAnt: 0, pendiente: 0 })
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [year, periodos])
+
+  const lineaPpto = lineaStats.presupuesto
+  const lineaPendiente = lineaStats.pendiente
 
   // Helper to build DrillRow with all columns
   const toRowWithYoY = (
