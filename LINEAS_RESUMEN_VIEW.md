@@ -22,6 +22,7 @@ Por eso se reconstruyó la capa resumen para depender **solo** de ese esquema ac
 - `public.lineas_resumen` (tabla física + índice por `anio, periodo`)
 - refresco vía `public.refresh_lineas_resumen(p_anio integer default null)`
 - el endpoint `/api/lineas` prioriza esta tabla para evitar timeouts
+- si la tabla viene vacía/no disponible, el API intenta auto-recuperar ejecutando `refresh_lineas_resumen(year)` y reintenta una vez
 
 3) Funciones auxiliares:
 - `public.parse_budget_text(text)`
@@ -99,3 +100,14 @@ SELECT public.refresh_lineas_resumen(NULL);      -- todo
 -- o por año:
 SELECT public.refresh_lineas_resumen(2026);
 ```
+
+## QA de front/data (bloque 2)
+Ejecutar smoke + baseline del tablero principal:
+```bash
+npm run qa:lineas
+```
+Valida:
+- filtros clave (`mes=2`, `mes=3`, `meses=1,2,3`)
+- 5 líneas del tacómetro
+- totales esperados de prima / año anterior / presupuesto
+- latencia de estabilidad (3 llamadas consecutivas)

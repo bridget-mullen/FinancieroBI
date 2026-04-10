@@ -146,6 +146,22 @@ function isColumnMissing(message: string, column: string): boolean {
   )
 }
 
+function isTransientSummaryError(message: string): boolean {
+  const normalized = message.toLowerCase()
+  return (
+    normalized.includes("statement timeout") ||
+    normalized.includes("canceling statement") ||
+    normalized.includes("unable to check out connection") ||
+    normalized.includes("dbhandler exited") ||
+    normalized.includes("ssl connection has been closed") ||
+    normalized.includes("read timeout")
+  )
+}
+
+function isFunctionMissing(message: string): boolean {
+  return message.includes("PGRST202") || message.includes("Could not find the function")
+}
+
 interface SummaryLoadResult {
   rows: LineaResult[]
   source: string
@@ -169,7 +185,9 @@ async function loadFromSummarySource(
   const { data: currentRows, error: currentError } = await currentQuery
 
   if (currentError) {
-    if (isTableMissing(currentError.message)) return null
+    if (isTableMissing(currentError.message) || isTransientSummaryError(currentError.message)) {
+      return null
+    }
     throw new Error(`${source} current error: ${currentError.message}`)
   }
 
@@ -188,7 +206,11 @@ async function loadFromSummarySource(
 
   const { data: priorRows, error: priorError } = await priorQuery
 
-  if (priorError && !isTableMissing(priorError.message)) {
+  if (
+    priorError &&
+    !isTableMissing(priorError.message) &&
+    !isTransientSummaryError(priorError.message)
+  ) {
     throw new Error(`${source} prior error: ${priorError.message}`)
   }
 
@@ -247,6 +269,23 @@ async function loadFromSummaryTable(
   }
 
   return null
+}
+
+async function tryRefreshSummaryYear(supabase: SupabaseClient, year: number): Promise<boolean> {
+  const { error } = await supabase.rpc("refresh_lineas_resumen", { p_anio: year })
+
+  if (!error) return true
+
+  if (
+    isFunctionMissing(error.message) ||
+    isTableMissing(error.message) ||
+    isTransientSummaryError(error.message)
+  ) {
+    return false
+  }
+
+  // Non-critical path: keep API alive and continue to raw fallback.
+  return false
 }
 
 type EfectuadaMode = "periodo" | "liquidacion"
@@ -512,8 +551,15 @@ export async function GET(request: NextRequest) {
 
     const supabase = createClient(supabaseUrl, apiKey)
 
-    // Fast path: pre-aggregated summary source (view first, then table when safe)
-    const summary = await loadFromSummaryTable(supabase, year, meses)
+    // Fast path: pre-aggregated summary source (physical table first, then view)
+    let summary: SummaryLoadResult | null = null
+
+    try {
+      summary = await loadFromSummaryTable(supabase, year, meses)
+    } catch {
+      summary = null
+    }
+
     if (summary && summary.rows.length > 0) {
       return NextResponse.json(summary.rows, {
         headers: {
@@ -521,6 +567,26 @@ export async function GET(request: NextRequest) {
           "x-lineas-source": `summary:${summary.source}`,
         },
       })
+    }
+
+    // Self-heal path: summary was empty/unavailable.
+    // Try refreshing only the requested year, then retry summary once.
+    const refreshed = await tryRefreshSummaryYear(supabase, year)
+    if (refreshed) {
+      try {
+        summary = await loadFromSummaryTable(supabase, year, meses)
+      } catch {
+        summary = null
+      }
+
+      if (summary && summary.rows.length > 0) {
+        return NextResponse.json(summary.rows, {
+          headers: {
+            "Cache-Control": "no-store",
+            "x-lineas-source": `summary:${summary.source}:refreshed`,
+          },
+        })
+      }
     }
 
     // Fallback path: aggregate from raw year tables
