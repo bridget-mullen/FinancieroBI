@@ -61,6 +61,35 @@ function monthFromFecha(fecha: unknown): number | null {
   return null
 }
 
+function monthFromLiquidacion(fecha: unknown): number | null {
+  if (typeof fecha !== "string" || !fecha.trim()) return null
+
+  const raw = fecha.trim()
+
+  // Expected source format for this dashboard: MM/DD (optionally /YYYY)
+  const mmdd = raw.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/)
+  if (mmdd) {
+    const month = Number.parseInt(mmdd[1], 10)
+    return month >= 1 && month <= 12 ? month : null
+  }
+
+  // ISO fallback (YYYY-MM-DD)
+  const iso = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)
+  if (iso) {
+    const month = Number.parseInt(iso[2], 10)
+    return month >= 1 && month <= 12 ? month : null
+  }
+
+  // Generic Date fallback as last resort
+  const dt = new Date(raw)
+  if (Number.isFinite(dt.getTime())) {
+    const month = dt.getMonth() + 1
+    return month >= 1 && month <= 12 ? month : null
+  }
+
+  return null
+}
+
 function lineaName(row: Record<string, unknown>): string {
   const raw = row.LBussinesNombre
   const value = typeof raw === "string" ? raw.trim() : ""
@@ -75,13 +104,28 @@ function isTableMissing(message: string): boolean {
   )
 }
 
-async function loadFromSummaryTable(
+function isColumnMissing(message: string, column: string): boolean {
+  return (
+    message.includes("PGRST204") ||
+    message.includes(`'${column}'`) ||
+    message.includes(`\"${column}\"`) ||
+    message.toLowerCase().includes(column.toLowerCase())
+  )
+}
+
+interface SummaryLoadResult {
+  rows: LineaResult[]
+  source: string
+}
+
+async function loadFromSummarySource(
   supabase: SupabaseClient,
+  source: string,
   year: number,
   meses: number[]
 ): Promise<LineaResult[] | null> {
   let currentQuery = supabase
-    .from("lineas_resumen")
+    .from(source)
     .select("linea, prima_neta, presupuesto, pendiente, periodo")
     .eq("anio", year)
 
@@ -93,7 +137,7 @@ async function loadFromSummaryTable(
 
   if (currentError) {
     if (isTableMissing(currentError.message)) return null
-    throw new Error(`lineas_resumen current error: ${currentError.message}`)
+    throw new Error(`${source} current error: ${currentError.message}`)
   }
 
   if (!currentRows || currentRows.length === 0) {
@@ -101,7 +145,7 @@ async function loadFromSummaryTable(
   }
 
   let priorQuery = supabase
-    .from("lineas_resumen")
+    .from(source)
     .select("linea, prima_neta, periodo")
     .eq("anio", year - 1)
 
@@ -112,7 +156,7 @@ async function loadFromSummaryTable(
   const { data: priorRows, error: priorError } = await priorQuery
 
   if (priorError && !isTableMissing(priorError.message)) {
-    throw new Error(`lineas_resumen prior error: ${priorError.message}`)
+    throw new Error(`${source} prior error: ${priorError.message}`)
   }
 
   const currentByLine = new Map<string, { primaNeta: number; presupuesto: number; pendiente: number }>()
@@ -151,22 +195,49 @@ async function loadFromSummaryTable(
     .sort((a, b) => b.primaNeta - a.primaNeta)
 }
 
-async function accumulateEfectuada(
+async function loadFromSummaryTable(
+  supabase: SupabaseClient,
+  year: number,
+  meses: number[]
+): Promise<SummaryLoadResult | null> {
+  const source = "vw_lineas_resumen_mensual"
+  const rows = await loadFromSummarySource(supabase, source, year, meses)
+
+  if (rows && rows.length > 0) {
+    return { rows, source }
+  }
+
+  return null
+}
+
+type EfectuadaMode = "periodo" | "liquidacion"
+
+interface EfectuadaOptions {
+  preferLiquidacionMonth?: boolean
+}
+
+async function accumulateEfectuadaWithMode(
   supabase: SupabaseClient,
   tableName: string,
   meses: number[],
-  target: Map<string, number>
-): Promise<boolean> {
+  target: Map<string, number>,
+  mode: EfectuadaMode
+): Promise<boolean | "retry-periodo"> {
   const PAGE_SIZE = 5000
+  const isLiquidacionMode = mode === "liquidacion"
 
   for (let from = 0; from < 1_000_000; from += PAGE_SIZE) {
     let query = supabase
       .from(tableName)
-      .select("LBussinesNombre, PrimaNeta, Descuento, TCPago, Periodo")
+      .select(
+        isLiquidacionMode
+          ? "LBussinesNombre, PrimaNeta, Descuento, TCPago, Periodo, FLiquidacion"
+          : "LBussinesNombre, PrimaNeta, Descuento, TCPago, Periodo"
+      )
       .order("IDDocto", { ascending: true })
       .range(from, from + PAGE_SIZE - 1)
 
-    if (meses.length > 0) {
+    if (!isLiquidacionMode && meses.length > 0) {
       query = query.in("Periodo", meses)
     }
 
@@ -174,13 +245,21 @@ async function accumulateEfectuada(
 
     if (error) {
       if (isTableMissing(error.message)) return false
-      throw new Error(`${tableName} error: ${error.message}`)
+      if (isLiquidacionMode && isColumnMissing(error.message, "FLiquidacion")) {
+        return "retry-periodo"
+      }
+      throw new Error(`${tableName} (${mode}) error: ${error.message}`)
     }
 
-    const rows = (data || []) as Record<string, unknown>[]
+    const rows = ((data || []) as unknown) as Record<string, unknown>[]
     if (rows.length === 0) return true
 
     for (const row of rows) {
+      if (isLiquidacionMode && meses.length > 0) {
+        const month = monthFromLiquidacion(row.FLiquidacion) ?? Math.round(toNumber(row.Periodo))
+        if (!meses.includes(month)) continue
+      }
+
       const linea = lineaName(row)
       const prima = toNumber(row.PrimaNeta)
       const descuento = toNumber(row.Descuento)
@@ -196,14 +275,63 @@ async function accumulateEfectuada(
   return true
 }
 
+async function accumulateEfectuada(
+  supabase: SupabaseClient,
+  tableName: string,
+  meses: number[],
+  target: Map<string, number>,
+  options: EfectuadaOptions = {}
+): Promise<boolean> {
+  const shouldUseLiquidacion = Boolean(options.preferLiquidacionMonth && meses.length > 0)
+
+  if (shouldUseLiquidacion) {
+    const liquidacionResult = await accumulateEfectuadaWithMode(
+      supabase,
+      tableName,
+      meses,
+      target,
+      "liquidacion"
+    )
+
+    if (liquidacionResult === "retry-periodo") {
+      const periodResult = await accumulateEfectuadaWithMode(
+        supabase,
+        tableName,
+        meses,
+        target,
+        "periodo"
+      )
+      return periodResult === "retry-periodo" ? false : periodResult
+    }
+
+    return liquidacionResult
+  }
+
+  const periodResult = await accumulateEfectuadaWithMode(
+    supabase,
+    tableName,
+    meses,
+    target,
+    "periodo"
+  )
+  return periodResult === "retry-periodo" ? false : periodResult
+}
+
 async function accumulateEfectuadaFromCandidates(
   supabase: SupabaseClient,
   tableNames: string[],
   meses: number[],
-  target: Map<string, number>
+  target: Map<string, number>,
+  options: EfectuadaOptions = {}
 ): Promise<string | null> {
   for (const tableName of tableNames) {
-    const ok = await accumulateEfectuada(supabase, tableName, meses, target)
+    const preferLiquidacionForTable =
+      Boolean(options.preferLiquidacionMonth) && tableName === "efectuada_2026_drive"
+
+    const ok = await accumulateEfectuada(supabase, tableName, meses, target, {
+      preferLiquidacionMonth: preferLiquidacionForTable,
+    })
+
     if (ok) return tableName
   }
   return null
@@ -319,13 +447,13 @@ export async function GET(request: NextRequest) {
 
     const supabase = createClient(supabaseUrl, apiKey)
 
-    // Fast path: pre-aggregated summary table
+    // Fast path: pre-aggregated summary source (view first, then table when safe)
     const summary = await loadFromSummaryTable(supabase, year, meses)
-    if (summary && summary.length > 0) {
-      return NextResponse.json(summary, {
+    if (summary && summary.rows.length > 0) {
+      return NextResponse.json(summary.rows, {
         headers: {
           "Cache-Control": "no-store",
-          "x-lineas-source": "summary",
+          "x-lineas-source": `summary:${summary.source}`,
         },
       })
     }
@@ -345,13 +473,25 @@ export async function GET(request: NextRequest) {
       supabase,
       currentTableCandidates,
       meses,
-      currentByLine
+      currentByLine,
+      {
+        // 2026 drive source needs month filtering by FLiquidacion (MM/DD), not Periodo.
+        preferLiquidacionMonth: year === 2026,
+      }
     )
     if (!currentSource) {
       throw new Error(`Missing source table for year ${year}: ${currentTableCandidates.join(" | ")}`)
     }
 
-    await accumulateEfectuadaFromCandidates(supabase, priorTableCandidates, meses, priorByLine)
+    await accumulateEfectuadaFromCandidates(
+      supabase,
+      priorTableCandidates,
+      meses,
+      priorByLine,
+      {
+        preferLiquidacionMonth: false,
+      }
+    )
 
     // Budget table is currently expected mostly for 2026, but keep dynamic naming.
     await accumulatePresupuesto(supabase, budgetTable, meses, budgetByLine)
@@ -381,7 +521,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(result, {
       headers: {
         "Cache-Control": "no-store",
-        "x-lineas-source": "raw-fallback",
+        "x-lineas-source": `raw-fallback:${currentSource}`,
       },
     })
   } catch (err) {
