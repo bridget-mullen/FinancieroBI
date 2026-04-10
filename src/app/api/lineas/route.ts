@@ -196,6 +196,19 @@ async function accumulateEfectuada(
   return true
 }
 
+async function accumulateEfectuadaFromCandidates(
+  supabase: SupabaseClient,
+  tableNames: string[],
+  meses: number[],
+  target: Map<string, number>
+): Promise<string | null> {
+  for (const tableName of tableNames) {
+    const ok = await accumulateEfectuada(supabase, tableName, meses, target)
+    if (ok) return tableName
+  }
+  return null
+}
+
 async function accumulatePresupuesto(
   supabase: SupabaseClient,
   tableName: string,
@@ -323,12 +336,22 @@ export async function GET(request: NextRequest) {
     const budgetByLine = new Map<string, number>()
     const pendingByLine = new Map<string, number>()
 
-    const currentTable = `Efectuada ${year}`
-    const priorTable = `Efectuada ${year - 1}`
+    const currentTableCandidates =
+      year === 2026 ? ["efectuada_2026_drive", `Efectuada ${year}`] : [`Efectuada ${year}`]
+    const priorTableCandidates = [`Efectuada ${year - 1}`]
     const budgetTable = `Presupuestos ${year}`
 
-    await accumulateEfectuada(supabase, currentTable, meses, currentByLine)
-    await accumulateEfectuada(supabase, priorTable, meses, priorByLine)
+    const currentSource = await accumulateEfectuadaFromCandidates(
+      supabase,
+      currentTableCandidates,
+      meses,
+      currentByLine
+    )
+    if (!currentSource) {
+      throw new Error(`Missing source table for year ${year}: ${currentTableCandidates.join(" | ")}`)
+    }
+
+    await accumulateEfectuadaFromCandidates(supabase, priorTableCandidates, meses, priorByLine)
 
     // Budget table is currently expected mostly for 2026, but keep dynamic naming.
     await accumulatePresupuesto(supabase, budgetTable, meses, budgetByLine)
