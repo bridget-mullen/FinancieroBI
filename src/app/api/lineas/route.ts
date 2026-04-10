@@ -325,8 +325,7 @@ async function accumulateEfectuadaFromCandidates(
   options: EfectuadaOptions = {}
 ): Promise<string | null> {
   for (const tableName of tableNames) {
-    const preferLiquidacionForTable =
-      Boolean(options.preferLiquidacionMonth) && tableName === "efectuada_2026_drive"
+    const preferLiquidacionForTable = Boolean(options.preferLiquidacionMonth)
 
     const ok = await accumulateEfectuada(supabase, tableName, meses, target, {
       preferLiquidacionMonth: preferLiquidacionForTable,
@@ -475,8 +474,8 @@ export async function GET(request: NextRequest) {
       meses,
       currentByLine,
       {
-        // 2026 drive source needs month filtering by FLiquidacion (MM/DD), not Periodo.
-        preferLiquidacionMonth: year === 2026,
+        // Month filters should align with liquidación date semantics when available.
+        preferLiquidacionMonth: meses.length > 0,
       }
     )
     if (!currentSource) {
@@ -489,7 +488,7 @@ export async function GET(request: NextRequest) {
       meses,
       priorByLine,
       {
-        preferLiquidacionMonth: false,
+        preferLiquidacionMonth: meses.length > 0,
       }
     )
 

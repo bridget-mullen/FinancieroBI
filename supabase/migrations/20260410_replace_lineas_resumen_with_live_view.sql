@@ -39,7 +39,21 @@ CREATE OR REPLACE VIEW public.vw_lineas_resumen_mensual AS
 WITH primas_base AS (
   SELECT
     2024::integer AS anio,
-    CASE WHEN "Periodo" BETWEEN 1 AND 12 THEN "Periodo"::integer ELSE NULL END AS periodo,
+    COALESCE(
+      CASE
+        -- Expected source values like "3/25/26 0:00" (MM/DD/YY with optional time)
+        WHEN split_part(trim(COALESCE("FLiquidacion"::text, '')), ' ', 1) ~ '^\d{1,2}/\d{1,2}/\d{2,4}$'
+          THEN CASE
+            WHEN split_part(split_part(trim(COALESCE("FLiquidacion"::text, '')), ' ', 1), '/', 1)::integer BETWEEN 1 AND 12
+              THEN split_part(split_part(trim(COALESCE("FLiquidacion"::text, '')), ' ', 1), '/', 1)::integer
+            ELSE NULL
+          END
+        WHEN split_part(trim(COALESCE("FLiquidacion"::text, '')), ' ', 1) ~ '^\d{4}-\d{1,2}-\d{1,2}$'
+          THEN EXTRACT(month FROM split_part(trim(COALESCE("FLiquidacion"::text, '')), ' ', 1)::date)::integer
+        ELSE NULL
+      END,
+      CASE WHEN "Periodo" BETWEEN 1 AND 12 THEN "Periodo"::integer ELSE NULL END
+    ) AS periodo,
     COALESCE(NULLIF(trim("LBussinesNombre"), ''), 'Sin línea') AS linea,
     public.parse_budget_text("PrimaNeta"::text) AS prima_neta,
     public.parse_budget_text("Descuento"::text) AS descuento,
@@ -50,7 +64,21 @@ WITH primas_base AS (
 
   SELECT
     2025::integer AS anio,
-    CASE WHEN "Periodo" BETWEEN 1 AND 12 THEN "Periodo"::integer ELSE NULL END AS periodo,
+    COALESCE(
+      CASE
+        -- Expected source values like "3/25/26 0:00" (MM/DD/YY with optional time)
+        WHEN split_part(trim(COALESCE("FLiquidacion"::text, '')), ' ', 1) ~ '^\d{1,2}/\d{1,2}/\d{2,4}$'
+          THEN CASE
+            WHEN split_part(split_part(trim(COALESCE("FLiquidacion"::text, '')), ' ', 1), '/', 1)::integer BETWEEN 1 AND 12
+              THEN split_part(split_part(trim(COALESCE("FLiquidacion"::text, '')), ' ', 1), '/', 1)::integer
+            ELSE NULL
+          END
+        WHEN split_part(trim(COALESCE("FLiquidacion"::text, '')), ' ', 1) ~ '^\d{4}-\d{1,2}-\d{1,2}$'
+          THEN EXTRACT(month FROM split_part(trim(COALESCE("FLiquidacion"::text, '')), ' ', 1)::date)::integer
+        ELSE NULL
+      END,
+      CASE WHEN "Periodo" BETWEEN 1 AND 12 THEN "Periodo"::integer ELSE NULL END
+    ) AS periodo,
     COALESCE(NULLIF(trim("LBussinesNombre"), ''), 'Sin línea') AS linea,
     public.parse_budget_text("PrimaNeta"::text) AS prima_neta,
     public.parse_budget_text("Descuento"::text) AS descuento,
