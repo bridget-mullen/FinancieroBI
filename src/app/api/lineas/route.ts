@@ -234,7 +234,10 @@ async function loadFromSummaryTable(
   year: number,
   meses: number[]
 ): Promise<SummaryLoadResult | null> {
-  const sources = ["vw_lineas_resumen_mensual", "lineas_resumen"]
+  // Performance-first order:
+  // 1) physical summary table (fast, indexed)
+  // 2) live view as compatibility fallback
+  const sources = ["lineas_resumen", "vw_lineas_resumen_mensual"]
 
   for (const source of sources) {
     const rows = await loadFromSummarySource(supabase, source, year, meses)

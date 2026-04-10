@@ -18,9 +18,10 @@ Por eso se reconstruyó la capa resumen para depender **solo** de ese esquema ac
 1) Vista principal viva:
 - `public.vw_lineas_resumen_mensual`
 
-2) Tabla de compatibilidad rápida (para builds viejos que aún leen `lineas_resumen`):
+2) Tabla de compatibilidad rápida (para builds viejos y como **fast path** del API):
 - `public.lineas_resumen` (tabla física + índice por `anio, periodo`)
 - refresco vía `public.refresh_lineas_resumen(p_anio integer default null)`
+- el endpoint `/api/lineas` prioriza esta tabla para evitar timeouts
 
 3) Funciones auxiliares:
 - `public.parse_budget_text(text)`
@@ -90,4 +91,11 @@ ORDER BY prima_neta DESC;
 Y en API:
 ```bash
 curl -s "https://financiero-bi-dashboard.vercel.app/api/lineas?year=2026&meses=2" -D - | head
+```
+
+Refresh manual (cuando recarguen tablas `*_drive`):
+```sql
+SELECT public.refresh_lineas_resumen(NULL);      -- todo
+-- o por año:
+SELECT public.refresh_lineas_resumen(2026);
 ```
