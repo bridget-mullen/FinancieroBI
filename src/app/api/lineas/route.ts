@@ -1,6 +1,14 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 import { NextRequest, NextResponse } from "next/server"
 
+interface LineaResult {
+  nombre: string
+  primaNeta: number
+  anioAnterior: number
+  presupuesto: number
+  pendiente: number
+}
+
 function cleanEnv(value?: string): string {
   return (value || "").replace(/\\n/g, "").trim()
 }
@@ -31,20 +39,6 @@ function toNumber(value: unknown): number {
     return Number.isFinite(parsed) ? parsed : 0
   }
   return 0
-}
-
-function monthFromPeriodo(periodo: unknown): number | null {
-  const n = Math.trunc(toNumber(periodo))
-  if (!Number.isFinite(n) || n <= 0) return null
-
-  // Handles 1..12 or YYYYMM
-  if (n >= 1 && n <= 12) return n
-  if (n >= 190001) {
-    const m = n % 100
-    if (m >= 1 && m <= 12) return m
-  }
-
-  return null
 }
 
 function monthFromFecha(fecha: unknown): number | null {
@@ -79,6 +73,82 @@ function isTableMissing(message: string): boolean {
     message.includes("Could not find the table") ||
     message.includes("relation")
   )
+}
+
+async function loadFromSummaryTable(
+  supabase: SupabaseClient,
+  year: number,
+  meses: number[]
+): Promise<LineaResult[] | null> {
+  let currentQuery = supabase
+    .from("lineas_resumen")
+    .select("linea, prima_neta, presupuesto, pendiente, periodo")
+    .eq("anio", year)
+
+  if (meses.length > 0) {
+    currentQuery = currentQuery.in("periodo", meses)
+  }
+
+  const { data: currentRows, error: currentError } = await currentQuery
+
+  if (currentError) {
+    if (isTableMissing(currentError.message)) return null
+    throw new Error(`lineas_resumen current error: ${currentError.message}`)
+  }
+
+  if (!currentRows || currentRows.length === 0) {
+    return null
+  }
+
+  let priorQuery = supabase
+    .from("lineas_resumen")
+    .select("linea, prima_neta, periodo")
+    .eq("anio", year - 1)
+
+  if (meses.length > 0) {
+    priorQuery = priorQuery.in("periodo", meses)
+  }
+
+  const { data: priorRows, error: priorError } = await priorQuery
+
+  if (priorError && !isTableMissing(priorError.message)) {
+    throw new Error(`lineas_resumen prior error: ${priorError.message}`)
+  }
+
+  const currentByLine = new Map<string, { primaNeta: number; presupuesto: number; pendiente: number }>()
+  const priorByLine = new Map<string, number>()
+
+  for (const row of (currentRows as Record<string, unknown>[])) {
+    const linea = String(row.linea || "Sin línea")
+    const acc = currentByLine.get(linea) || { primaNeta: 0, presupuesto: 0, pendiente: 0 }
+    acc.primaNeta += toNumber(row.prima_neta)
+    acc.presupuesto += toNumber(row.presupuesto)
+    acc.pendiente += toNumber(row.pendiente)
+    currentByLine.set(linea, acc)
+  }
+
+  for (const row of ((priorRows || []) as Record<string, unknown>[])) {
+    const linea = String(row.linea || "Sin línea")
+    priorByLine.set(linea, (priorByLine.get(linea) || 0) + toNumber(row.prima_neta))
+  }
+
+  const lineas = new Set<string>([
+    ...Array.from(currentByLine.keys()),
+    ...Array.from(priorByLine.keys()),
+  ])
+
+  return Array.from(lineas)
+    .map((nombre) => {
+      const c = currentByLine.get(nombre) || { primaNeta: 0, presupuesto: 0, pendiente: 0 }
+      return {
+        nombre,
+        primaNeta: Math.round(c.primaNeta),
+        anioAnterior: Math.round(priorByLine.get(nombre) || 0),
+        presupuesto: Math.round(c.presupuesto),
+        pendiente: Math.round(c.pendiente),
+      }
+    })
+    .sort((a, b) => b.primaNeta - a.primaNeta)
 }
 
 async function accumulateEfectuada(
@@ -236,6 +306,18 @@ export async function GET(request: NextRequest) {
 
     const supabase = createClient(supabaseUrl, apiKey)
 
+    // Fast path: pre-aggregated summary table
+    const summary = await loadFromSummaryTable(supabase, year, meses)
+    if (summary && summary.length > 0) {
+      return NextResponse.json(summary, {
+        headers: {
+          "Cache-Control": "no-store",
+          "x-lineas-source": "summary",
+        },
+      })
+    }
+
+    // Fallback path: aggregate from raw year tables
     const currentByLine = new Map<string, number>()
     const priorByLine = new Map<string, number>()
     const budgetByLine = new Map<string, number>()
@@ -263,7 +345,7 @@ export async function GET(request: NextRequest) {
       ...Array.from(pendingByLine.keys()),
     ])
 
-    const result = Array.from(lineas)
+    const result: LineaResult[] = Array.from(lineas)
       .map((nombre) => ({
         nombre,
         primaNeta: Math.round(currentByLine.get(nombre) || 0),
@@ -274,7 +356,10 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.primaNeta - a.primaNeta)
 
     return NextResponse.json(result, {
-      headers: { "Cache-Control": "no-store" },
+      headers: {
+        "Cache-Control": "no-store",
+        "x-lineas-source": "raw-fallback",
+      },
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error"
