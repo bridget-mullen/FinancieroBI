@@ -6,7 +6,7 @@ import { ChevronRight, ChevronLeft, ChevronDown, Search, Download } from "lucide
 import { PageTabs } from "@/components/page-tabs"
 import { PageFooter } from "@/components/page-footer"
 import { PeriodFilter } from "@/components/period-filter"
-import { getLineasWithYoY, getGerencias, getVendedores, getGrupos, getClientes, getPolizas, globalSearch, getLastDataDate, getVendedoresWithTipo, getAseguradorasByClasificacion } from "@/lib/queries"
+import { getLineasWithYoY, getGerencias, getVendedores, getGrupos, getClientes, getPolizas, globalSearch, getLastDataDate, getVendedoresWithTipo } from "@/lib/queries"
 import type { SearchResult, PolizaRow, TierGroup, VendedorFullRow } from "@/lib/queries"
 import { exportExcel, exportPDF } from "@/lib/export"
 import { NLQuery } from "@/components/nl-query"
@@ -82,12 +82,8 @@ function TablaDetalleContent() {
   const [mounted, setMounted] = useState(false)
   const [didAutoDrill, setDidAutoDrill] = useState(false)
 
-  // Feature 2: Clasificación Aseguradoras filter
-  const [clasificacion, setClasificacion] = useState<string>("Todas")
-  const [clasificacionAseguradoras, setClasificacionAseguradoras] = useState<string[] | null>(null)
-
-  // Feature 3: Cartera filter (Personal vs Promotorías)
-  const [cartera, setCartera] = useState<string>("Todas")
+  // Filtros removidos por solicitud: cartera y clasificación de aseguradoras
+  const clasificacionAseguradoras: string[] | null = null
 
   // Feature 1: Tipo Vendedor grouper state (now with full 9-column data)
   const [tipoGroups, setTipoGroups] = useState<TierGroup[] | null>(null)
@@ -151,16 +147,6 @@ function TablaDetalleContent() {
   useEffect(() => { document.title = "Tabla detalle | CLK BI Dashboard" }, [])
   useEffect(() => { getLastDataDate().then(d => setLastDataDate(d)) }, [])
 
-  // Update clasificación aseguradoras when filter changes
-  useEffect(() => {
-    if (clasificacion === "Todas") {
-      setClasificacionAseguradoras(null)
-    } else {
-      getAseguradorasByClasificacion(clasificacion).then(aseguradoras => {
-        setClasificacionAseguradoras(aseguradoras)
-      })
-    }
-  }, [clasificacion])
   // Use first selected period for queries (multi-period queries use first as primary)
   const periodo = periodos.length > 0 ? Math.max(...periodos) : undefined
 
@@ -502,14 +488,7 @@ function TablaDetalleContent() {
     grupo: "Grupo", cliente: "Cliente / Asegurado", poliza: "Póliza",
   }
 
-  // Apply cartera filter to lineas
-  const carteraFilteredLineas = lineas.filter(l => {
-    if (cartera === "Todas") return true
-    if (cartera === "Promotorías") return isPromotoriasLine(l.linea)
-    if (cartera === "Personal") return !isPromotoriasLine(l.linea)
-    return true
-  })
-  const filteredLineas = filterSearch(carteraFilteredLineas, "linea")
+  const filteredLineas = filterSearch(lineas, "linea")
   const totalLineas = { primaNeta: filteredLineas.reduce((s, l) => s + l.primaNeta, 0), presupuesto: filteredLineas.reduce((s, l) => s + l.presupuesto, 0), pnAnioAnt: filteredLineas.reduce((s, l) => s + l.pnAnioAnt, 0), pendiente: filteredLineas.reduce((s, l) => s + l.pendiente, 0) }
   const totalDif = filteredLineas.reduce((s, l) => s + l.diferencia, 0)
   const totalDifPct = totalLineas.presupuesto > 0 ? ((totalDif / totalLineas.presupuesto) * 100).toFixed(1) : ""
@@ -635,33 +614,6 @@ function TablaDetalleContent() {
 
       {/* Filter bar */}
       <div className="flex items-center gap-2 mb-2 flex-wrap">
-        {/* Feature 3: Cartera filter */}
-        <select
-          id="cartera-filter"
-          name="cartera"
-          value={cartera}
-          onChange={e => setCartera(e.target.value)}
-          className="px-2 py-1 border border-[#E5E7EB] rounded text-xs bg-white text-[#333] cursor-pointer hover:border-[#CCD1D3] transition-colors"
-        >
-          <option value="Todas">Cartera: Todas</option>
-          <option value="Personal">Personal</option>
-          <option value="Promotorías">Promotorías</option>
-        </select>
-
-        {/* Feature 2: Clasificación Aseguradoras filter */}
-        <select
-          id="clasificacion-filter"
-          name="clasificacion"
-          value={clasificacion}
-          onChange={e => setClasificacion(e.target.value)}
-          className="px-2 py-1 border border-[#E5E7EB] rounded text-xs bg-white text-[#333] cursor-pointer hover:border-[#CCD1D3] transition-colors"
-        >
-          <option value="Todas">Aseguradoras: Todas</option>
-          <option value="Estratégica">Estratégica</option>
-          <option value="Importante">Importante</option>
-          <option value="De servicio">De servicio</option>
-        </select>
-
         {/* Feature 5: Agrupar por tipo toggle — only show for Franquicias/Promotorías at vendedor level */}
         {drillLevel === "vendedor" && usesTipoGrouper(sel.linea || "") && (
           <button
