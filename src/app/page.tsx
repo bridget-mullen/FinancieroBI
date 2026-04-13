@@ -201,25 +201,25 @@ export default function Home() {
         {/* ═══ DESKTOP LAYOUT ═══ */}
         <div className="hidden md:block mt-0">
           {/* Top section: Gauge + Table */}
-          <div className="flex gap-3">
+          <div className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-3 items-start">
             {/* Left column: Gauge */}
-            <div className="w-[55%] flex items-center justify-center">
+            <div className="min-w-0 flex items-center justify-center">
               <div className="w-full">
                 <Gauge value={total / 1e6} prevYear={totalAA / 1e6} budget={totalPpto / 1e6} cumplimiento={cumpl} crecimiento={crec} />
               </div>
             </div>
 
             {/* Right column: Table */}
-            <div className="w-[45%] flex flex-col gap-1 justify-center mt-3">
-              <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-x-auto">
-                <table className="w-full text-xs min-w-[700px]">
+            <div className="min-w-0 flex flex-col gap-1 justify-center mt-3">
+              <div className="bg-white shadow-sm rounded-lg border border-gray-200">
+                <table className="w-full table-auto text-[11px] lg:text-xs">
                   <thead>
                     <tr className="bg-[#041224] border-b-2 border-b-[#E62800]">
-                      <th className="text-left px-2 py-2 text-xs font-semibold uppercase tracking-wider text-white">Línea</th>
-                      <th className="text-center px-2 py-2 text-xs font-semibold uppercase tracking-wider text-white">Prima Neta</th>
-                      <th className="text-center px-2 py-2 text-xs font-semibold uppercase tracking-wider text-white">Año Ant.</th>
-                      <th className="text-center px-2 py-2 text-xs font-semibold uppercase tracking-wider text-white">Presupuesto</th>
-                      <th className="text-center px-2 py-2 text-xs font-semibold uppercase tracking-wider text-white whitespace-nowrap min-w-[130px]">Diferencia</th>
+                      <th className="text-left px-1.5 lg:px-2 py-2 text-xs font-semibold uppercase tracking-wider text-white">Línea</th>
+                      <th className="text-center px-1.5 lg:px-2 py-2 text-xs font-semibold uppercase tracking-wider text-white">Prima Neta</th>
+                      <th className="text-center px-1.5 lg:px-2 py-2 text-xs font-semibold uppercase tracking-wider text-white">Año Ant.</th>
+                      <th className="text-center px-1.5 lg:px-2 py-2 text-xs font-semibold uppercase tracking-wider text-white">Presupuesto</th>
+                      <th className="text-center px-2 lg:px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white whitespace-nowrap">Diferencia</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -229,24 +229,24 @@ export default function Home() {
                       const diffColor = diff < 0 ? "text-[#E62800]" : "text-[#059669]"
                       return (
                         <tr key={l.nombre} className={`cursor-pointer transition-colors hover:bg-blue-50 ${i % 2 === 0 ? "bg-white" : "bg-[#E5E7E9]/30"}`}>
-                          <td className="px-2 py-2 text-sm font-semibold whitespace-nowrap text-gray-900">
+                          <td className="px-1.5 lg:px-2 py-2 text-sm font-semibold whitespace-nowrap text-gray-900">
                             {link ? <Link href={link} className="hover:underline text-gray-900">{l.nombre}</Link> : l.nombre}
                           </td>
-                          <td className="px-2 py-2 text-center text-sm font-bold text-gray-900 tabular-nums">{fmt(l.primaNeta)}</td>
-                          <td className="px-2 py-2 text-center text-sm font-bold text-gray-800 tabular-nums">{fmt(l.anioAnterior)}</td>
-                          <td className="px-2 py-2 text-center text-sm font-bold text-gray-800 tabular-nums">{fmt(l.presupuesto)}</td>
-                          <td className={`px-2 py-2 text-center text-sm tabular-nums whitespace-nowrap min-w-[130px] ${diffColor} font-bold`}>
+                          <td className="px-1.5 lg:px-2 py-2 text-center text-sm font-bold text-gray-900 tabular-nums">{fmt(l.primaNeta)}</td>
+                          <td className="px-1.5 lg:px-2 py-2 text-center text-sm font-bold text-gray-800 tabular-nums">{fmt(l.anioAnterior)}</td>
+                          <td className="px-1.5 lg:px-2 py-2 text-center text-sm font-bold text-gray-800 tabular-nums">{fmt(l.presupuesto)}</td>
+                          <td className={`px-2 lg:px-3 py-2 text-center text-sm tabular-nums whitespace-nowrap ${diffColor} font-bold`}>
                             {diff < 0 ? `(${fmt(Math.abs(diff))})` : fmt(diff)}
                           </td>
                         </tr>
                       )
                     })}
                     <tr className="font-bold border-t-2 border-gray-300 bg-[#041224]">
-                      <td className="px-2 py-2 text-sm font-bold text-white">Total</td>
-                      <td className="px-2 py-2 text-center text-sm font-bold tabular-nums text-white">{fmt(total)}</td>
-                      <td className="px-2 py-2 text-center text-sm font-bold tabular-nums text-white">{fmt(totalAA)}</td>
-                      <td className="px-2 py-2 text-center text-sm font-bold tabular-nums text-gray-400">{fmt(totalPpto)}</td>
-                      <td className="px-2 py-2 text-center text-sm font-bold tabular-nums whitespace-nowrap min-w-[130px]" style={{ color: (total - totalPpto) < 0 ? '#E62800' : '#059669' }}>
+                      <td className="px-1.5 lg:px-2 py-2 text-sm font-bold text-white">Total</td>
+                      <td className="px-1.5 lg:px-2 py-2 text-center text-sm font-bold tabular-nums text-white">{fmt(total)}</td>
+                      <td className="px-1.5 lg:px-2 py-2 text-center text-sm font-bold tabular-nums text-white">{fmt(totalAA)}</td>
+                      <td className="px-1.5 lg:px-2 py-2 text-center text-sm font-bold tabular-nums text-gray-400">{fmt(totalPpto)}</td>
+                      <td className="px-2 lg:px-3 py-2 text-center text-sm font-bold tabular-nums whitespace-nowrap" style={{ color: (total - totalPpto) < 0 ? '#E62800' : '#059669' }}>
                         {(total - totalPpto) < 0 ? `(${fmt(Math.abs(total - totalPpto))})` : fmt(total - totalPpto)}
                       </td>
                     </tr>
