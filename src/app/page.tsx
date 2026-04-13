@@ -212,7 +212,7 @@ export default function Home() {
             {/* Right column: Table */}
             <div className="w-[45%] flex flex-col gap-1 justify-center mt-3">
               <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-x-auto">
-                <table className="w-full text-xs min-w-[640px]">
+                <table className="w-full text-xs min-w-[700px]">
                   <thead>
                     <tr className="bg-[#041224] border-b-2 border-b-[#E62800]">
                       <th className="text-left px-2 py-2 text-xs font-semibold uppercase tracking-wider text-white">Línea</th>
