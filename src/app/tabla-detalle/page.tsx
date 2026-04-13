@@ -226,7 +226,8 @@ function TablaDetalleContent() {
       pnAnioAntTotal: number,
       lineaPpto: number,
       lineaPendiente: number,
-      currentTotal: number
+      currentTotal: number,
+      explicitPpto?: number | null
     ): DrillRow => {
       // Allocate presupuesto based on PRIOR YEAR share, not current primaNeta
       // This gives unique % Dif ppto per row (rows performing better/worse than their historical share)
@@ -234,7 +235,7 @@ function TablaDetalleContent() {
       const priorShare = pnAnioAntTotal > 0 ? pnAnioAnt / pnAnioAntTotal : 0
       const currentShare = currentTotal > 0 ? primaNeta / currentTotal : 0
       const effectiveShare = priorShare > 0 ? priorShare : currentShare
-      const ppto = Math.round(lineaPpto * effectiveShare)
+      const ppto = explicitPpto != null ? Math.round(explicitPpto) : Math.round(lineaPpto * effectiveShare)
       const dif = ppto > 0 ? primaNeta - ppto : null
       const pctDif = ppto > 0 ? Math.round((dif! / ppto) * 1000) / 10 : null
       const difY = pnAnioAnt > 0 ? primaNeta - pnAnioAnt : (primaNeta > 0 ? primaNeta : null)
@@ -261,10 +262,10 @@ function TablaDetalleContent() {
 
     try {
       if (level === "gerencia") {
-        const data = await getGerencias(newSel.linea!, periodo, year, clasificacionAseguradoras)
+        const data = await getGerencias(newSel.linea!, periodos, year, clasificacionAseguradoras)
         const pnAnioAntTotal = (data ?? []).reduce((s, d) => s + d.pnAnioAnt, 0)
         const currentTotal = (data ?? []).reduce((s, d) => s + d.primaNeta, 0)
-        setRows((data ?? []).map(d => toRowWithYoY(d.gerencia, d.primaNeta, d.pnAnioAnt, pnAnioAntTotal, lineaPpto, lineaPendiente, currentTotal)))
+        setRows((data ?? []).map(d => toRowWithYoY(d.gerencia, d.primaNeta, d.pnAnioAnt, pnAnioAntTotal, lineaPpto, lineaPendiente, currentTotal, d.presupuesto ?? null)))
       } else if (level === "vendedor") {
         // Feature 1: For Franquicias/Promotorías, use tipo grouper ONLY if groupByTipo is ON
         // Default: show flat vendedor list (Abraham: "Que haya algún botón que le ponga yo agrupar por tipo")
@@ -282,25 +283,25 @@ function TablaDetalleContent() {
           setRows([]) // Clear regular rows
         } else {
           // All líneas: show vendedores directly (default behavior)
-          const data = await getVendedores(newSel.gerencia!, newSel.linea!, periodo, year, clasificacionAseguradoras)
+          const data = await getVendedores(newSel.gerencia!, newSel.linea!, periodos, year, clasificacionAseguradoras)
           const pnAnioAntTotal = (data ?? []).reduce((s, d) => s + d.pnAnioAnt, 0)
           const currentTotal = (data ?? []).reduce((s, d) => s + d.primaNeta, 0)
           // For vendedor level, use gerencia's proportional share of línea ppto
           const gerenciaShare = lineas.find(l => l.linea === newSel.linea)
           const gerenciaPpto = gerenciaShare ? Math.round(lineaPpto * (currentTotal / (gerenciaShare.primaNeta || 1))) : lineaPpto
-          setRows((data ?? []).map(d => toRowWithYoY(d.vendedor, d.primaNeta, d.pnAnioAnt, pnAnioAntTotal, gerenciaPpto, lineaPendiente, currentTotal)))
+          setRows((data ?? []).map(d => toRowWithYoY(d.vendedor, d.primaNeta, d.pnAnioAnt, pnAnioAntTotal, gerenciaPpto, lineaPendiente, currentTotal, d.presupuesto ?? null)))
           setTipoGroups(null)
         }
       } else if (level === "grupo") {
-        const data = await getGrupos(newSel.vendedor!, newSel.gerencia!, newSel.linea!, periodo, year, clasificacionAseguradoras)
+        const data = await getGrupos(newSel.vendedor!, newSel.gerencia!, newSel.linea!, periodos, year, clasificacionAseguradoras)
         const pnAnioAntTotal = (data ?? []).reduce((s, d) => s + d.pnAnioAnt, 0)
         const currentTotal = (data ?? []).reduce((s, d) => s + d.primaNeta, 0)
-        setRows((data ?? []).map(d => toRowWithYoY(d.grupo, d.primaNeta, d.pnAnioAnt, pnAnioAntTotal, 0, 0, currentTotal)))
+        setRows((data ?? []).map(d => toRowWithYoY(d.grupo, d.primaNeta, d.pnAnioAnt, pnAnioAntTotal, 0, 0, currentTotal, d.presupuesto ?? null)))
       } else if (level === "cliente") {
-        const data = await getClientes(newSel.grupo!, newSel.vendedor!, newSel.gerencia!, newSel.linea!, periodo, year, clasificacionAseguradoras)
+        const data = await getClientes(newSel.grupo!, newSel.vendedor!, newSel.gerencia!, newSel.linea!, periodos, year, clasificacionAseguradoras)
         const pnAnioAntTotal = (data ?? []).reduce((s, d) => s + d.pnAnioAnt, 0)
         const currentTotal = (data ?? []).reduce((s, d) => s + d.primaNeta, 0)
-        setRows((data ?? []).map(d => toRowWithYoY(d.cliente, d.primaNeta, d.pnAnioAnt, pnAnioAntTotal, 0, 0, currentTotal)))
+        setRows((data ?? []).map(d => toRowWithYoY(d.cliente, d.primaNeta, d.pnAnioAnt, pnAnioAntTotal, 0, 0, currentTotal, d.presupuesto ?? null)))
       } else if (level === "poliza") {
         const data = await getPolizas(newSel.cliente!, newSel.grupo!, newSel.vendedor!, newSel.gerencia!, newSel.linea!, periodo, year, clasificacionAseguradoras)
         setPolizas(data ?? [])

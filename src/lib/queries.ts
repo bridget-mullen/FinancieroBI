@@ -122,6 +122,11 @@ function monthNamesFromAcumuladoPeriodo(periodo?: number): string[] {
   return monthNamesFromPeriodos(months)
 }
 
+function resolveMonths(periodoOrPeriodos?: number | number[]): string[] {
+  if (Array.isArray(periodoOrPeriodos)) return monthNamesFromPeriodos(periodoOrPeriodos)
+  return monthNamesFromAcumuladoPeriodo(periodoOrPeriodos)
+}
+
 /**
  * Fetch prima neta cobrada grouped by línea de negocio from bi_dashboard.fact_primas
  * Periodo 1-12 maps to month names in Spanish (Enero..Diciembre)
@@ -193,24 +198,24 @@ export interface GerenciaRow {
   gerencia: string
   primaNeta: number
   pnAnioAnt: number
+  presupuesto?: number
 }
 
 export async function getGerencias(
   linea: string,
-  periodo?: number,
+  periodoOrPeriodos?: number | number[],
   año?: string,
   _clasificacionAseguradoras?: string[] | null
 ): Promise<GerenciaRow[] | null> {
   try {
-    const months = monthNamesFromAcumuladoPeriodo(periodo)
+    const months = resolveMonths(periodoOrPeriodos)
 
     let query = supabase
       .schema("bi_dashboard")
       .from("fact_primas")
-      .select("gerencia, prima_neta_cobrada, año_anterior")
+      .select("gerencia, prima_neta_cobrada, año_anterior, presupuesto")
       .eq("linea_negocio", linea)
       .not("gerencia", "is", null)
-      .is("vendedor", null)
 
     if (año) query = query.eq("año", parseInt(año))
     if (months.length > 0) query = query.in("mes", months)
@@ -218,13 +223,18 @@ export async function getGerencias(
     const { data, error } = await query
     if (error || !data?.length) return null
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (data as any[])
-      .map((row) => ({
-        gerencia: (row.gerencia as string) || "Sin gerencia",
-        primaNeta: Math.round((row.prima_neta_cobrada as number) || 0),
-        pnAnioAnt: Math.round((row["año_anterior"] as number) || 0),
-      }))
+    const map = new Map<string, { primaNeta: number; pnAnioAnt: number; presupuesto: number }>()
+    for (const row of data as any[]) {
+      const key = ((row.gerencia as string) || "Sin gerencia").trim() || "Sin gerencia"
+      const cur = map.get(key) || { primaNeta: 0, pnAnioAnt: 0, presupuesto: 0 }
+      cur.primaNeta += Number(row.prima_neta_cobrada) || 0
+      cur.pnAnioAnt += Number(row["año_anterior"]) || 0
+      cur.presupuesto += Number(row.presupuesto) || 0
+      map.set(key, cur)
+    }
+
+    return Array.from(map.entries())
+      .map(([gerencia, v]) => ({ gerencia, primaNeta: Math.round(v.primaNeta), pnAnioAnt: Math.round(v.pnAnioAnt), presupuesto: Math.round(v.presupuesto) }))
       .sort((a, b) => b.primaNeta - a.primaNeta)
   } catch {
     return null
@@ -238,22 +248,23 @@ export interface VendedorRow {
   vendedor: string
   primaNeta: number
   pnAnioAnt: number
+  presupuesto?: number
 }
 
 export async function getVendedores(
   gerencia: string,
   linea: string,
-  periodo?: number,
+  periodoOrPeriodos?: number | number[],
   año?: string,
   _clasificacionAseguradoras?: string[] | null
 ): Promise<VendedorRow[] | null> {
   try {
-    const months = monthNamesFromAcumuladoPeriodo(periodo)
+    const months = resolveMonths(periodoOrPeriodos)
 
     let query = supabase
       .schema("bi_dashboard")
       .from("fact_primas")
-      .select("vendedor, prima_neta_cobrada, año_anterior")
+      .select("vendedor, prima_neta_cobrada, año_anterior, presupuesto")
       .eq("linea_negocio", linea)
       .eq("gerencia", gerencia)
       .not("vendedor", "is", null)
@@ -264,13 +275,18 @@ export async function getVendedores(
     const { data, error } = await query
     if (error || !data?.length) return null
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (data as any[])
-      .map((row) => ({
-        vendedor: (row.vendedor as string) || "Sin vendedor",
-        primaNeta: Math.round((row.prima_neta_cobrada as number) || 0),
-        pnAnioAnt: Math.round((row["año_anterior"] as number) || 0),
-      }))
+    const map = new Map<string, { primaNeta: number; pnAnioAnt: number; presupuesto: number }>()
+    for (const row of data as any[]) {
+      const key = ((row.vendedor as string) || "Sin vendedor").trim() || "Sin vendedor"
+      const cur = map.get(key) || { primaNeta: 0, pnAnioAnt: 0, presupuesto: 0 }
+      cur.primaNeta += Number(row.prima_neta_cobrada) || 0
+      cur.pnAnioAnt += Number(row["año_anterior"]) || 0
+      cur.presupuesto += Number(row.presupuesto) || 0
+      map.set(key, cur)
+    }
+
+    return Array.from(map.entries())
+      .map(([vendedor, v]) => ({ vendedor, primaNeta: Math.round(v.primaNeta), pnAnioAnt: Math.round(v.pnAnioAnt), presupuesto: Math.round(v.presupuesto) }))
       .sort((a, b) => b.primaNeta - a.primaNeta)
   } catch {
     return null
@@ -311,23 +327,24 @@ export interface GrupoRow {
   cliente: string
   primaNeta: number
   pnAnioAnt: number
+  presupuesto?: number
 }
 
 export async function getGrupos(
   vendedor: string,
   gerencia: string,
   linea: string,
-  periodo?: number,
+  periodoOrPeriodos?: number | number[],
   año?: string,
   _clasificacionAseguradoras?: string[] | null
 ): Promise<GrupoRow[] | null> {
   try {
-    const months = monthNamesFromAcumuladoPeriodo(periodo)
+    const months = resolveMonths(periodoOrPeriodos)
 
     let query = supabase
       .schema("bi_dashboard")
       .from("fact_primas")
-      .select("vendedor, prima_neta_cobrada, año_anterior")
+      .select("grupo:vendedor, prima_neta_cobrada, año_anterior, presupuesto")
       .eq("linea_negocio", linea)
       .eq("gerencia", gerencia)
       .eq("vendedor", vendedor)
@@ -338,19 +355,19 @@ export async function getGrupos(
     const { data, error } = await query
     if (error || !data?.length) return null
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rows = data as any[]
-    const primaNeta = rows.reduce((sum, row) => sum + (Number(row.prima_neta_cobrada) || 0), 0)
-    const pnAnioAnt = rows.reduce((sum, row) => sum + (Number(row["año_anterior"]) || 0), 0)
+    const map = new Map<string, { primaNeta: number; pnAnioAnt: number; presupuesto: number }>()
+    for (const row of data as any[]) {
+      const key = ((row.grupo as string) || vendedor || "Sin grupo").trim() || "Sin grupo"
+      const cur = map.get(key) || { primaNeta: 0, pnAnioAnt: 0, presupuesto: 0 }
+      cur.primaNeta += Number(row.prima_neta_cobrada) || 0
+      cur.pnAnioAnt += Number(row["año_anterior"]) || 0
+      cur.presupuesto += Number(row.presupuesto) || 0
+      map.set(key, cur)
+    }
 
-    return [
-      {
-        grupo: vendedor || "Sin grupo",
-        cliente: vendedor || "",
-        primaNeta: Math.round(primaNeta),
-        pnAnioAnt: Math.round(pnAnioAnt),
-      },
-    ]
+    return Array.from(map.entries())
+      .map(([grupo, v]) => ({ grupo, cliente: grupo, primaNeta: Math.round(v.primaNeta), pnAnioAnt: Math.round(v.pnAnioAnt), presupuesto: Math.round(v.presupuesto) }))
+      .sort((a, b) => b.primaNeta - a.primaNeta)
   } catch {
     return null
   }
@@ -363,6 +380,7 @@ export interface ClienteRow {
   cliente: string
   primaNeta: number
   pnAnioAnt: number
+  presupuesto?: number
 }
 
 export async function getClientes(
@@ -370,18 +388,18 @@ export async function getClientes(
   vendedor: string,
   gerencia: string,
   linea: string,
-  periodo?: number,
+  periodoOrPeriodos?: number | number[],
   año?: string,
   _clasificacionAseguradoras?: string[] | null
 ): Promise<ClienteRow[] | null> {
   try {
-    const months = monthNamesFromAcumuladoPeriodo(periodo)
+    const months = resolveMonths(periodoOrPeriodos)
     const vendedorRef = vendedor || grupo
 
     let query = supabase
       .schema("bi_dashboard")
       .from("fact_primas")
-      .select("prima_neta_cobrada, año_anterior")
+      .select("cliente:vendedor, prima_neta_cobrada, año_anterior, presupuesto")
       .eq("linea_negocio", linea)
       .eq("gerencia", gerencia)
       .eq("vendedor", vendedorRef)
@@ -392,18 +410,19 @@ export async function getClientes(
     const { data, error } = await query
     if (error || !data?.length) return null
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rows = data as any[]
-    const primaNeta = rows.reduce((sum, row) => sum + (Number(row.prima_neta_cobrada) || 0), 0)
-    const pnAnioAnt = rows.reduce((sum, row) => sum + (Number(row["año_anterior"]) || 0), 0)
+    const map = new Map<string, { primaNeta: number; pnAnioAnt: number; presupuesto: number }>()
+    for (const row of data as any[]) {
+      const key = ((row.cliente as string) || grupo || vendedorRef || "Sin cliente").trim() || "Sin cliente"
+      const cur = map.get(key) || { primaNeta: 0, pnAnioAnt: 0, presupuesto: 0 }
+      cur.primaNeta += Number(row.prima_neta_cobrada) || 0
+      cur.pnAnioAnt += Number(row["año_anterior"]) || 0
+      cur.presupuesto += Number(row.presupuesto) || 0
+      map.set(key, cur)
+    }
 
-    return [
-      {
-        cliente: grupo || vendedorRef || "Sin cliente",
-        primaNeta: Math.round(primaNeta),
-        pnAnioAnt: Math.round(pnAnioAnt),
-      },
-    ]
+    return Array.from(map.entries())
+      .map(([cliente, v]) => ({ cliente, primaNeta: Math.round(v.primaNeta), pnAnioAnt: Math.round(v.pnAnioAnt), presupuesto: Math.round(v.presupuesto) }))
+      .sort((a, b) => b.primaNeta - a.primaNeta)
   } catch {
     return null
   }

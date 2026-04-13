@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
-import { getLineasWithYoY, getTipoCambio } from "@/lib/queries"
+import { getLineasWithYoY } from "@/lib/queries"
 import type { LineaRow } from "@/lib/queries"
 import { Gauge } from "@/components/gauge"
 import { PageTabs } from "@/components/page-tabs"
@@ -36,7 +36,6 @@ export default function Home() {
   const [year, setYear] = useState(currentYear)
   const [periodos, setPeriodos] = useState<number[]>([currentMonth])
   const [lineas, setLineas] = useState<LineaRow[]>([])
-  const [fx, setFx] = useState({ usd: 0, dop: 0 })
 
   const handleFilterChange = useCallback((newYear: string, newPeriodos: number[]) => {
     setYear(newYear)
@@ -69,20 +68,6 @@ export default function Home() {
     }
   }, [year, periodos])
 
-  useEffect(() => {
-    let cancelled = false
-    getTipoCambio()
-      .then((data) => {
-        if (!cancelled && data) setFx({ usd: data.usd, dop: data.dop })
-      })
-      .catch(() => {
-        if (!cancelled) setFx({ usd: 0, dop: 0 })
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
 
   const total = lineas.reduce((s, l) => s + l.primaNeta, 0)
   const totalPpto = lineas.reduce((s, l) => s + l.presupuesto, 0)
@@ -256,25 +241,14 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Bottom section: 3-column grid — Tipo de cambio | KPIs | Bar chart */}
-          <div className="grid mt-3 gap-3" style={{ gridTemplateColumns: 'auto 1fr 1fr' }}>
-            {/* Col 1: Tipo de cambio */}
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm px-4 py-3 flex flex-col justify-center gap-2 min-w-[140px]">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Tipo de cambio</p>
-              <div>
-                <p className="text-sm font-bold text-gray-800">Dólar <span className="tabular-nums">${fx.usd.toFixed(2)}</span></p>
-                <p className="text-sm font-bold text-gray-800 mt-1">Peso Dom. <span className="tabular-nums">${fx.dop.toFixed(2)}</span></p>
-              </div>
-            </div>
-
-            {/* Col 2: KPI cards stacked */}
-            <div className="flex flex-col gap-2">
-              {/* Cumplimiento */}
+          {/* Bottom section: KPI + Bar chart */}
+          <div className="flex mt-3 gap-3">
+            {/* Col 1: KPI cards stacked */}
+            <div className="w-[55%] flex flex-col gap-2">
               <div className="rounded-lg border border-[#D4C5A0] px-4 py-3 text-center" style={{ backgroundColor: '#FDF6E3' }}>
                 <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Cumplimiento del presupuesto</p>
                 <p className="text-3xl font-black tabular-nums mt-1" style={{ color: '#8B6914' }}>{cumpl}%</p>
               </div>
-              {/* Crecimiento */}
               <div className={`rounded-lg px-4 py-3 text-center ${crec >= 0 ? 'bg-[#059669]' : 'bg-[#E62800]'}`}>
                 <p className="text-xs font-semibold uppercase tracking-wider text-white/80">Crecimiento vs año anterior</p>
                 <p className="text-3xl font-black tabular-nums mt-1 text-white">
@@ -283,8 +257,8 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Col 3: Bar chart */}
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm px-2 py-1.5 flex flex-col h-[280px] overflow-hidden">
+            {/* Col 2: Bar chart (same width as table column) */}
+            <div className="w-[45%] bg-white border border-gray-200 rounded-lg shadow-sm px-2 py-1.5 flex flex-col h-[280px] overflow-hidden">
               <div className="flex gap-3 text-[13px] mb-1 self-start">
                 <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: '#041224' }}/><span className="text-gray-700 font-medium">Prima neta efectuada</span></div>
                 <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: '#9CA3AF' }}/><span className="text-gray-700 font-medium">Presupuesto</span></div>
