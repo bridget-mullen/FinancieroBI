@@ -211,15 +211,15 @@ export default function Home() {
 
             {/* Right column: Table */}
             <div className="w-[45%] flex flex-col gap-1 justify-center mt-3">
-              <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
-                <table className="w-full text-xs min-w-[480px]">
+              <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-x-auto">
+                <table className="w-full text-xs min-w-[640px]">
                   <thead>
                     <tr className="bg-[#041224] border-b-2 border-b-[#E62800]">
                       <th className="text-left px-2 py-2 text-xs font-semibold uppercase tracking-wider text-white">Línea</th>
                       <th className="text-center px-2 py-2 text-xs font-semibold uppercase tracking-wider text-white">Prima Neta</th>
                       <th className="text-center px-2 py-2 text-xs font-semibold uppercase tracking-wider text-white">Año Ant.</th>
                       <th className="text-center px-2 py-2 text-xs font-semibold uppercase tracking-wider text-white">Presupuesto</th>
-                      <th className="text-center px-2 py-2 text-xs font-semibold uppercase tracking-wider text-white">Diferencia</th>
+                      <th className="text-center px-2 py-2 text-xs font-semibold uppercase tracking-wider text-white whitespace-nowrap min-w-[130px]">Diferencia</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -235,7 +235,7 @@ export default function Home() {
                           <td className="px-2 py-2 text-center text-sm font-bold text-gray-900 tabular-nums">{fmt(l.primaNeta)}</td>
                           <td className="px-2 py-2 text-center text-sm font-bold text-gray-800 tabular-nums">{fmt(l.anioAnterior)}</td>
                           <td className="px-2 py-2 text-center text-sm font-bold text-gray-800 tabular-nums">{fmt(l.presupuesto)}</td>
-                          <td className={`px-2 py-2 text-center text-sm tabular-nums ${diffColor} font-bold`}>
+                          <td className={`px-2 py-2 text-center text-sm tabular-nums whitespace-nowrap min-w-[130px] ${diffColor} font-bold`}>
                             {diff < 0 ? `(${fmt(Math.abs(diff))})` : fmt(diff)}
                           </td>
                         </tr>
@@ -246,7 +246,7 @@ export default function Home() {
                       <td className="px-2 py-2 text-center text-sm font-bold tabular-nums text-white">{fmt(total)}</td>
                       <td className="px-2 py-2 text-center text-sm font-bold tabular-nums text-white">{fmt(totalAA)}</td>
                       <td className="px-2 py-2 text-center text-sm font-bold tabular-nums text-gray-400">{fmt(totalPpto)}</td>
-                      <td className="px-2 py-2 text-center text-sm font-bold tabular-nums" style={{ color: (total - totalPpto) < 0 ? '#E62800' : '#059669' }}>
+                      <td className="px-2 py-2 text-center text-sm font-bold tabular-nums whitespace-nowrap min-w-[130px]" style={{ color: (total - totalPpto) < 0 ? '#E62800' : '#059669' }}>
                         {(total - totalPpto) < 0 ? `(${fmt(Math.abs(total - totalPpto))})` : fmt(total - totalPpto)}
                       </td>
                     </tr>
