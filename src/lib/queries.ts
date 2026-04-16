@@ -259,27 +259,52 @@ export async function getGerencias(
           .trim()
           .toLowerCase()
 
-      const effRows = await fetchAll(() =>
-        supabase
+      const effRows = await fetchAll(() => {
+        let q = supabase
           .from(effTable)
           .select('LBussinesNombre, GerenciaNombre, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo')
-          
-      )
 
-      const pptoRows = await fetchAll(() =>
-        supabase
+        if (linea === 'Click Promotorías') {
+          q = q.in('LBussinesNombre', ['Click Promotorías', 'Click Promotorias'])
+        } else {
+          q = q.eq('LBussinesNombre', linea)
+        }
+
+        if (monthNums.length > 0) {
+          q = q.in('Periodo', monthNums)
+        }
+
+        return q
+      })
+
+      const pptoRows = await fetchAll(() => {
+        let q = supabase
           .from(pptoTable)
           .select('LBussinesNombre, GerenciaNombre, Presupuesto, Fecha')
-          
-      )
+
+        if (linea === 'Click Promotorías') {
+          q = q.in('LBussinesNombre', ['Click Promotorías', 'Click Promotorias'])
+        } else {
+          q = q.eq('LBussinesNombre', linea)
+        }
+
+        return q
+      })
 
       const prevRows = prevEffTable
-        ? await fetchAll(() =>
-            supabase
+        ? await fetchAll(() => {
+            let q = supabase
               .from(prevEffTable)
               .select('LBussinesNombre, GerenciaNombre, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo')
-              
-          )
+
+            if (linea === 'Click Promotorías') {
+              q = q.in('LBussinesNombre', ['Click Promotorías', 'Click Promotorias'])
+            } else {
+              q = q.eq('LBussinesNombre', linea)
+            }
+
+            return q
+          })
         : []
 
       const map = new Map<string, { primaNeta: number; pnAnioAnt: number; presupuesto: number }>()
