@@ -241,6 +241,19 @@ export async function getGerencias(
     const includeMonth = (m: number | null) => monthNums.length === 0 || (m !== null && monthNums.includes(m))
 
     if ([2024, 2025, 2026].includes(yearNum)) {
+      const meses = monthNums.join(",")
+      try {
+        const apiUrl = `/api/gerencias?linea=${encodeURIComponent(linea)}&year=${yearNum}&meses=${meses}`
+        const res = await fetch(apiUrl, { cache: "no-store" })
+        if (res.ok) {
+          const apiData: GerenciaRow[] = await res.json()
+          if (Array.isArray(apiData)) return apiData
+        }
+      } catch {
+        // fallback below only if API route is unavailable
+      }
+
+
       const effTable = `efectuada_${yearNum}_drive`
       const pptoTable = `presupuestos_${yearNum}_drive`
       const prevEffTable = yearNum > 2024 ? `efectuada_${yearNum - 1}_drive` : null
@@ -269,11 +282,6 @@ export async function getGerencias(
         } else {
           q = q.eq('LBussinesNombre', linea)
         }
-
-        if (monthNums.length > 0) {
-          q = q.in('Periodo', monthNums)
-        }
-
         return q
       })
 
