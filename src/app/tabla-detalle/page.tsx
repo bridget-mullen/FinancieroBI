@@ -6,7 +6,7 @@ import { ChevronRight, ChevronLeft, ChevronDown, Search, Download } from "lucide
 import { PageTabs } from "@/components/page-tabs"
 import { PageFooter } from "@/components/page-footer"
 import { PeriodFilter } from "@/components/period-filter"
-import { getLineasWithYoY, getGerencias, getVendedores, getGrupos, getClientes, getPolizas, globalSearch, getLastDataDate, getVendedoresWithTipo } from "@/lib/queries"
+import { getLineasWithYoY, getGerencias, getVendedores, getGrupos, getClientes, globalSearch, getLastDataDate, getVendedoresWithTipo } from "@/lib/queries"
 import type { SearchResult, PolizaRow, TierGroup, VendedorFullRow } from "@/lib/queries"
 import { exportExcel, exportPDF } from "@/lib/export"
 import { NLQuery } from "@/components/nl-query"
@@ -235,23 +235,24 @@ function TablaDetalleContent() {
       const priorShare = pnAnioAntTotal > 0 ? pnAnioAnt / pnAnioAntTotal : 0
       const currentShare = currentTotal > 0 ? primaNeta / currentTotal : 0
       const effectiveShare = priorShare > 0 ? priorShare : currentShare
-      const ppto = explicitPpto != null ? Math.round(explicitPpto) : Math.round(lineaPpto * effectiveShare)
-      const dif = ppto > 0 ? primaNeta - ppto : null
-      const pctDif = ppto > 0 ? Math.round((dif! / ppto) * 1000) / 10 : null
-      const difY = pnAnioAnt > 0 ? primaNeta - pnAnioAnt : (primaNeta > 0 ? primaNeta : null)
-      const pctDifY = pnAnioAnt > 0 ? Math.round((difY! / pnAnioAnt) * 10000) / 100 : null
+      const pptoProporcional = Math.round(lineaPpto * effectiveShare)
+      const ppto = explicitPpto != null && explicitPpto > 0 ? Math.round(explicitPpto) : pptoProporcional
+      const dif = primaNeta - ppto
+      const pctDif = ppto > 0 ? Math.round((dif / ppto) * 1000) / 10 : 0
+      const difY = primaNeta - pnAnioAnt
+      const pctDifY = pnAnioAnt > 0 ? Math.round((difY / pnAnioAnt) * 10000) / 100 : 0
       // Pendiente allocated by effectiveShare
       const pend = Math.round(lineaPendiente * effectiveShare)
       return {
         name,
         primaNeta,
-        presupuesto: ppto > 0 ? ppto : null,
+        presupuesto: ppto,
         diferencia: dif,
         pctDifPpto: pctDif,
-        pnAnioAnt: pnAnioAnt > 0 ? pnAnioAnt : null,
+        pnAnioAnt,
         difYoY: difY,
         pctDifYoY: pctDifY,
-        pendiente: pend > 0 ? pend : null
+        pendiente: pend
       }
     }
 
@@ -302,9 +303,6 @@ function TablaDetalleContent() {
         const pnAnioAntTotal = (data ?? []).reduce((s, d) => s + d.pnAnioAnt, 0)
         const currentTotal = (data ?? []).reduce((s, d) => s + d.primaNeta, 0)
         setRows((data ?? []).map(d => toRowWithYoY(d.cliente, d.primaNeta, d.pnAnioAnt, pnAnioAntTotal, 0, 0, currentTotal, d.presupuesto ?? null)))
-      } else if (level === "poliza") {
-        const data = await getPolizas(newSel.cliente!, newSel.grupo!, newSel.vendedor!, newSel.gerencia!, newSel.linea!, periodo, year, clasificacionAseguradoras)
-        setPolizas(data ?? [])
       }
     } catch { setRows([]); setPolizas([]); setTipoGroups(null) }
 
@@ -336,7 +334,7 @@ function TablaDetalleContent() {
       const newCrumbs = crumbs.slice(0, -1)
       // Reconstruct sel from crumbs
       const newSel: typeof sel = {}
-      const levels: DrillLevel[] = ["linea", "gerencia", "vendedor", "grupo", "cliente", "poliza"]
+      const levels: DrillLevel[] = ["linea", "gerencia", "vendedor", "grupo", "cliente"]
       const selKeys = ["linea", "gerencia", "vendedor", "grupo", "cliente"] as const
       for (let i = 0; i < newCrumbs.length; i++) {
         const idx = levels.indexOf(newCrumbs[i].level)
@@ -486,7 +484,7 @@ function TablaDetalleContent() {
   // Column label for current level
   const levelLabels: Record<DrillLevel, string> = {
     linea: "Línea de negocio", gerencia: "Gerencia", vendedor: "Vendedor",
-    grupo: "Grupo", cliente: "Cliente / Asegurado", poliza: "Póliza",
+    grupo: "Grupo", cliente: "Cliente", poliza: "Póliza",
   }
 
   const filteredLineas = filterSearch(lineas, "linea")
@@ -501,13 +499,11 @@ function TablaDetalleContent() {
 
   const filteredRows = filterSearch(rows, "name")
   // Apply Top 10 + Otros for drill levels 2-5 (gerencia, vendedor, grupo, cliente)
-  const { rows: displayRows, otrosCount } = drillLevel !== "linea" && drillLevel !== "poliza"
-    ? computeTop10WithOtros(filteredRows)
-    : { rows: filteredRows, otrosCount: 0 }
+  const { rows: displayRows, otrosCount } = { rows: filteredRows, otrosCount: 0 }
   const filteredPolizas = filterSearch(polizas, "documento")
   const rowTotal = filteredRows.reduce((s, r) => s + r.primaNeta, 0)
   // Determine if table has many rows (for adaptive max-height)
-  const manyRows = drillLevel === 'poliza' ? filteredPolizas.length > 15 : drillLevel !== 'linea' && displayRows.length > 15
+  const manyRows = drillLevel === 'poliza' ? filteredPolizas.length > 15 : (drillLevel !== 'linea' && drillLevel !== 'gerencia' && displayRows.length > 15)
 
   // Compute totals for levels 2-5 (same pattern as totalLineas)
   const totalRows = {
@@ -523,13 +519,13 @@ function TablaDetalleContent() {
 
   // Detect which optional columns have data (for levels 2-5) — hide empty columns
   // Column visibility depends ONLY on whether individual rows have data
-  const hasPresupuesto = drillLevel === 'linea' || filteredRows.some(r => r.presupuesto !== null)
-  const hasDiferencia = drillLevel === 'linea' || filteredRows.some(r => r.diferencia !== null)
-  const hasPctDifPpto = drillLevel === 'linea' || filteredRows.some(r => r.pctDifPpto !== null)
-  const hasPnAnioAnt = drillLevel === 'linea' || filteredRows.some(r => r.pnAnioAnt !== null)
-  const hasDifYoY = drillLevel === 'linea' || filteredRows.some(r => r.difYoY !== null)
-  const hasPctDifYoY = drillLevel === 'linea' || filteredRows.some(r => r.pctDifYoY !== null)
-  const hasPendiente = drillLevel === 'linea' || filteredRows.some(r => r.pendiente !== null)
+  const hasPresupuesto = true
+  const hasDiferencia = true
+  const hasPctDifPpto = true
+  const hasPnAnioAnt = true
+  const hasDifYoY = true
+  const hasPctDifYoY = true
+  const hasPendiente = true
   const visibleColCount = 3 + [hasPresupuesto, hasDiferencia, hasPctDifPpto, hasPnAnioAnt, hasDifYoY, hasPctDifYoY, hasPendiente].filter(Boolean).length
   const polizaTotal = filteredPolizas.reduce((s, p) => s + p.primaNeta, 0)
 
@@ -833,7 +829,7 @@ function TablaDetalleContent() {
                 drillLevel === "gerencia" ? "vendedor" :
                 drillLevel === "vendedor" ? (skipGrupo ? "cliente" : "grupo") :
                 drillLevel === "grupo" ? "cliente" :
-                drillLevel === "cliente" ? "poliza" : null
+                null
               )
               const selKey = isOtros ? null : (drillLevel === "gerencia" ? "gerencia" : drillLevel === "vendedor" ? "vendedor" : drillLevel === "grupo" ? "grupo" : drillLevel === "cliente" ? "cliente" : null)
               return (
@@ -1135,7 +1131,7 @@ function TablaDetalleContent() {
                     drillLevel === "gerencia" ? "vendedor" :
                     drillLevel === "vendedor" ? (skipGrupo ? "cliente" : "grupo") :
                     drillLevel === "grupo" ? "cliente" :
-                    drillLevel === "cliente" ? "poliza" : null
+                    null
                   )
                   const selKey = isOtros ? null : (
                     drillLevel === "gerencia" ? "gerencia" :

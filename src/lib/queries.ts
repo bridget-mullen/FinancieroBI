@@ -209,6 +209,148 @@ export async function getGerencias(
 ): Promise<GerenciaRow[] | null> {
   try {
     const months = resolveMonths(periodoOrPeriodos)
+    const monthNums = months.map((m) => MONTH_NAME_TO_NUMBER[m]).filter((n): n is number => Boolean(n))
+    const yearNum = año ? parseInt(año, 10) : new Date().getFullYear()
+
+    const parseNum = (v: unknown): number => {
+      if (v === null || v === undefined || v === "") return 0
+      if (typeof v === "number") return Number.isFinite(v) ? v : 0
+      const n = Number(String(v).replace(/[$,\s]/g, ""))
+      return Number.isFinite(n) ? n : 0
+    }
+
+    const monthFromDateLike = (v: unknown): number | null => {
+      if (v === null || v === undefined || v === "") return null
+      if (typeof v === "number") {
+        const d = new Date(Math.round((v - 25569) * 86400 * 1000))
+        return Number.isNaN(d.getTime()) ? null : d.getMonth() + 1
+      }
+      const s = String(v).trim()
+      if (/^\d+(\.\d+)?$/.test(s)) {
+        const serial = Number(s)
+        if (Number.isFinite(serial) && serial > 20000) {
+          const d = new Date(Math.round((serial - 25569) * 86400 * 1000))
+          return Number.isNaN(d.getTime()) ? null : d.getMonth() + 1
+        }
+      }
+      const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/)
+      if (m) return parseInt(m[2], 10)
+      return null
+    }
+
+    const includeMonth = (m: number | null) => monthNums.length === 0 || (m !== null && monthNums.includes(m))
+
+    if ([2024, 2025, 2026].includes(yearNum)) {
+      const effTable = `efectuada_${yearNum}_drive`
+      const pptoTable = `presupuestos_${yearNum}_drive`
+      const prevEffTable = yearNum > 2024 ? `efectuada_${yearNum - 1}_drive` : null
+
+      const normalizeLinea = (v: unknown): string => {
+        const x = String(v ?? '').trim()
+        if (/^Click Promotor/i.test(x)) return 'Click Promotorías'
+        return x
+      }
+
+      const normalizeText = (v: unknown): string =>
+        String(v ?? '')
+          .normalize('NFD')
+          .replace(/[̀-ͯ]/g, '')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .toLowerCase()
+
+      const catalogRows = await fetchAll(() =>
+        supabase
+          .from('catalogo_lineas_negocio_drive')
+          .select('LBussinesNombre, Gerencia')
+          
+      )
+      const allowedGerencias = new Set(
+        catalogRows
+          .filter((r) => normalizeLinea(r.LBussinesNombre) === linea)
+          .map((r) => String(r.Gerencia ?? '').trim())
+          .filter((g) => g.length > 0)
+      )
+      const allowedGerenciasNorm = new Set(Array.from(allowedGerencias).map((g) => normalizeText(g)))
+
+      const effRows = await fetchAll(() =>
+        supabase
+          .from(effTable)
+          .select('LBussinesNombre, GerenciaNombre, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo')
+          
+      )
+
+      const pptoRows = await fetchAll(() =>
+        supabase
+          .from(pptoTable)
+          .select('LBussinesNombre, GerenciaNombre, Presupuesto, Fecha')
+          
+      )
+
+      const prevRows = prevEffTable
+        ? await fetchAll(() =>
+            supabase
+              .from(prevEffTable)
+              .select('LBussinesNombre, GerenciaNombre, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo')
+              
+          )
+        : []
+
+      const map = new Map<string, { primaNeta: number; pnAnioAnt: number; presupuesto: number }>()
+      if (allowedGerencias.size > 0) allowedGerencias.forEach((g) => map.set(g, { primaNeta: 0, pnAnioAnt: 0, presupuesto: 0 }))
+
+      for (const r of effRows) {
+        if (normalizeLinea(r.LBussinesNombre) !== linea) continue
+        const ger = String(r.GerenciaNombre ?? '').trim() || 'Sin gerencia'
+                const m = monthFromDateLike(r.FLiquidacion) ?? parseNum(r.Periodo)
+        if (!includeMonth(m)) continue
+        const pn = (parseNum(r.PrimaNeta) - parseNum(r.Descuento)) * (parseNum(r.TCPago) || 1)
+        const cur = map.get(ger) || { primaNeta: 0, pnAnioAnt: 0, presupuesto: 0 }
+        cur.primaNeta += pn
+        map.set(ger, cur)
+      }
+
+      for (const r of pptoRows) {
+        if (normalizeLinea(r.LBussinesNombre) !== linea) continue
+        const ger = String(r.GerenciaNombre ?? '').trim() || 'Sin gerencia'
+                const m = monthFromDateLike(r.Fecha)
+        if (!includeMonth(m)) continue
+        const cur = map.get(ger) || { primaNeta: 0, pnAnioAnt: 0, presupuesto: 0 }
+        cur.presupuesto += parseNum(r.Presupuesto)
+        map.set(ger, cur)
+      }
+
+      for (const r of prevRows) {
+        if (normalizeLinea(r.LBussinesNombre) !== linea) continue
+        const ger = String(r.GerenciaNombre ?? '').trim() || 'Sin gerencia'
+                const m = monthFromDateLike(r.FLiquidacion) ?? parseNum(r.Periodo)
+        if (!includeMonth(m)) continue
+        const pnAA = (parseNum(r.PrimaNeta) - parseNum(r.Descuento)) * (parseNum(r.TCPago) || 1)
+        const cur = map.get(ger) || { primaNeta: 0, pnAnioAnt: 0, presupuesto: 0 }
+        cur.pnAnioAnt += pnAA
+        map.set(ger, cur)
+      }
+
+      const out = Array.from(map.entries())
+        .map(([gerencia, v]) => ({
+          gerencia,
+          primaNeta: Math.round(v.primaNeta),
+          pnAnioAnt: Math.round(v.pnAnioAnt),
+          presupuesto: Math.round(v.presupuesto),
+        }))
+        .sort((a, b) => a.gerencia.localeCompare(b.gerencia, 'es', { sensitivity: 'base' }))
+
+      const merged = [...out]
+      const existing = new Set(out.map((x) => normalizeText(x.gerencia)))
+      allowedGerencias.forEach((g) => {
+        if (!existing.has(normalizeText(g))) {
+          merged.push({ gerencia: g, primaNeta: 0, pnAnioAnt: 0, presupuesto: 0 })
+        }
+      })
+      if (merged.length > 0) {
+        return merged.sort((a, b) => a.gerencia.localeCompare(b.gerencia, 'es', { sensitivity: 'base' }))
+      }
+    }
 
     let query = supabase
       .schema("bi_dashboard")
@@ -235,7 +377,7 @@ export async function getGerencias(
 
     return Array.from(map.entries())
       .map(([gerencia, v]) => ({ gerencia, primaNeta: Math.round(v.primaNeta), pnAnioAnt: Math.round(v.pnAnioAnt), presupuesto: Math.round(v.presupuesto) }))
-      .sort((a, b) => b.primaNeta - a.primaNeta)
+      .sort((a, b) => a.gerencia.localeCompare(b.gerencia, 'es', { sensitivity: 'base' }))
   } catch {
     return null
   }
@@ -260,6 +402,113 @@ export async function getVendedores(
 ): Promise<VendedorRow[] | null> {
   try {
     const months = resolveMonths(periodoOrPeriodos)
+    const monthNums = months.map((m) => MONTH_NAME_TO_NUMBER[m]).filter((n): n is number => Boolean(n))
+    const yearNum = año ? parseInt(año, 10) : new Date().getFullYear()
+
+    const parseNum = (v: unknown): number => {
+      if (v === null || v === undefined || v === "") return 0
+      if (typeof v === "number") return Number.isFinite(v) ? v : 0
+      const n = Number(String(v).replace(/[$,\s]/g, ""))
+      return Number.isFinite(n) ? n : 0
+    }
+
+    const monthFromDateLike = (v: unknown): number | null => {
+      if (v === null || v === undefined || v === "") return null
+      if (typeof v === "number") {
+        const d = new Date(Math.round((v - 25569) * 86400 * 1000))
+        return Number.isNaN(d.getTime()) ? null : d.getMonth() + 1
+      }
+      const s = String(v).trim()
+      if (/^\d+(\.\d+)?$/.test(s)) {
+        const serial = Number(s)
+        if (Number.isFinite(serial) && serial > 20000) {
+          const d = new Date(Math.round((serial - 25569) * 86400 * 1000))
+          return Number.isNaN(d.getTime()) ? null : d.getMonth() + 1
+        }
+      }
+      const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/)
+      if (m) return parseInt(m[2], 10)
+      return null
+    }
+
+    const includeMonth = (m: number | null) => monthNums.length === 0 || (m !== null && monthNums.includes(m))
+
+    if ([2024, 2025, 2026].includes(yearNum)) {
+      const effTable = `efectuada_${yearNum}_drive`
+      const pptoTable = `presupuestos_${yearNum}_drive`
+      const prevEffTable = yearNum > 2024 ? `efectuada_${yearNum - 1}_drive` : null
+
+      const effRows = await fetchAll(() =>
+        supabase
+          .from(effTable)
+          .select('VendNombre, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo')
+          .eq('LBussinesNombre', linea)
+          .eq('GerenciaNombre', gerencia)
+      )
+
+      const pptoRows = await fetchAll(() =>
+        supabase
+          .from(pptoTable)
+          .select('Vendedor, Presupuesto, Fecha')
+          .eq('LBussinesNombre', linea)
+          .eq('GerenciaNombre', gerencia)
+      )
+
+      const prevRows = prevEffTable
+        ? await fetchAll(() =>
+            supabase
+              .from(prevEffTable)
+              .select('VendNombre, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo')
+              .eq('LBussinesNombre', linea)
+              .eq('GerenciaNombre', gerencia)
+          )
+        : []
+
+      const map = new Map<string, { primaNeta: number; pnAnioAnt: number; presupuesto: number }>()
+
+      for (const r of effRows) {
+        const vendedor = String(r.VendNombre ?? '').trim()
+        if (!vendedor) continue
+        const m = monthFromDateLike(r.FLiquidacion) ?? parseNum(r.Periodo)
+        if (!includeMonth(m)) continue
+        const pn = (parseNum(r.PrimaNeta) - parseNum(r.Descuento)) * (parseNum(r.TCPago) || 1)
+        const cur = map.get(vendedor) || { primaNeta: 0, pnAnioAnt: 0, presupuesto: 0 }
+        cur.primaNeta += pn
+        map.set(vendedor, cur)
+      }
+
+      for (const r of pptoRows) {
+        const vendedor = String(r.Vendedor ?? '').trim()
+        if (!vendedor) continue
+        const m = monthFromDateLike(r.Fecha)
+        if (!includeMonth(m)) continue
+        const cur = map.get(vendedor) || { primaNeta: 0, pnAnioAnt: 0, presupuesto: 0 }
+        cur.presupuesto += parseNum(r.Presupuesto)
+        map.set(vendedor, cur)
+      }
+
+      for (const r of prevRows) {
+        const vendedor = String(r.VendNombre ?? '').trim()
+        if (!vendedor) continue
+        const m = monthFromDateLike(r.FLiquidacion) ?? parseNum(r.Periodo)
+        if (!includeMonth(m)) continue
+        const pnAA = (parseNum(r.PrimaNeta) - parseNum(r.Descuento)) * (parseNum(r.TCPago) || 1)
+        const cur = map.get(vendedor) || { primaNeta: 0, pnAnioAnt: 0, presupuesto: 0 }
+        cur.pnAnioAnt += pnAA
+        map.set(vendedor, cur)
+      }
+
+      const out = Array.from(map.entries())
+        .map(([vendedor, v]) => ({
+          vendedor,
+          primaNeta: Math.round(v.primaNeta),
+          pnAnioAnt: Math.round(v.pnAnioAnt),
+          presupuesto: Math.round(v.presupuesto),
+        }))
+        .sort((a, b) => b.primaNeta - a.primaNeta)
+
+      if (out.length > 0) return out
+    }
 
     let query = supabase
       .schema("bi_dashboard")
