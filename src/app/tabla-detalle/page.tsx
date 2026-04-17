@@ -552,7 +552,7 @@ function TablaDetalleContent() {
   // Compute totals for levels 2-5 (same pattern as totalLineas)
   // For gerencia level, pin totals to selected línea card totals so it always matches level-1 exactly.
   const lineaTotals = sel.linea ? lineas.find((l) => l.linea === sel.linea) : null
-  const totalRows = drillLevel === "gerencia" && lineaTotals
+  const totalRows = drillLevel === "gerencia" && lineaTotals && sel.linea !== "Corporate"
     ? {
         primaNeta: lineaTotals.primaNeta,
         presupuesto: lineaTotals.presupuesto,
