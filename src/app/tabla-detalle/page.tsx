@@ -306,7 +306,10 @@ function TablaDetalleContent() {
           // For vendedor level, use gerencia's proportional share of línea ppto
           const gerenciaShare = lineas.find(l => l.linea === newSel.linea)
           const gerenciaPpto = gerenciaShare ? Math.round(lineaPpto * (currentTotal / (gerenciaShare.primaNeta || 1))) : lineaPpto
-          setRows((data ?? []).map(d => toRowWithYoY(d.vendedor, d.primaNeta, d.pnAnioAnt, pnAnioAntTotal, gerenciaPpto, lineaPendiente, currentTotal, d.presupuesto ?? null)))
+          const vendedorRows = (data ?? [])
+            .map(d => toRowWithYoY(d.vendedor, d.primaNeta, d.pnAnioAnt, pnAnioAntTotal, gerenciaPpto, lineaPendiente, currentTotal, d.presupuesto ?? null))
+            .sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }))
+          setRows(vendedorRows)
           setTipoGroups(null)
         }
       } else if (level === "grupo") {
