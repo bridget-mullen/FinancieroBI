@@ -115,6 +115,7 @@ function TablaDetalleContent() {
   const [polizas, setPolizas] = useState<PolizaRow[]>([])
   const [lastDataDate, setLastDataDate] = useState<string | null>(null)
   const [vendedorParentTotals, setVendedorParentTotals] = useState<{ primaNeta: number; presupuesto: number; pnAnioAnt: number } | null>(null)
+  const [groupBudgetOnlyTotal, setGroupBudgetOnlyTotal] = useState(false)
 
   // Global search
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
@@ -570,7 +571,7 @@ function TablaDetalleContent() {
         return {
           primaNeta,
           // If there is no presupuesto truly assigned to real groups, keep parent total at footer only
-          presupuesto: presupuestoRowsSinGrupo > 0 ? presupuestoRows : (vendedorParentTotals.presupuesto ?? 0),
+          presupuesto: presupuestoRowsSinGrupo > 0 ? presupuestoRows : (groupBudgetOnlyTotal ? (vendedorParentTotals.presupuesto ?? 0) : 0),
           pnAnioAnt,
           pendiente: filteredRows.reduce((s, r) => s + (r.pendiente ?? 0), 0),
         }
@@ -1223,9 +1224,9 @@ function TablaDetalleContent() {
                       <td className={`px-3 py-3 text-center tabular-nums text-sm font-bold ${r.primaNeta < 0 ? "text-[#E62800]" : ""}`}>
                         {r.primaNeta < 0 ? `(${fmt(Math.abs(r.primaNeta))})` : fmt(r.primaNeta)}
                       </td>
-                      {hasPresupuesto && <td className="px-3 py-3 text-center tabular-nums text-sm text-gray-600 font-bold">{(groupBudgetOnlyInSinGrupo && String(r.name || "").trim().toLowerCase() === "sin grupo") ? "" : (r.presupuesto !== null && fmt(r.presupuesto))}</td>}
-                      {hasDiferencia && <td className={`px-3 py-3 text-center tabular-nums text-sm font-bold ${semaforoColor}`}>{(groupBudgetOnlyInSinGrupo && String(r.name || "").trim().toLowerCase() === "sin grupo") ? "" : (r.diferencia !== null && (r.diferencia < 0 ? `(${fmt(Math.abs(r.diferencia))})` : fmt(r.diferencia)))}</td>}
-                      {hasPctDifPpto && <td className={`px-3 py-3 text-center tabular-nums text-sm font-bold ${semaforoColor}`}>{(groupBudgetOnlyInSinGrupo && String(r.name || "").trim().toLowerCase() === "sin grupo") ? "" : (r.pctDifPpto !== null && `${r.pctDifPpto > 0 ? "+" : ""}${r.pctDifPpto}%`)}</td>}
+                      {hasPresupuesto && <td className="px-3 py-3 text-center tabular-nums text-sm text-gray-600 font-bold">{(groupBudgetOnlyTotal && String(r.name || "").trim().toLowerCase() === "sin grupo") ? "" : (r.presupuesto !== null && fmt(r.presupuesto))}</td>}
+                      {hasDiferencia && <td className={`px-3 py-3 text-center tabular-nums text-sm font-bold ${semaforoColor}`}>{(groupBudgetOnlyTotal && String(r.name || "").trim().toLowerCase() === "sin grupo") ? "" : (r.diferencia !== null && (r.diferencia < 0 ? `(${fmt(Math.abs(r.diferencia))})` : fmt(r.diferencia)))}</td>}
+                      {hasPctDifPpto && <td className={`px-3 py-3 text-center tabular-nums text-sm font-bold ${semaforoColor}`}>{(groupBudgetOnlyTotal && String(r.name || "").trim().toLowerCase() === "sin grupo") ? "" : (r.pctDifPpto !== null && `${r.pctDifPpto > 0 ? "+" : ""}${r.pctDifPpto}%`)}</td>}
                       {hasPnAnioAnt && <td className="px-3 py-3 text-center tabular-nums text-sm text-gray-800 font-bold">{r.pnAnioAnt !== null && fmt(r.pnAnioAnt)}</td>}
                       {hasDifYoY && <td className={`px-3 py-3 text-center tabular-nums text-sm font-bold ${r.difYoY === null ? "" : r.difYoY < 0 ? "text-[#E62800]" : ""}`}>{r.difYoY !== null && (r.difYoY < 0 ? `(${fmt(Math.abs(r.difYoY))})` : fmt(r.difYoY))}</td>}
                       {hasPctDifYoY && <td className={`px-3 py-3 text-center tabular-nums text-sm font-bold ${r.pctDifYoY === null ? "" : r.pctDifYoY < 0 ? "text-[#E62800]" : r.pctDifYoY > 0 ? "text-[#059669]" : ""}`}>{r.pctDifYoY !== null && `${r.pctDifYoY > 0 ? "+" : ""}${r.pctDifYoY}%`}</td>}
