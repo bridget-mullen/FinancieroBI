@@ -134,8 +134,7 @@ async function loadVendedoresDrive(
   for (const r of effRows) {
     if (normalizeLinea(r.LBussinesNombre) !== linea) continue
     if (!matchesGerencia(r.GerenciaNombre)) continue
-    const vendedor = String(r.VendNombre ?? "").trim()
-    if (!vendedor) continue
+    const vendedor = String(r.VendNombre ?? "").trim() || "Sin vendedor"
     const m = monthFromDateLike(r.FLiquidacion) ?? toNumber(r.Periodo)
     if (!includeMonth(m)) continue
     const pn = (toNumber(r.PrimaNeta) - toNumber(r.Descuento)) * (toNumber(r.TCPago) || 1)
@@ -147,8 +146,7 @@ async function loadVendedoresDrive(
   for (const r of pptoRows) {
     if (normalizeLinea(r.LBussinesNombre) !== linea) continue
     if (!matchesGerencia(r.GerenciaNombre)) continue
-    const vendedor = String(r.Vendedor ?? "").trim()
-    if (!vendedor) continue
+    const vendedor = String(r.Vendedor ?? "").trim() || "Sin vendedor"
     const m = monthFromDateLike(r.Fecha)
     if (!includeMonth(m)) continue
     const cur = getOrInit(vendedor)
@@ -159,8 +157,7 @@ async function loadVendedoresDrive(
   for (const r of prevRows) {
     if (normalizeLinea(r.LBussinesNombre) !== linea) continue
     if (!matchesGerencia(r.GerenciaNombre)) continue
-    const vendedor = String(r.VendNombre ?? "").trim()
-    if (!vendedor) continue
+    const vendedor = String(r.VendNombre ?? "").trim() || "Sin vendedor"
     const m = monthFromDateLike(r.FLiquidacion) ?? toNumber(r.Periodo)
     if (!includeMonth(m)) continue
     const pnAA = (toNumber(r.PrimaNeta) - toNumber(r.Descuento)) * (toNumber(r.TCPago) || 1)
@@ -172,12 +169,12 @@ async function loadVendedoresDrive(
   return Array.from(map.values())
     .map((v) => ({
       vendedor: v.vendedor,
-      primaNeta: Math.round(v.primaNeta),
-      pnAnioAnt: Math.round(v.pnAnioAnt),
-      presupuesto: Math.round(v.presupuesto),
+      primaNeta: v.primaNeta,
+      pnAnioAnt: v.pnAnioAnt,
+      presupuesto: v.presupuesto,
     }))
     .filter((r) => r.primaNeta > 0 || (r.presupuesto ?? 0) > 0)
-    .sort((a, b) => b.primaNeta - a.primaNeta)
+    .sort((a, b) => a.vendedor.localeCompare(b.vendedor, 'es', { sensitivity: 'base' }))
 }
 
 export async function GET(request: NextRequest) {

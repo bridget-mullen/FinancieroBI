@@ -2,7 +2,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 import { NextRequest, NextResponse } from "next/server"
 
 function cleanEnv(value?: string): string {
-  return (value || "").replace(/\\n/g, "").trim()
+  return (value || "").replace(/\n/g, "").trim()
 }
 
 function toNumber(value: unknown): number {
@@ -41,6 +41,15 @@ function monthFromDateLike(v: unknown): number | null {
   return null
 }
 
+function normalizeText(v: unknown): string {
+  return String(v ?? "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase()
+}
+
 function normalizeLinea(v: unknown): string {
   const x = String(v ?? "").trim()
   if (/^Click Promotor/i.test(x)) return "Click Promotorías"
@@ -63,8 +72,17 @@ async function fetchAll(queryFactory: () => any, pageSize = 1000): Promise<Recor
   return allRows
 }
 
-async function loadGerenciasDrive(supabase: SupabaseClient, linea: string, yearNum: number, months: number[]) {
+async function loadGruposDrive(
+  supabase: SupabaseClient,
+  linea: string,
+  gerencia: string,
+  vendedor: string,
+  yearNum: number,
+  months: number[]
+) {
   const includeMonth = (m: number | null) => months.length === 0 || (m !== null && months.includes(m))
+  const selGerNorm = normalizeText(gerencia)
+  const selVendNorm = normalizeText(vendedor)
 
   const effTable = `efectuada_${yearNum}_drive`
   const pptoTable = `presupuestos_${yearNum}_drive`
@@ -73,7 +91,7 @@ async function loadGerenciasDrive(supabase: SupabaseClient, linea: string, yearN
   const effRows = await fetchAll(() => {
     let q = supabase
       .from(effTable)
-      .select("LBussinesNombre, GerenciaNombre, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo")
+      .select("LBussinesNombre, GerenciaNombre, VendNombre, Grupo, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo")
     if (linea === "Click Promotorías") q = q.in("LBussinesNombre", ["Click Promotorías", "Click Promotorias"])
     else q = q.eq("LBussinesNombre", linea)
     return q
@@ -82,7 +100,7 @@ async function loadGerenciasDrive(supabase: SupabaseClient, linea: string, yearN
   const pptoRows = await fetchAll(() => {
     let q = supabase
       .from(pptoTable)
-      .select("LBussinesNombre, GerenciaNombre, Presupuesto, Fecha")
+      .select("LBussinesNombre, GerenciaNombre, Vendedor, Grupo, Presupuesto, Fecha")
     if (linea === "Click Promotorías") q = q.in("LBussinesNombre", ["Click Promotorías", "Click Promotorias"])
     else q = q.eq("LBussinesNombre", linea)
     return q
@@ -92,69 +110,82 @@ async function loadGerenciasDrive(supabase: SupabaseClient, linea: string, yearN
     ? await fetchAll(() => {
         let q = supabase
           .from(prevEffTable)
-          .select("LBussinesNombre, GerenciaNombre, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo")
+          .select("LBussinesNombre, GerenciaNombre, VendNombre, Grupo, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo")
         if (linea === "Click Promotorías") q = q.in("LBussinesNombre", ["Click Promotorías", "Click Promotorias"])
         else q = q.eq("LBussinesNombre", linea)
         return q
       })
     : []
 
-  const map = new Map<string, { primaNeta: number; pnAnioAnt: number; presupuesto: number }>()
+  const map = new Map<string, { grupo: string; primaNeta: number; pnAnioAnt: number; presupuesto: number }>()
+  const getOrInit = (raw: string) => {
+    const display = raw.trim() || "Sin grupo"
+    const key = normalizeText(display)
+    const cur = map.get(key) || { grupo: display, primaNeta: 0, pnAnioAnt: 0, presupuesto: 0 }
+    map.set(key, cur)
+    return cur
+  }
 
   for (const r of effRows) {
     if (normalizeLinea(r.LBussinesNombre) !== linea) continue
-    const ger = String(r.GerenciaNombre ?? "").trim() || "Sin gerencia"
+    if (normalizeText(r.GerenciaNombre) !== selGerNorm) continue
+    if (normalizeText(r.VendNombre) !== selVendNorm) continue
+    const grupo = String(r.Grupo ?? "").trim() || "Sin grupo"
     const m = monthFromDateLike(r.FLiquidacion) ?? toNumber(r.Periodo)
     if (!includeMonth(m)) continue
     const pn = (toNumber(r.PrimaNeta) - toNumber(r.Descuento)) * (toNumber(r.TCPago) || 1)
-    const cur = map.get(ger) || { primaNeta: 0, pnAnioAnt: 0, presupuesto: 0 }
+    const cur = getOrInit(grupo)
     cur.primaNeta += pn
-    map.set(ger, cur)
   }
 
   for (const r of pptoRows) {
     if (normalizeLinea(r.LBussinesNombre) !== linea) continue
-    const ger = String(r.GerenciaNombre ?? "").trim() || "Sin gerencia"
+    if (normalizeText(r.GerenciaNombre) !== selGerNorm) continue
+    if (normalizeText(r.Vendedor) !== selVendNorm) continue
+    const grupo = String(r.Grupo ?? "").trim() || "Sin grupo"
     const m = monthFromDateLike(r.Fecha)
     if (!includeMonth(m)) continue
-    const cur = map.get(ger) || { primaNeta: 0, pnAnioAnt: 0, presupuesto: 0 }
+    const cur = getOrInit(grupo)
     cur.presupuesto += toNumber(r.Presupuesto)
-    map.set(ger, cur)
   }
 
   for (const r of prevRows) {
     if (normalizeLinea(r.LBussinesNombre) !== linea) continue
-    const ger = String(r.GerenciaNombre ?? "").trim() || "Sin gerencia"
+    if (normalizeText(r.GerenciaNombre) !== selGerNorm) continue
+    if (normalizeText(r.VendNombre) !== selVendNorm) continue
+    const grupo = String(r.Grupo ?? "").trim() || "Sin grupo"
     const m = monthFromDateLike(r.FLiquidacion) ?? toNumber(r.Periodo)
     if (!includeMonth(m)) continue
     const pnAA = (toNumber(r.PrimaNeta) - toNumber(r.Descuento)) * (toNumber(r.TCPago) || 1)
-    const cur = map.get(ger) || { primaNeta: 0, pnAnioAnt: 0, presupuesto: 0 }
+    const cur = getOrInit(grupo)
     cur.pnAnioAnt += pnAA
-    map.set(ger, cur)
   }
 
-  return Array.from(map.entries())
-    .map(([gerencia, v]) => ({
-      gerencia,
-      primaNeta: v.primaNeta,
-      pnAnioAnt: v.pnAnioAnt,
-      presupuesto: v.presupuesto,
+  return Array.from(map.values())
+    .map((v) => ({
+      grupo: v.grupo,
+      cliente: v.grupo,
+      primaNeta: Math.round(v.primaNeta),
+      pnAnioAnt: Math.round(v.pnAnioAnt),
+      presupuesto: Math.round(v.presupuesto),
     }))
-    .filter((r) => r.primaNeta > 0 || r.presupuesto > 0)
-    .sort((a, b) => a.gerencia.localeCompare(b.gerencia, "es", { sensitivity: "base" }))
+    .filter((r) => r.primaNeta > 0 || (r.presupuesto ?? 0) > 0)
+    .sort((a, b) => a.grupo.localeCompare(b.grupo, "es", { sensitivity: "base" }))
 }
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const linea = (searchParams.get("linea") || "").trim()
+    const gerencia = (searchParams.get("gerencia") || "").trim()
+    const vendedor = (searchParams.get("vendedor") || "").trim()
     const year = parseInt(searchParams.get("year") || `${new Date().getFullYear()}`, 10)
     const meses = (searchParams.get("meses") || "")
       .split(",")
       .map((m) => parseInt(m, 10))
       .filter((m) => Number.isFinite(m) && m >= 1 && m <= 12)
 
-    if (!linea) return NextResponse.json([], { headers: { "Cache-Control": "no-store" } })
+    if (!linea || !gerencia || !vendedor) return NextResponse.json([], { headers: { "Cache-Control": "no-store" } })
     if (![2024, 2025, 2026].includes(year)) return NextResponse.json([], { headers: { "Cache-Control": "no-store" } })
 
     const supabaseUrl = cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL)
@@ -164,10 +195,10 @@ export async function GET(request: NextRequest) {
     if (!supabaseUrl || !apiKey) return NextResponse.json([], { headers: { "Cache-Control": "no-store" } })
 
     const supabase = createClient(supabaseUrl, apiKey)
-    const rows = await loadGerenciasDrive(supabase, linea, year, meses)
+    const rows = await loadGruposDrive(supabase, linea, gerencia, vendedor, year, meses)
     return NextResponse.json(rows, { headers: { "Cache-Control": "no-store" } })
   } catch (err) {
     const detail = err instanceof Error ? err.message : "unknown"
-    return NextResponse.json({ error: "gerencias_failed", detail }, { status: 500 })
+    return NextResponse.json({ error: "grupos_failed", detail }, { status: 500 })
   }
 }

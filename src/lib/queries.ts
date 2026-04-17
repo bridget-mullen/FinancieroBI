@@ -523,8 +523,7 @@ export async function getVendedores(
       for (const r of effRows) {
         if (normalizeLinea(r.LBussinesNombre) !== linea) continue
         if (!matchesGerencia(r.GerenciaNombre)) continue
-        const vendedor = String(r.VendNombre ?? '').trim()
-        if (!vendedor) continue
+        const vendedor = String(r.VendNombre ?? '').trim() || 'Sin vendedor'
         const m = monthFromDateLike(r.FLiquidacion) ?? parseNum(r.Periodo)
         if (!includeMonth(m)) continue
         const pn = (parseNum(r.PrimaNeta) - parseNum(r.Descuento)) * (parseNum(r.TCPago) || 1)
@@ -536,8 +535,7 @@ export async function getVendedores(
       for (const r of pptoRows) {
         if (normalizeLinea(r.LBussinesNombre) !== linea) continue
         if (!matchesGerencia(r.GerenciaNombre)) continue
-        const vendedor = String(r.Vendedor ?? '').trim()
-        if (!vendedor) continue
+        const vendedor = String(r.Vendedor ?? '').trim() || 'Sin vendedor'
         const m = monthFromDateLike(r.Fecha)
         if (!includeMonth(m)) continue
         const cur = getOrInit(vendedor)
@@ -548,8 +546,7 @@ export async function getVendedores(
       for (const r of prevRows) {
         if (normalizeLinea(r.LBussinesNombre) !== linea) continue
         if (!matchesGerencia(r.GerenciaNombre)) continue
-        const vendedor = String(r.VendNombre ?? '').trim()
-        if (!vendedor) continue
+        const vendedor = String(r.VendNombre ?? '').trim() || 'Sin vendedor'
         const m = monthFromDateLike(r.FLiquidacion) ?? parseNum(r.Periodo)
         if (!includeMonth(m)) continue
         const pnAA = (parseNum(r.PrimaNeta) - parseNum(r.Descuento)) * (parseNum(r.TCPago) || 1)
@@ -566,7 +563,7 @@ export async function getVendedores(
           presupuesto: Math.round(v.presupuesto),
         }))
         .filter((r) => r.primaNeta > 0 || (r.presupuesto ?? 0) > 0)
-        .sort((a, b) => b.primaNeta - a.primaNeta)
+        .sort((a, b) => a.vendedor.localeCompare(b.vendedor, 'es', { sensitivity: 'base' }))
 
       return out
     }
@@ -597,7 +594,7 @@ export async function getVendedores(
 
     return Array.from(map.entries())
       .map(([vendedor, v]) => ({ vendedor, primaNeta: Math.round(v.primaNeta), pnAnioAnt: Math.round(v.pnAnioAnt), presupuesto: Math.round(v.presupuesto) }))
-      .sort((a, b) => b.primaNeta - a.primaNeta)
+      .sort((a, b) => a.vendedor.localeCompare(b.vendedor, 'es', { sensitivity: 'base' }))
   } catch {
     return null
   }
@@ -650,6 +647,162 @@ export async function getGrupos(
 ): Promise<GrupoRow[] | null> {
   try {
     const months = resolveMonths(periodoOrPeriodos)
+    const monthNums = months.map((m) => MONTH_NAME_TO_NUMBER[m]).filter((n): n is number => Boolean(n))
+    const yearNum = año ? parseInt(año, 10) : new Date().getFullYear()
+
+    const parseNum = (v: unknown): number => {
+      if (v === null || v === undefined || v === "") return 0
+      if (typeof v === "number") return Number.isFinite(v) ? v : 0
+      const n = Number(String(v).replace(/[$,\s]/g, ""))
+      return Number.isFinite(n) ? n : 0
+    }
+
+    const monthFromDateLike = (v: unknown): number | null => {
+      if (v === null || v === undefined || v === "") return null
+      if (typeof v === "number") {
+        const d = new Date(Math.round((v - 25569) * 86400 * 1000))
+        return Number.isNaN(d.getTime()) ? null : d.getMonth() + 1
+      }
+      const s = String(v).trim()
+      if (/^\d+(\.\d+)?$/.test(s)) {
+        const serial = Number(s)
+        if (Number.isFinite(serial) && serial > 20000) {
+          const d = new Date(Math.round((serial - 25569) * 86400 * 1000))
+          return Number.isNaN(d.getTime()) ? null : d.getMonth() + 1
+        }
+      }
+      const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/)
+      if (m) {
+        const mm = parseInt(m[1], 10)
+        return mm >= 1 && mm <= 12 ? mm : null
+      }
+      const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/)
+      if (iso) {
+        const mm = parseInt(iso[2], 10)
+        return mm >= 1 && mm <= 12 ? mm : null
+      }
+      return null
+    }
+
+    const includeMonth = (m: number | null) => monthNums.length === 0 || (m !== null && monthNums.includes(m))
+
+    const normalizeText = (v: unknown): string =>
+      String(v ?? '')
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase()
+
+    const normalizeLinea = (v: unknown): string => {
+      const x = String(v ?? '').trim()
+      if (/^Click Promotor/i.test(x)) return 'Click Promotorías'
+      return x
+    }
+
+    if ([2024, 2025, 2026].includes(yearNum)) {
+      const meses = monthNums.join(",")
+      try {
+        const apiUrl = `/api/grupos?linea=${encodeURIComponent(linea)}&gerencia=${encodeURIComponent(gerencia)}&vendedor=${encodeURIComponent(vendedor)}&year=${yearNum}&meses=${meses}&_=${Date.now()}`
+        const res = await fetch(apiUrl, { cache: "no-store" })
+        if (res.ok) {
+          const apiData: GrupoRow[] = await res.json()
+          if (Array.isArray(apiData)) return apiData
+        }
+      } catch {
+        // fallback below
+      }
+
+      const effTable = `efectuada_${yearNum}_drive`
+      const pptoTable = `presupuestos_${yearNum}_drive`
+      const prevEffTable = yearNum > 2024 ? `efectuada_${yearNum - 1}_drive` : null
+      const selVendNorm = normalizeText(vendedor)
+      const selGerNorm = normalizeText(gerencia)
+
+      const effRows = await fetchAll(() => {
+        let q = supabase
+          .from(effTable)
+          .select('LBussinesNombre, GerenciaNombre, VendNombre, Grupo, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo')
+        if (linea === 'Click Promotorías') q = q.in('LBussinesNombre', ['Click Promotorías', 'Click Promotorias'])
+        else q = q.eq('LBussinesNombre', linea)
+        return q
+      })
+
+      const pptoRows = await fetchAll(() => {
+        let q = supabase
+          .from(pptoTable)
+          .select('LBussinesNombre, GerenciaNombre, Vendedor, Grupo, Presupuesto, Fecha')
+        if (linea === 'Click Promotorías') q = q.in('LBussinesNombre', ['Click Promotorías', 'Click Promotorias'])
+        else q = q.eq('LBussinesNombre', linea)
+        return q
+      })
+
+      const prevRows = prevEffTable
+        ? await fetchAll(() => {
+            let q = supabase
+              .from(prevEffTable as string)
+              .select('LBussinesNombre, GerenciaNombre, VendNombre, Grupo, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo')
+            if (linea === 'Click Promotorías') q = q.in('LBussinesNombre', ['Click Promotorías', 'Click Promotorias'])
+            else q = q.eq('LBussinesNombre', linea)
+            return q
+          })
+        : []
+
+      const map = new Map<string, { grupo: string; primaNeta: number; pnAnioAnt: number; presupuesto: number }>()
+      const getOrInit = (raw: string) => {
+        const display = raw.trim() || 'Sin grupo'
+        const key = normalizeText(display)
+        const cur = map.get(key) || { grupo: display, primaNeta: 0, pnAnioAnt: 0, presupuesto: 0 }
+        if (!cur.grupo) cur.grupo = display
+        map.set(key, cur)
+        return cur
+      }
+
+      for (const r of effRows) {
+        if (normalizeLinea(r.LBussinesNombre) !== linea) continue
+        if (normalizeText(r.GerenciaNombre) !== selGerNorm) continue
+        if (normalizeText(r.VendNombre) !== selVendNorm) continue
+        const grp = String(r.Grupo ?? '').trim() || 'Sin grupo'
+        const m = monthFromDateLike(r.FLiquidacion) ?? parseNum(r.Periodo)
+        if (!includeMonth(m)) continue
+        const pn = (parseNum(r.PrimaNeta) - parseNum(r.Descuento)) * (parseNum(r.TCPago) || 1)
+        const cur = getOrInit(grp)
+        if (!cur) continue
+        cur.primaNeta += pn
+      }
+
+      for (const r of pptoRows) {
+        if (normalizeLinea(r.LBussinesNombre) !== linea) continue
+        if (normalizeText(r.GerenciaNombre) !== selGerNorm) continue
+        if (normalizeText(r.Vendedor) !== selVendNorm) continue
+        const grp = String(r.Grupo ?? '').trim() || 'Sin grupo'
+        const m = monthFromDateLike(r.Fecha)
+        if (!includeMonth(m)) continue
+        const cur = getOrInit(grp)
+        if (!cur) continue
+        cur.presupuesto += parseNum(r.Presupuesto)
+      }
+
+      for (const r of prevRows) {
+        if (normalizeLinea(r.LBussinesNombre) !== linea) continue
+        if (normalizeText(r.GerenciaNombre) !== selGerNorm) continue
+        if (normalizeText(r.VendNombre) !== selVendNorm) continue
+        const grp = String(r.Grupo ?? '').trim() || 'Sin grupo'
+        const m = monthFromDateLike(r.FLiquidacion) ?? parseNum(r.Periodo)
+        if (!includeMonth(m)) continue
+        const pnAA = (parseNum(r.PrimaNeta) - parseNum(r.Descuento)) * (parseNum(r.TCPago) || 1)
+        const cur = getOrInit(grp)
+        if (!cur) continue
+        cur.pnAnioAnt += pnAA
+      }
+
+      const out = Array.from(map.values())
+        .map((v) => ({ grupo: v.grupo, cliente: v.grupo, primaNeta: Math.round(v.primaNeta), pnAnioAnt: Math.round(v.pnAnioAnt), presupuesto: Math.round(v.presupuesto) }))
+        .filter((r) => r.primaNeta > 0 || (r.presupuesto ?? 0) > 0)
+        .sort((a, b) => a.grupo.localeCompare(b.grupo, "es", { sensitivity: "base" }))
+
+      return out
+    }
 
     let query = supabase
       .schema("bi_dashboard")
@@ -677,7 +830,7 @@ export async function getGrupos(
 
     return Array.from(map.entries())
       .map(([grupo, v]) => ({ grupo, cliente: grupo, primaNeta: Math.round(v.primaNeta), pnAnioAnt: Math.round(v.pnAnioAnt), presupuesto: Math.round(v.presupuesto) }))
-      .sort((a, b) => b.primaNeta - a.primaNeta)
+      .sort((a, b) => a.grupo.localeCompare(b.grupo, "es", { sensitivity: "base" }))
   } catch {
     return null
   }

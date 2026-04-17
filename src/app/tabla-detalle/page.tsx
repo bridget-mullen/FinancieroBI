@@ -12,13 +12,20 @@ import { exportExcel, exportPDF } from "@/lib/export"
 import { NLQuery } from "@/components/nl-query"
 import { DrillCharts } from "@/components/drill-charts"
 
+function roundToIntegerByFirstDecimal(v: number) {
+  if (!Number.isFinite(v)) return 0
+  // Rule requested: 10.5 -> 11, 10.4 -> 10 (same logic for negatives by symmetry)
+  return v >= 0 ? Math.floor(v + 0.5) : Math.ceil(v - 0.5)
+}
+
 function fmt(v: number) {
-  return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v)
+  return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(roundToIntegerByFirstDecimal(v))
 }
 function fmtShort(v: number) {
-  if (Math.abs(v) >= 1e6) return `$${(v / 1e6).toFixed(1)}M`
-  if (Math.abs(v) >= 1e3) return `$${(v / 1e3).toFixed(0)}K`
-  return `$${v}`
+  const rounded = roundToIntegerByFirstDecimal(v)
+  if (Math.abs(rounded) >= 1e6) return `$${(rounded / 1e6).toFixed(1)}M`
+  if (Math.abs(rounded) >= 1e3) return `$${(rounded / 1e3).toFixed(0)}K`
+  return `$${rounded}`
 }
 function fmtDate(dateStr: string): string {
   if (!dateStr) return ""
@@ -107,6 +114,7 @@ function TablaDetalleContent() {
   const [rows, setRows] = useState<DrillRow[]>([])
   const [polizas, setPolizas] = useState<PolizaRow[]>([])
   const [lastDataDate, setLastDataDate] = useState<string | null>(null)
+  const [vendedorParentTotals, setVendedorParentTotals] = useState<{ primaNeta: number; presupuesto: number; pnAnioAnt: number } | null>(null)
 
   // Global search
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
@@ -211,6 +219,9 @@ function TablaDetalleContent() {
       setTipoGroups(null)
       setExpandedTipos(new Set())
     }
+    if (level !== "vendedor") {
+      setVendedorParentTotals(null)
+    }
 
     // Helper: compute DrillRow with YoY and proportional presupuesto
     // Now requires pnAnioAntTotal to allocate budget based on prior year share (not current primaNeta)
@@ -264,6 +275,14 @@ function TablaDetalleContent() {
         const currentTotal = (data ?? []).reduce((s, d) => s + d.primaNeta, 0)
         setRows((data ?? []).map(d => toRowWithYoY(d.gerencia, d.primaNeta, d.pnAnioAnt, pnAnioAntTotal, lineaPpto, lineaPendiente, currentTotal, d.presupuesto ?? null)))
       } else if (level === "vendedor") {
+        const parentGerencias = await getGerencias(newSel.linea!, periodos, year, clasificacionAseguradoras)
+        const parent = (parentGerencias ?? []).find((g) => g.gerencia.trim().toLowerCase() === String(newSel.gerencia ?? '').trim().toLowerCase())
+        setVendedorParentTotals(parent ? {
+          primaNeta: roundToIntegerByFirstDecimal(parent.primaNeta),
+          presupuesto: roundToIntegerByFirstDecimal(parent.presupuesto ?? 0),
+          pnAnioAnt: roundToIntegerByFirstDecimal(parent.pnAnioAnt),
+        } : null)
+
         // Feature 1: For Franquicias/Promotorías, use tipo grouper ONLY if groupByTipo is ON
         // Default: show flat vendedor list (Abraham: "Que haya algún botón que le ponga yo agrupar por tipo")
         if (usesTipoGrouper(newSel.linea || "") && groupByTipo) {
@@ -452,9 +471,6 @@ function TablaDetalleContent() {
     return { rows: [...top10, otrosRow], otrosCount: rest.length }
   }
 
-  // Helper: check if línea should skip grupo (only Corporate and Tradicional use grupo)
-  const lineaUsesGrupo = (linea: string) => linea === "Corporate" || linea === "Cartera Tradicional"
-
   // Top 10 + Otros for vendedores within a tier group (full row data)
   const computeTop10VendedoresInTier = (vendedores: VendedorFullRow[]): { vendedores: VendedorFullRow[]; otrosCount: number } => {
     if (vendedores.length <= 10) return { vendedores, otrosCount: 0 }
@@ -507,7 +523,11 @@ function TablaDetalleContent() {
   const filteredPolizas = filterSearch(polizas, "documento")
   const rowTotal = filteredRows.reduce((s, r) => s + r.primaNeta, 0)
   // Determine if table has many rows (for adaptive max-height)
-  const manyRows = drillLevel === 'poliza' ? filteredPolizas.length > 15 : (drillLevel !== 'linea' && drillLevel !== 'gerencia' && displayRows.length > 15)
+  const manyRows = drillLevel === 'poliza'
+    ? filteredPolizas.length > 15
+    : drillLevel === 'gerencia' && sel.linea === 'Click Franquicias'
+    ? displayRows.length > 15
+    : (drillLevel !== 'linea' && drillLevel !== 'gerencia' && displayRows.length > 15)
 
   // Compute totals for levels 2-5 (same pattern as totalLineas)
   // For gerencia level, pin totals to selected línea card totals so it always matches level-1 exactly.
@@ -518,6 +538,13 @@ function TablaDetalleContent() {
         presupuesto: lineaTotals.presupuesto,
         pnAnioAnt: lineaTotals.pnAnioAnt,
         pendiente: lineaTotals.pendiente,
+      }
+    : drillLevel === "vendedor" && vendedorParentTotals
+    ? {
+        primaNeta: vendedorParentTotals.primaNeta,
+        presupuesto: vendedorParentTotals.presupuesto,
+        pnAnioAnt: vendedorParentTotals.pnAnioAnt,
+        pendiente: filteredRows.reduce((s, r) => s + (r.pendiente ?? 0), 0),
       }
     : {
         primaNeta: filteredRows.reduce((s, r) => s + r.primaNeta, 0),
@@ -798,8 +825,7 @@ function TablaDetalleContent() {
                   {/* Vendedores within tier — shows individual vendedor data */}
                   {isExpanded && displayVendedores.map((v) => {
                     const isOtros = v.vendedor.startsWith("Otros (")
-                    // Skip grupo for Franquicias/Promotorías (only Corporate and Tradicional use grupo)
-                    const nextLevelFromVendedor = lineaUsesGrupo(sel.linea || "") ? "grupo" : "cliente"
+                    const nextLevelFromVendedor = "grupo"
                     return (
                       <div
                         key={v.vendedor}
@@ -836,11 +862,9 @@ function TablaDetalleContent() {
               <p className="text-center text-[#888] py-8">Sin datos para este periodo</p>
             ) : displayRows.map((r) => {
               const isOtros = r.name.startsWith("Otros (")
-              // Skip grupo for non-Corporate/Tradicional lines (Abraham: "Corporate y tradicional es importante el grupo")
-              const skipGrupo = drillLevel === "vendedor" && !lineaUsesGrupo(sel.linea || "")
               const nextLevel: DrillLevel | null = isOtros ? null : (
                 drillLevel === "gerencia" ? "vendedor" :
-                drillLevel === "vendedor" ? (skipGrupo ? "cliente" : "grupo") :
+                drillLevel === "vendedor" ? "grupo" :
                 drillLevel === "grupo" ? "cliente" :
                 null
               )
@@ -1047,8 +1071,7 @@ function TablaDetalleContent() {
                       {/* Individual vendedor rows within tier (when expanded) — FULL 9 COLUMNS */}
                       {isExpanded && displayVendedores.map((v, vIdx) => {
                         const isOtros = v.vendedor.startsWith("Otros (")
-                        // Skip grupo for Franquicias/Promotorías (only Corporate and Tradicional use grupo)
-                        const nextLevelFromVendedor = lineaUsesGrupo(sel.linea || "") ? "grupo" : "cliente"
+                        const nextLevelFromVendedor = "grupo"
                         // Vendedor semáforo color
                         const vSemaforoColor = v.presupuesto !== null && v.pnAnioAnt > 0
                           ? (v.primaNeta >= v.presupuesto
@@ -1138,11 +1161,9 @@ function TablaDetalleContent() {
                   </td></tr>
                 ) : displayRows.map((r, idx) => {
                   const isOtros = r.name.startsWith("Otros (")
-                  // Skip grupo for non-Corporate/Tradicional lines (Abraham: "Corporate y tradicional es importante el grupo")
-                  const skipGrupo = drillLevel === "vendedor" && !lineaUsesGrupo(sel.linea || "")
                   const nextLevel: DrillLevel | null = isOtros ? null : (
                     drillLevel === "gerencia" ? "vendedor" :
-                    drillLevel === "vendedor" ? (skipGrupo ? "cliente" : "grupo") :
+                    drillLevel === "vendedor" ? "grupo" :
                     drillLevel === "grupo" ? "cliente" :
                     null
                   )

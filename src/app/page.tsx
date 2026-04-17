@@ -188,14 +188,14 @@ export default function Home() {
           {/* Top section: Gauge + Table */}
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] gap-3 items-start">
             {/* Left column: Gauge */}
-            <div className="w-[55%] min-w-0 flex items-center justify-center">
+            <div className="w-full min-w-0 flex items-center justify-center">
               <div className="w-full">
                 <Gauge value={total / 1e6} prevYear={totalAA / 1e6} budget={totalPpto / 1e6} cumplimiento={cumpl} crecimiento={crec} />
               </div>
             </div>
 
             {/* Right column: Table */}
-            <div className="w-[45%] min-w-0 flex flex-col gap-1 justify-center lg:mt-3">
+            <div className="w-full min-w-0 flex flex-col gap-1 justify-center">
               <div className="bg-white shadow-sm rounded-lg border border-gray-200">
                 <table className="w-full table-auto text-[11px] lg:text-xs">
                   <thead>
@@ -242,9 +242,9 @@ export default function Home() {
           </div>
 
           {/* Bottom section: KPI + Bar chart */}
-          <div className="flex mt-3 gap-3">
+          <div className="grid mt-3 gap-3 grid-cols-1 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] items-start">
             {/* Col 1: KPI cards stacked */}
-            <div className="w-[55%] flex flex-col gap-2">
+            <div className="w-full flex flex-col gap-2">
               <div className="rounded-lg border border-[#D4C5A0] px-4 py-3 text-center" style={{ backgroundColor: '#FDF6E3' }}>
                 <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Cumplimiento del presupuesto</p>
                 <p className="text-3xl font-black tabular-nums mt-1" style={{ color: '#8B6914' }}>{cumpl}%</p>
@@ -258,7 +258,7 @@ export default function Home() {
             </div>
 
             {/* Col 2: Bar chart (same width as table column) */}
-            <div className="w-[45%] bg-white border border-gray-200 rounded-lg shadow-sm px-2 py-1.5 flex flex-col h-[280px] overflow-hidden">
+            <div className="w-full bg-white border border-gray-200 rounded-lg shadow-sm px-2 py-1.5 flex flex-col h-[280px] overflow-hidden">
               <div className="flex gap-3 text-[13px] mb-1 self-start">
                 <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: '#041224' }}/><span className="text-gray-700 font-medium">Prima neta efectuada</span></div>
                 <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: '#9CA3AF' }}/><span className="text-gray-700 font-medium">Presupuesto</span></div>
