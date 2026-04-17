@@ -73,18 +73,25 @@ async function loadGerenciasDrive(supabase: SupabaseClient, linea: string, yearN
   const effRows = await fetchAll(() => {
     let q = supabase
       .from(effTable)
-      .select("LBussinesNombre, GerenciaNombre, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo")
+      .select("LBussinesNombre, GerenciaNombre, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo, IDDocto")
     if (linea === "Click Promotorías") q = q.in("LBussinesNombre", ["Click Promotorías", "Click Promotorias"])
     else q = q.eq("LBussinesNombre", linea)
+    q = q.order("IDDocto", { ascending: true })
     return q
   })
 
   const pptoRows = await fetchAll(() => {
     let q = supabase
       .from(pptoTable)
-      .select("LBussinesNombre, GerenciaNombre, Presupuesto, Fecha")
+      .select("LBussinesNombre, GerenciaNombre, Vendedor, Grupo, Cliente, Presupuesto, Fecha")
     if (linea === "Click Promotorías") q = q.in("LBussinesNombre", ["Click Promotorías", "Click Promotorias"])
     else q = q.eq("LBussinesNombre", linea)
+    q = q
+      .order("Fecha", { ascending: true })
+      .order("GerenciaNombre", { ascending: true })
+      .order("Vendedor", { ascending: true })
+      .order("Grupo", { ascending: true })
+      .order("Cliente", { ascending: true })
     return q
   })
 
@@ -92,7 +99,7 @@ async function loadGerenciasDrive(supabase: SupabaseClient, linea: string, yearN
     ? await fetchAll(() => {
         let q = supabase
           .from(prevEffTable)
-          .select("LBussinesNombre, GerenciaNombre, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo")
+          .select("LBussinesNombre, GerenciaNombre, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo, IDDocto")
         if (linea === "Click Promotorías") q = q.in("LBussinesNombre", ["Click Promotorías", "Click Promotorias"])
         else q = q.eq("LBussinesNombre", linea)
         return q
