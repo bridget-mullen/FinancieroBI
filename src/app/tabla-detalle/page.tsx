@@ -308,7 +308,10 @@ function TablaDetalleContent() {
           const gerenciaPpto = gerenciaShare ? Math.round(lineaPpto * (currentTotal / (gerenciaShare.primaNeta || 1))) : lineaPpto
           const vendedorRows = (data ?? [])
             .map(d => toRowWithYoY(d.vendedor, d.primaNeta, d.pnAnioAnt, pnAnioAntTotal, gerenciaPpto, lineaPendiente, currentTotal, d.presupuesto ?? null))
-            .sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }))
+          // Only force A-Z for requested case: Corporate > Partner
+          if ((newSel.linea || "") === "Corporate" && (newSel.gerencia || "") === "Partner") {
+            vendedorRows.sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }))
+          }
           setRows(vendedorRows)
           setTipoGroups(null)
         }
