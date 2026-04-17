@@ -311,24 +311,18 @@ function TablaDetalleContent() {
       } else if (level === "grupo") {
         const data = await getGrupos(newSel.vendedor!, newSel.gerencia!, newSel.linea!, periodos, year, clasificacionAseguradoras)
         const rowsData = data ?? []
-        const sinGrupoBudget = rowsData
-          .filter((d) => String(d.grupo || "").trim().toLowerCase() === "sin grupo")
-          .reduce((s, d) => s + (d.presupuesto ?? 0), 0)
         const hasBudgetOutsideSinGrupo = rowsData.some((d) => ((d.presupuesto ?? 0) > 0) && String(d.grupo || '').trim().toLowerCase() !== 'sin grupo')
-        const groupBudgetOnlyInSinGrupo = sinGrupoBudget > 0 && !hasBudgetOutsideSinGrupo
+        const groupBudgetOnlyInSinGrupo = rowsData.some((d) => String(d.grupo || '').trim().toLowerCase() === 'sin grupo' && (d.presupuesto ?? 0) > 0)
+          && !hasBudgetOutsideSinGrupo
 
-        // If presupuesto only exists in "Sin grupo" (common spreadsheet error),
-        // redistribute across real groups by PN año anterior share (except Call Center).
-        if (groupBudgetOnlyInSinGrupo && newSel.linea !== "Call Center") {
-          const realGroups = rowsData.filter((d) => String(d.grupo || "").trim().toLowerCase() !== "sin grupo")
-          const pnAnioAntTotal = realGroups.reduce((s, d) => s + d.pnAnioAnt, 0)
-          const currentTotal = realGroups.reduce((s, d) => s + d.primaNeta, 0)
-          setRows(realGroups.map((d) => toRowWithYoY(d.grupo, d.primaNeta, d.pnAnioAnt, pnAnioAntTotal, sinGrupoBudget, 0, currentTotal, null)))
-        } else {
-          const pnAnioAntTotal = rowsData.reduce((s, d) => s + d.pnAnioAnt, 0)
-          const currentTotal = rowsData.reduce((s, d) => s + d.primaNeta, 0)
-          setRows(rowsData.map(d => toRowWithYoY(d.grupo, d.primaNeta, d.pnAnioAnt, pnAnioAntTotal, 0, 0, currentTotal, d.presupuesto ?? null)))
-        }
+        // If presupuesto only exists in "Sin grupo", keep it ONLY at total level (not in group rows)
+        const visibleRows = groupBudgetOnlyInSinGrupo
+          ? rowsData.filter((d) => String(d.grupo || '').trim().toLowerCase() !== 'sin grupo')
+          : rowsData
+
+        const pnAnioAntTotal = visibleRows.reduce((s, d) => s + d.pnAnioAnt, 0)
+        const currentTotal = visibleRows.reduce((s, d) => s + d.primaNeta, 0)
+        setRows(visibleRows.map(d => toRowWithYoY(d.grupo, d.primaNeta, d.pnAnioAnt, pnAnioAntTotal, 0, 0, currentTotal, d.presupuesto ?? null)))
       } else if (level === "cliente") {
         const data = await getClientes(newSel.grupo!, newSel.vendedor!, newSel.gerencia!, newSel.linea!, periodos, year, clasificacionAseguradoras)
         const pnAnioAntTotal = (data ?? []).reduce((s, d) => s + d.pnAnioAnt, 0)
