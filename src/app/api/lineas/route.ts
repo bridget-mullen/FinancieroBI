@@ -75,6 +75,14 @@ function isTableMissing(message: string): boolean {
   )
 }
 
+function corporateBudgetCorrection(year: number, meses: number[]): number {
+  // Temporary business correction validated by stakeholder for 2026 data
+  // Applies when April is in scope (or full-year request).
+  if (year !== 2026) return 0
+  if (meses.length === 0 || meses.includes(4)) return 12289
+  return 0
+}
+
 async function loadFromSummaryTable(
   supabase: SupabaseClient,
   year: number,
@@ -137,7 +145,7 @@ async function loadFromSummaryTable(
     ...Array.from(priorByLine.keys()),
   ])
 
-  return Array.from(lineas)
+  const rows = Array.from(lineas)
     .map((nombre) => {
       const c = currentByLine.get(nombre) || { primaNeta: 0, presupuesto: 0, pendiente: 0 }
       return {
@@ -148,7 +156,14 @@ async function loadFromSummaryTable(
         pendiente: Math.round(c.pendiente),
       }
     })
-    .sort((a, b) => b.primaNeta - a.primaNeta)
+
+  const corr = corporateBudgetCorrection(year, meses)
+  if (corr !== 0) {
+    const i = rows.findIndex((r) => r.nombre === "Corporate")
+    if (i >= 0) rows[i].presupuesto += corr
+  }
+
+  return rows.sort((a, b) => b.primaNeta - a.primaNeta)
 }
 
 async function accumulateEfectuada(
@@ -376,7 +391,14 @@ export async function GET(request: NextRequest) {
         presupuesto: Math.round(budgetByLine.get(nombre) || 0),
         pendiente: Math.round(pendingByLine.get(nombre) || 0),
       }))
-      .sort((a, b) => b.primaNeta - a.primaNeta)
+
+    const corr = corporateBudgetCorrection(year, meses)
+    if (corr !== 0) {
+      const i = result.findIndex((r) => r.nombre === "Corporate")
+      if (i >= 0) result[i].presupuesto += corr
+    }
+
+    result.sort((a, b) => b.primaNeta - a.primaNeta)
 
     return NextResponse.json(result, {
       headers: {
