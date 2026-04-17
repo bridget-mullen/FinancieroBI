@@ -312,7 +312,12 @@ function TablaDetalleContent() {
         const data = await getGrupos(newSel.vendedor!, newSel.gerencia!, newSel.linea!, periodos, year, clasificacionAseguradoras)
         const pnAnioAntTotal = (data ?? []).reduce((s, d) => s + d.pnAnioAnt, 0)
         const currentTotal = (data ?? []).reduce((s, d) => s + d.primaNeta, 0)
-        setRows((data ?? []).map(d => toRowWithYoY(d.grupo, d.primaNeta, d.pnAnioAnt, pnAnioAntTotal, 0, 0, currentTotal, d.presupuesto ?? null)))
+        const hasBudgetOutsideSinGrupo = (data ?? []).some((d) => ((d.presupuesto ?? 0) > 0) && String(d.grupo || '').trim().toLowerCase() !== 'sin grupo')
+        setRows((data ?? []).map(d => {
+          const isSinGrupo = String(d.grupo || '').trim().toLowerCase() === 'sin grupo'
+          const presupuesto = (!hasBudgetOutsideSinGrupo && isSinGrupo) ? 0 : (d.presupuesto ?? null)
+          return toRowWithYoY(d.grupo, d.primaNeta, d.pnAnioAnt, pnAnioAntTotal, 0, 0, currentTotal, presupuesto)
+        }))
       } else if (level === "cliente") {
         const data = await getClientes(newSel.grupo!, newSel.vendedor!, newSel.gerencia!, newSel.linea!, periodos, year, clasificacionAseguradoras)
         const pnAnioAntTotal = (data ?? []).reduce((s, d) => s + d.pnAnioAnt, 0)
@@ -550,11 +555,14 @@ function TablaDetalleContent() {
     ? (() => {
         const primaNeta = filteredRows.reduce((s, r) => s + r.primaNeta, 0)
         const presupuestoRows = filteredRows.reduce((s, r) => s + (r.presupuesto ?? 0), 0)
+        const presupuestoRowsSinGrupo = filteredRows
+          .filter((r) => String(r.name || '').trim().toLowerCase() !== 'sin grupo')
+          .reduce((s, r) => s + (r.presupuesto ?? 0), 0)
         const pnAnioAnt = filteredRows.reduce((s, r) => s + (r.pnAnioAnt ?? 0), 0)
         return {
           primaNeta,
-          // If no presupuesto is assigned at group row level, keep parent (vendedor/gerencia) total value
-          presupuesto: presupuestoRows > 0 ? presupuestoRows : (vendedorParentTotals.presupuesto ?? 0),
+          // If there is no presupuesto truly assigned to real groups, keep parent total at footer only
+          presupuesto: presupuestoRowsSinGrupo > 0 ? presupuestoRows : (vendedorParentTotals.presupuesto ?? 0),
           pnAnioAnt,
           pendiente: filteredRows.reduce((s, r) => s + (r.pendiente ?? 0), 0),
         }
