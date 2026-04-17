@@ -56,6 +56,13 @@ function normalizeLinea(v: unknown): string {
   return x
 }
 
+function sanitizeGrupo(v: unknown): string {
+  const raw = String(v ?? "").trim()
+  if (!raw) return "Sin grupo"
+  if (/^#\w+!?$/i.test(raw) || /^#(N\/A|NA|ERROR!?|VALUE!?|REF!?|DIV\/0!?|NAME\?)$/i.test(raw)) return "Sin grupo"
+  return raw
+}
+
 async function fetchAll(queryFactory: () => any, pageSize = 1000): Promise<Record<string, unknown>[]> {
   const allRows: Record<string, unknown>[] = []
   let from = 0
@@ -140,7 +147,7 @@ async function loadGruposDrive(
     if (normalizeLinea(r.LBussinesNombre) !== linea) continue
     if (!matchesGerencia(r.GerenciaNombre)) continue
     if (!matchesVendedor(r.VendNombre)) continue
-    const grupo = String(r.Grupo ?? "").trim() || "Sin grupo"
+    const grupo = sanitizeGrupo(r.Grupo)
     const m = monthFromDateLike(r.FLiquidacion) ?? toNumber(r.Periodo)
     if (!includeMonth(m)) continue
     const pn = (toNumber(r.PrimaNeta) - toNumber(r.Descuento)) * (toNumber(r.TCPago) || 1)
@@ -152,7 +159,7 @@ async function loadGruposDrive(
     if (normalizeLinea(r.LBussinesNombre) !== linea) continue
     if (!matchesGerencia(r.GerenciaNombre)) continue
     if (!matchesVendedor(r.Vendedor)) continue
-    const grupo = String(r.Grupo ?? "").trim() || "Sin grupo"
+    const grupo = sanitizeGrupo(r.Grupo)
     const m = monthFromDateLike(r.Fecha)
     if (!includeMonth(m)) continue
     const cur = getOrInit(grupo)
@@ -163,7 +170,7 @@ async function loadGruposDrive(
     if (normalizeLinea(r.LBussinesNombre) !== linea) continue
     if (!matchesGerencia(r.GerenciaNombre)) continue
     if (!matchesVendedor(r.VendNombre)) continue
-    const grupo = String(r.Grupo ?? "").trim() || "Sin grupo"
+    const grupo = sanitizeGrupo(r.Grupo)
     const m = monthFromDateLike(r.FLiquidacion) ?? toNumber(r.Periodo)
     if (!includeMonth(m)) continue
     const pnAA = (toNumber(r.PrimaNeta) - toNumber(r.Descuento)) * (toNumber(r.TCPago) || 1)

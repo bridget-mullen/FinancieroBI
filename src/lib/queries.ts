@@ -458,6 +458,13 @@ export async function getVendedores(
       return x
     }
 
+    const sanitizeGrupo = (v: unknown): string => {
+      const raw = String(v ?? '').trim()
+      if (!raw) return 'Sin grupo'
+      if (/^#\w+!?$/i.test(raw) || /^#(N\/A|NA|ERROR!?|VALUE!?|REF!?|DIV\/0!?|NAME\?)$/i.test(raw)) return 'Sin grupo'
+      return raw
+    }
+
     if ([2024, 2025, 2026].includes(yearNum)) {
       const meses = monthNums.join(",")
       try {
@@ -700,6 +707,13 @@ export async function getGrupos(
       return x
     }
 
+    const sanitizeGrupo = (v: unknown): string => {
+      const raw = String(v ?? '').trim()
+      if (!raw) return 'Sin grupo'
+      if (/^#\w+!?$/i.test(raw) || /^#(N\/A|NA|ERROR!?|VALUE!?|REF!?|DIV\/0!?|NAME\?)$/i.test(raw)) return 'Sin grupo'
+      return raw
+    }
+
     if ([2024, 2025, 2026].includes(yearNum)) {
       const meses = monthNums.join(",")
       try {
@@ -772,7 +786,7 @@ export async function getGrupos(
         if (normalizeLinea(r.LBussinesNombre) !== linea) continue
         if (!matchesGerencia(r.GerenciaNombre)) continue
         if (!matchesVendedor(r.VendNombre)) continue
-        const grp = String(r.Grupo ?? '').trim() || 'Sin grupo'
+        const grp = sanitizeGrupo(r.Grupo)
         const m = monthFromDateLike(r.FLiquidacion) ?? parseNum(r.Periodo)
         if (!includeMonth(m)) continue
         const pn = (parseNum(r.PrimaNeta) - parseNum(r.Descuento)) * (parseNum(r.TCPago) || 1)
@@ -785,7 +799,7 @@ export async function getGrupos(
         if (normalizeLinea(r.LBussinesNombre) !== linea) continue
         if (!matchesGerencia(r.GerenciaNombre)) continue
         if (!matchesVendedor(r.Vendedor)) continue
-        const grp = String(r.Grupo ?? '').trim() || 'Sin grupo'
+        const grp = sanitizeGrupo(r.Grupo)
         const m = monthFromDateLike(r.Fecha)
         if (!includeMonth(m)) continue
         const cur = getOrInit(grp)
@@ -797,7 +811,7 @@ export async function getGrupos(
         if (normalizeLinea(r.LBussinesNombre) !== linea) continue
         if (!matchesGerencia(r.GerenciaNombre)) continue
         if (!matchesVendedor(r.VendNombre)) continue
-        const grp = String(r.Grupo ?? '').trim() || 'Sin grupo'
+        const grp = sanitizeGrupo(r.Grupo)
         const m = monthFromDateLike(r.FLiquidacion) ?? parseNum(r.Periodo)
         if (!includeMonth(m)) continue
         const pnAA = (parseNum(r.PrimaNeta) - parseNum(r.Descuento)) * (parseNum(r.TCPago) || 1)
