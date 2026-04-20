@@ -773,23 +773,20 @@ export async function getGrupos(
           })
         : []
 
-      const hasExactEff = effRows.some((r) => normalizeText(r.VendNombre) === selVendNorm)
-      const hasExactPpto = pptoRows.some((r) => normalizeText(r.Vendedor) === selVendNorm)
-      const hasExactPrev = prevRows.some((r) => normalizeText(r.VendNombre) === selVendNorm)
       const matchesVendedorEff = (raw: unknown) => {
         const v = normalizeText(raw)
         if (!v || !selVendNorm) return false
-        return hasExactEff ? v === selVendNorm : looseMatchVendedor(raw)
+        return v === selVendNorm
       }
       const matchesVendedorPpto = (raw: unknown) => {
         const v = normalizeText(raw)
         if (!v || !selVendNorm) return false
-        return hasExactPpto ? v === selVendNorm : looseMatchVendedor(raw)
+        return v === selVendNorm
       }
       const matchesVendedorPrev = (raw: unknown) => {
         const v = normalizeText(raw)
         if (!v || !selVendNorm) return false
-        return hasExactPrev ? v === selVendNorm : looseMatchVendedor(raw)
+        return v === selVendNorm
       }
 
       const clientToGroup = new Map<string, string>()
