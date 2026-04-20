@@ -108,7 +108,7 @@ async function loadGruposDrive(
   const effRows = await fetchAll(() => {
     let q = supabase
       .from(effTable)
-      .select("LBussinesNombre, GerenciaNombre, VendNombre, Grupo, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo, IDDocto")
+      .select("LBussinesNombre, GerenciaNombre, VendNombre, NombreCompleto, Grupo, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo, IDDocto")
     if (linea === "Click Promotorías") q = q.in("LBussinesNombre", ["Click Promotorías", "Click Promotorias"])
     else q = q.eq("LBussinesNombre", linea)
     q = q.order("IDDocto", { ascending: true })
@@ -134,7 +134,7 @@ async function loadGruposDrive(
     ? await fetchAll(() => {
         let q = supabase
           .from(prevEffTable)
-          .select("LBussinesNombre, GerenciaNombre, VendNombre, Grupo, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo, IDDocto")
+          .select("LBussinesNombre, GerenciaNombre, VendNombre, NombreCompleto, Grupo, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo, IDDocto")
         if (linea === "Click Promotorías") q = q.in("LBussinesNombre", ["Click Promotorías", "Click Promotorias"])
         else q = q.eq("LBussinesNombre", linea)
         return q
@@ -159,6 +159,37 @@ async function loadGruposDrive(
     if (!v || !selVendNorm) return false
     return hasExactPrev ? v === selVendNorm : looseMatchVendedor(raw)
   }
+
+  const clientToGroup = new Map<string, string>()
+  const clientGroupScore = new Map<string, Map<string, number>>()
+
+  for (const r of effRows) {
+    if (normalizeLinea(r.LBussinesNombre) !== linea) continue
+    if (!matchesGerencia(r.GerenciaNombre)) continue
+    if (!matchesVendedorEff(r.VendNombre)) continue
+    const m = monthFromDateLike(r.FLiquidacion) ?? toNumber(r.Periodo)
+    if (!includeMonth(m)) continue
+    const clientKey = normalizeText(r.NombreCompleto)
+    if (!clientKey) continue
+    const grupo = sanitizeGrupo(r.Grupo)
+    if (normalizeText(grupo) === "sin grupo") continue
+    const pn = Math.abs((toNumber(r.PrimaNeta) - toNumber(r.Descuento)) * (toNumber(r.TCPago) || 1))
+    const gScores = clientGroupScore.get(clientKey) || new Map<string, number>()
+    gScores.set(grupo, (gScores.get(grupo) || 0) + (pn || 1))
+    clientGroupScore.set(clientKey, gScores)
+  }
+
+  clientGroupScore.forEach((gScores, clientKey) => {
+    let bestGroup = ""
+    let bestScore = -1
+    gScores.forEach((score, g) => {
+      if (score > bestScore) {
+        bestGroup = g
+        bestScore = score
+      }
+    })
+    if (bestGroup) clientToGroup.set(clientKey, bestGroup)
+  })
 
   const map = new Map<string, { grupo: string; primaNeta: number; pnAnioAnt: number; presupuesto: number }>()
   const getOrInit = (raw: string) => {
@@ -190,7 +221,11 @@ async function loadGruposDrive(
     if (!includeMonth(m)) continue
     const ppto = toNumber(r.Presupuesto)
     presupuestoTotalNivel += ppto
-    const grupo = sanitizeGrupo(r.Grupo)
+    let grupo = sanitizeGrupo(r.Grupo)
+    if (normalizeText(grupo) === "sin grupo") {
+      const mapped = clientToGroup.get(normalizeText(r.Cliente))
+      if (mapped) grupo = mapped
+    }
     const cur = getOrInit(grupo)
     cur.presupuesto += ppto
   }
@@ -208,7 +243,7 @@ async function loadGruposDrive(
     cur.pnAnioAnt += pnAA
   }
 
-  return Array.from(map.values())
+  const out = Array.from(map.values())
     .map((v) => ({
       grupo: v.grupo,
       cliente: v.grupo,
@@ -216,6 +251,23 @@ async function loadGruposDrive(
       pnAnioAnt: v.pnAnioAnt,
       presupuesto: v.presupuesto,
     }))
+
+  // If presupuesto remains in "Sin grupo", redistribute it to real groups by prima neta share.
+  const nonSin = out.filter((r) => normalizeText(r.grupo) !== "sin grupo")
+  const sin = out.find((r) => normalizeText(r.grupo) === "sin grupo")
+  if (sin && (sin.presupuesto || 0) > 0 && nonSin.length > 0) {
+    const budgetToRedistribute = sin.presupuesto || 0
+    const totalPnNonSin = nonSin.reduce((s, r) => s + Math.max(0, r.primaNeta || 0), 0)
+    if (totalPnNonSin > 0) {
+      for (const r of nonSin) {
+        const share = Math.max(0, r.primaNeta || 0) / totalPnNonSin
+        r.presupuesto = (r.presupuesto || 0) + budgetToRedistribute * share
+      }
+      sin.presupuesto = 0
+    }
+  }
+
+  return out
     .filter((r) => r.primaNeta > 0 || (r.presupuesto ?? 0) > 0)
     .sort((a, b) => a.grupo.localeCompare(b.grupo, "es", { sensitivity: "base" }))
 }
