@@ -199,7 +199,7 @@ async function loadGruposDrive(
   for (const r of prevRows) {
     if (normalizeLinea(r.LBussinesNombre) !== linea) continue
     if (!matchesGerencia(r.GerenciaNombre)) continue
-    if (!matchesVendedorEff(r.VendNombre)) continue
+    if (!matchesVendedorPrev(r.VendNombre)) continue
     const grupo = sanitizeGrupo(r.Grupo)
     const m = monthFromDateLike(r.FLiquidacion) ?? toNumber(r.Periodo)
     if (!includeMonth(m)) continue
