@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
       supabase
         .from(`efectuada_${year}_drive`)
         .select("LBussinesNombre, GerenciaNombre")
+        .order("IDDocto", { ascending: true })
     )
 
     for (const r of rows) {
