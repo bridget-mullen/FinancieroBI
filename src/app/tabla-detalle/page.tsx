@@ -221,7 +221,8 @@ function TablaDetalleContent() {
       setTipoGroups(null)
       setExpandedTipos(new Set())
     }
-    if (level !== "vendedor") {
+    // Keep vendedor parent totals while drilling into grupo/cliente
+    if (level === "linea" || level === "gerencia") {
       setVendedorParentTotals(null)
     }
 
