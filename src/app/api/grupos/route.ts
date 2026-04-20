@@ -108,10 +108,11 @@ async function loadGruposDrive(
   const effRows = await fetchAll(() => {
     let q = supabase
       .from(effTable)
-      .select("LBussinesNombre, GerenciaNombre, VendNombre, NombreCompleto, Grupo, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo, IDDocto")
+      .select("LBussinesNombre, GerenciaNombre, VendNombre, NombreCompleto, Grupo, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo")
+      .eq("GerenciaNombre", gerencia)
+      .eq("VendNombre", vendedor)
     if (linea === "Click Promotorías") q = q.in("LBussinesNombre", ["Click Promotorías", "Click Promotorias"])
     else q = q.eq("LBussinesNombre", linea)
-    q = q.order("IDDocto", { ascending: true })
     return q
   })
 
@@ -119,14 +120,10 @@ async function loadGruposDrive(
     let q = supabase
       .from(pptoTable)
       .select("LBussinesNombre, GerenciaNombre, Vendedor, Grupo, Cliente, Presupuesto, Fecha")
+      .eq("GerenciaNombre", gerencia)
+      .eq("Vendedor", vendedor)
     if (linea === "Click Promotorías") q = q.in("LBussinesNombre", ["Click Promotorías", "Click Promotorias"])
     else q = q.eq("LBussinesNombre", linea)
-    q = q
-      .order("Fecha", { ascending: true })
-      .order("GerenciaNombre", { ascending: true })
-      .order("Vendedor", { ascending: true })
-      .order("Grupo", { ascending: true })
-      .order("Cliente", { ascending: true })
     return q
   })
 
@@ -134,7 +131,9 @@ async function loadGruposDrive(
     ? await fetchAll(() => {
         let q = supabase
           .from(prevEffTable)
-          .select("LBussinesNombre, GerenciaNombre, VendNombre, NombreCompleto, Grupo, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo, IDDocto")
+          .select("LBussinesNombre, GerenciaNombre, VendNombre, NombreCompleto, Grupo, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo")
+          .eq("GerenciaNombre", gerencia)
+          .eq("VendNombre", vendedor)
         if (linea === "Click Promotorías") q = q.in("LBussinesNombre", ["Click Promotorías", "Click Promotorias"])
         else q = q.eq("LBussinesNombre", linea)
         return q
