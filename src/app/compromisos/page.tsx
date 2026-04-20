@@ -199,28 +199,18 @@ export default function CompromisosPage() {
   }, [])
   const gerenciasDisponibles = lineaFilter
     ? (filtros.gerenciasByLinea[lineaFilter] || [])
-    : []
-
-  useEffect(() => {
-    if (!lineaFilter && filtros.lineas.length > 0) {
-      setLineaFilter(filtros.lineas[0])
-    }
-  }, [lineaFilter, filtros.lineas])
+    : Array.from(new Set(Object.values(filtros.gerenciasByLinea).flat())).sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }))
 
   useEffect(() => {
     if (!lineaFilter) return
     const gerencias = filtros.gerenciasByLinea[lineaFilter] || []
-    if (gerencias.length === 0) {
-      if (gerenciaFilter) setGerenciaFilter("")
-      return
-    }
-    if (!gerencias.includes(gerenciaFilter)) {
-      setGerenciaFilter(gerencias[0])
+    if (gerenciaFilter && !gerencias.includes(gerenciaFilter)) {
+      setGerenciaFilter("")
     }
   }, [lineaFilter, gerenciaFilter, filtros.gerenciasByLinea])
 
   useEffect(() => {
-    if (periodos.length === 0 || !lineaFilter) {
+    if (periodos.length === 0) {
       setData([])
       setLoading(false)
       return
@@ -276,6 +266,7 @@ export default function CompromisosPage() {
               onChange={(e) => { setLineaFilter(e.target.value); setGerenciaFilter("") }}
               className="h-8 px-2.5 text-xs border border-gray-300 rounded-md outline-none focus:border-[#041224] bg-white"
             >
+              <option value="" disabled>Línea de negocio</option>
               {filtros.lineas.map((l) => (
                 <option key={l} value={l}>{l}</option>
               ))}
@@ -285,6 +276,7 @@ export default function CompromisosPage() {
               onChange={(e) => setGerenciaFilter(e.target.value)}
               className="h-8 px-2.5 text-xs border border-gray-300 rounded-md outline-none focus:border-[#041224] bg-white"
             >
+              <option value="" disabled>Gerencia</option>
               {gerenciasDisponibles.map((g) => (
                 <option key={g} value={g}>{g}</option>
               ))}
