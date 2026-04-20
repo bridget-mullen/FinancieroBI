@@ -246,7 +246,8 @@ function TablaDetalleContent() {
       const currentShare = currentTotal > 0 ? primaNeta / currentTotal : 0
       const effectiveShare = priorShare > 0 ? priorShare : currentShare
       const pptoProporcional = Math.round(lineaPpto * effectiveShare)
-      const ppto = explicitPpto != null ? Math.round(explicitPpto) : pptoProporcional
+      // Keep explicit presupuesto exact; apply rounding only at render/footer final.
+      const ppto = explicitPpto != null ? explicitPpto : pptoProporcional
       const dif = primaNeta - ppto
       const pctDif = ppto > 0 ? Math.round((dif / ppto) * 1000) / 10 : 0
       const difY = primaNeta - pnAnioAnt
