@@ -183,8 +183,8 @@ export async function getLineasWithYoY(
         nombre: item.nombre,
         primaNeta: item.primaNeta,
         anioAnterior: item.anioAnterior,
-        presupuesto: roundByFirstDecimal(item.presupuesto || 0),
-        pendiente: roundByFirstDecimal(item.pendiente || 0),
+        presupuesto: item.presupuesto || 0,
+        pendiente: item.pendiente || 0,
       }))
       .sort((a, b) => b.primaNeta - a.primaNeta)
   } catch {
