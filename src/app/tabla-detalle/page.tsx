@@ -528,7 +528,7 @@ function TablaDetalleContent() {
   }
 
   const filteredLineas = filterSearch(lineas, "linea")
-  const totalLineas = { primaNeta: filteredLineas.reduce((s, l) => s + roundToIntegerByFirstDecimal(l.primaNeta), 0), presupuesto: filteredLineas.reduce((s, l) => s + roundToIntegerByFirstDecimal(l.presupuesto), 0), pnAnioAnt: filteredLineas.reduce((s, l) => s + roundToIntegerByFirstDecimal(l.pnAnioAnt), 0), pendiente: filteredLineas.reduce((s, l) => s + roundToIntegerByFirstDecimal(l.pendiente), 0) }
+  const totalLineas = { primaNeta: filteredLineas.reduce((s, l) => s + l.primaNeta, 0), presupuesto: filteredLineas.reduce((s, l) => s + l.presupuesto, 0), pnAnioAnt: filteredLineas.reduce((s, l) => s + l.pnAnioAnt, 0), pendiente: filteredLineas.reduce((s, l) => s + l.pendiente, 0) }
   const totalDif = filteredLineas.reduce((s, l) => s + l.diferencia, 0)
   const totalDifPct = totalLineas.presupuesto > 0 ? ((totalDif / totalLineas.presupuesto) * 100).toFixed(1) : ""
   const totalDifYoy = filteredLineas.reduce((s, l) => s + l.difYoY, 0)
@@ -564,29 +564,29 @@ function TablaDetalleContent() {
         primaNeta: vendedorParentTotals.primaNeta,
         presupuesto: vendedorParentTotals.presupuesto,
         pnAnioAnt: vendedorParentTotals.pnAnioAnt,
-        pendiente: filteredRows.reduce((s, r) => s + roundToIntegerByFirstDecimal(r.pendiente ?? 0), 0),
+        pendiente: filteredRows.reduce((s, r) => s + (r.pendiente ?? 0), 0),
       }
     : drillLevel === "grupo" && vendedorParentTotals
     ? (() => {
-        const primaNeta = filteredRows.reduce((s, r) => s + roundToIntegerByFirstDecimal(r.primaNeta), 0)
-        const presupuestoRows = filteredRows.reduce((s, r) => s + roundToIntegerByFirstDecimal(r.presupuesto ?? 0), 0)
+        const primaNeta = filteredRows.reduce((s, r) => s + r.primaNeta, 0)
+        const presupuestoRows = filteredRows.reduce((s, r) => s + (r.presupuesto ?? 0), 0)
         const presupuestoRowsSinGrupo = filteredRows
           .filter((r) => String(r.name || '').trim().toLowerCase() !== 'sin grupo')
-          .reduce((s, r) => s + roundToIntegerByFirstDecimal(r.presupuesto ?? 0), 0)
-        const pnAnioAnt = filteredRows.reduce((s, r) => s + roundToIntegerByFirstDecimal(r.pnAnioAnt ?? 0), 0)
+          .reduce((s, r) => s + (r.presupuesto ?? 0), 0)
+        const pnAnioAnt = filteredRows.reduce((s, r) => s + (r.pnAnioAnt ?? 0), 0)
         return {
           primaNeta,
           // If there is no presupuesto truly assigned to real groups, keep parent total at footer only
           presupuesto: presupuestoRowsSinGrupo > 0 ? presupuestoRows : (groupBudgetOnlyTotal ? (vendedorParentTotals.presupuesto ?? 0) : 0),
           pnAnioAnt,
-          pendiente: filteredRows.reduce((s, r) => s + roundToIntegerByFirstDecimal(r.pendiente ?? 0), 0),
+          pendiente: filteredRows.reduce((s, r) => s + (r.pendiente ?? 0), 0),
         }
       })()
     : {
-        primaNeta: filteredRows.reduce((s, r) => s + roundToIntegerByFirstDecimal(r.primaNeta), 0),
-        presupuesto: filteredRows.reduce((s, r) => s + roundToIntegerByFirstDecimal(r.presupuesto ?? 0), 0),
-        pnAnioAnt: filteredRows.reduce((s, r) => s + roundToIntegerByFirstDecimal(r.pnAnioAnt ?? 0), 0),
-        pendiente: filteredRows.reduce((s, r) => s + roundToIntegerByFirstDecimal(r.pendiente ?? 0), 0),
+        primaNeta: filteredRows.reduce((s, r) => s + r.primaNeta, 0),
+        presupuesto: filteredRows.reduce((s, r) => s + (r.presupuesto ?? 0), 0),
+        pnAnioAnt: filteredRows.reduce((s, r) => s + (r.pnAnioAnt ?? 0), 0),
+        pendiente: filteredRows.reduce((s, r) => s + (r.pendiente ?? 0), 0),
       }
   const totalRowsDif = totalRows.primaNeta - (totalRows.presupuesto ?? 0)
   const totalRowsDifPct = totalRows.presupuesto > 0 ? ((totalRowsDif / totalRows.presupuesto) * 100).toFixed(1) : ""
