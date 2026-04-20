@@ -1,0 +1,59 @@
+import { createClient } from "@supabase/supabase-js"
+import { NextResponse } from "next/server"
+
+function cleanEnv(value?: string): string {
+  return (value || "").replace(/\n/g, "").trim()
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchAll(queryFactory: () => any, pageSize = 5000): Promise<Record<string, unknown>[]> {
+  const allRows: Record<string, unknown>[] = []
+  for (let from = 0; from < 300000; from += pageSize) {
+    const to = from + pageSize - 1
+    const { data, error } = await queryFactory().range(from, to)
+    if (error) break
+    if (!data || data.length === 0) break
+    allRows.push(...(data as Record<string, unknown>[]))
+    if (data.length < pageSize) break
+  }
+  return allRows
+}
+
+export async function GET() {
+  try {
+    const supabaseUrl = cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL)
+    const serviceRoleKey = cleanEnv(process.env.SUPABASE_SERVICE_ROLE_KEY)
+    const anonKey = cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    const apiKey = serviceRoleKey || anonKey
+    if (!supabaseUrl || !apiKey) return NextResponse.json({ lineas: [], gerenciasByLinea: {} }, { headers: { "Cache-Control": "no-store" } })
+
+    const supabase = createClient(supabaseUrl, apiKey)
+    const rows = await fetchAll(() =>
+      supabase
+        .from("catalogo_lineas_negocio_drive")
+        .select("Linea, Gerencia")
+    )
+
+    const lineasSet = new Set<string>()
+    const gerByLinea = new Map<string, Set<string>>()
+
+    for (const r of rows) {
+      const linea = String(r.Linea || "").trim()
+      const gerencia = String(r.Gerencia || "").trim()
+      if (!linea) continue
+      lineasSet.add(linea)
+      if (!gerByLinea.has(linea)) gerByLinea.set(linea, new Set<string>())
+      if (gerencia) gerByLinea.get(linea)!.add(gerencia)
+    }
+
+    const lineas = Array.from(lineasSet).sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }))
+    const gerenciasByLinea: Record<string, string[]> = {}
+    for (const l of lineas) {
+      gerenciasByLinea[l] = Array.from(gerByLinea.get(l) || []).sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }))
+    }
+
+    return NextResponse.json({ lineas, gerenciasByLinea }, { headers: { "Cache-Control": "no-store" } })
+  } catch {
+    return NextResponse.json({ lineas: [], gerenciasByLinea: {} }, { headers: { "Cache-Control": "no-store" } })
+  }
+}

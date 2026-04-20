@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from "react"
 import { PageTabs } from "@/components/page-tabs"
 import { PeriodFilter } from "@/components/period-filter"
-import { getCompromisos } from "@/lib/queries"
-import type { CompromisoRow } from "@/lib/queries"
+import { getCompromisos, getCompromisosFiltros } from "@/lib/queries"
+import type { CompromisoRow, CompromisosFiltros } from "@/lib/queries"
 import { roundByFirstDecimal } from "@/lib/rounding"
 
 function fmt(v: number) {
@@ -186,10 +186,27 @@ export default function CompromisosPage() {
   const [data, setData] = useState<CompromisoRow[]>([])
   const [loading, setLoading] = useState(true)
   const [vendorSearch, setVendorSearch] = useState("")
+  const [lineaFilter, setLineaFilter] = useState("Todas")
+  const [gerenciaFilter, setGerenciaFilter] = useState("Todas")
+  const [filtros, setFiltros] = useState<CompromisosFiltros>({ lineas: [], gerenciasByLinea: {} })
   // Bottom 5 removed per Angel's request
 
   const handleFilterChange = useCallback((newYear: string, newPeriodos: number[]) => { setYear(newYear); setPeriodos(newPeriodos) }, [])
   useEffect(() => { document.title = "Vendedores | CLK BI Dashboard" }, [])
+
+  useEffect(() => {
+    getCompromisosFiltros().then(setFiltros).catch(() => setFiltros({ lineas: [], gerenciasByLinea: {} }))
+  }, [])
+  const gerenciasDisponibles = lineaFilter !== "Todas"
+    ? (filtros.gerenciasByLinea[lineaFilter] || [])
+    : Array.from(new Set(Object.values(filtros.gerenciasByLinea).flat())).sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }))
+
+  useEffect(() => {
+    if (lineaFilter !== "Todas" && gerenciaFilter !== "Todas" && !gerenciasDisponibles.includes(gerenciaFilter)) {
+      setGerenciaFilter("Todas")
+    }
+  }, [lineaFilter, gerenciaFilter, gerenciasDisponibles])
+
   useEffect(() => {
     if (periodos.length === 0) {
       setData([])
@@ -198,8 +215,10 @@ export default function CompromisosPage() {
     }
 
     setLoading(true)
-    getCompromisos(Number(year), periodos).then(r => { setData(r ?? []); setLoading(false) }).catch(() => setLoading(false))
-  }, [year, periodos])
+    getCompromisos(Number(year), periodos, lineaFilter, gerenciaFilter)
+      .then(r => { setData(r ?? []); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [year, periodos, lineaFilter, gerenciaFilter])
 
   const search = vendorSearch.trim().toLowerCase()
 
@@ -239,13 +258,35 @@ export default function CompromisosPage() {
         </div>
         <div className="mt-3 mb-2 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
           <h1 className="text-sm font-bold text-[#111] font-lato">Vendedores — Compromisos</h1>
-          <input
-            type="text"
-            value={vendorSearch}
-            onChange={(e) => setVendorSearch(e.target.value)}
-            placeholder="Buscar vendedor..."
-            className="w-full md:w-72 h-8 px-2.5 text-xs border border-gray-300 rounded-md outline-none focus:border-[#041224]"
-          />
+          <div className="w-full md:w-auto grid grid-cols-1 md:grid-cols-3 gap-2">
+            <select
+              value={lineaFilter}
+              onChange={(e) => { setLineaFilter(e.target.value); setGerenciaFilter("Todas") }}
+              className="h-8 px-2.5 text-xs border border-gray-300 rounded-md outline-none focus:border-[#041224] bg-white"
+            >
+              <option value="Todas">Línea de negocio</option>
+              {filtros.lineas.map((l) => (
+                <option key={l} value={l}>{l}</option>
+              ))}
+            </select>
+            <select
+              value={gerenciaFilter}
+              onChange={(e) => setGerenciaFilter(e.target.value)}
+              className="h-8 px-2.5 text-xs border border-gray-300 rounded-md outline-none focus:border-[#041224] bg-white"
+            >
+              <option value="Todas">Gerencia</option>
+              {gerenciasDisponibles.map((g) => (
+                <option key={g} value={g}>{g}</option>
+              ))}
+            </select>
+            <input
+              type="text"
+              value={vendorSearch}
+              onChange={(e) => setVendorSearch(e.target.value)}
+              placeholder="Buscar vendedor..."
+              className="h-8 px-2.5 text-xs border border-gray-300 rounded-md outline-none focus:border-[#041224]"
+            />
+          </div>
         </div>
 
         {/* ROW-BASED LAYOUT */}

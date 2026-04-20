@@ -1236,11 +1236,35 @@ export async function globalSearch(
 export interface CompromisoRow {
   vendedor: string; meta: number; primaActual: number; pctAvance: number
 }
-export async function getCompromisos(anio: number, meses: number[]): Promise<CompromisoRow[] | null> {
+
+export interface CompromisosFiltros {
+  lineas: string[]
+  gerenciasByLinea: Record<string, string[]>
+}
+export async function getCompromisosFiltros(): Promise<CompromisosFiltros> {
+  try {
+    const res = await fetch(`/api/compromisos-filtros`, { cache: "no-store" })
+    if (!res.ok) throw new Error(`API error: ${res.status}`)
+    const data: CompromisosFiltros = await res.json()
+    return data || { lineas: [], gerenciasByLinea: {} }
+  } catch {
+    return { lineas: [], gerenciasByLinea: {} }
+  }
+}
+
+export async function getCompromisos(
+  anio: number,
+  meses: number[],
+  linea?: string,
+  gerencia?: string
+): Promise<CompromisoRow[] | null> {
   try {
     const validMeses = (meses || []).filter((m) => Number.isFinite(m) && m >= 1 && m <= 12)
     const qMeses = validMeses.join(",")
-    const url = `/api/compromisos?year=${anio}&meses=${encodeURIComponent(qMeses)}`
+    const params = new URLSearchParams({ year: String(anio), meses: qMeses })
+    if (linea && linea !== "Todas") params.set("linea", linea)
+    if (gerencia && gerencia !== "Todas") params.set("gerencia", gerencia)
+    const url = `/api/compromisos?${params.toString()}`
     const res = await fetch(url, { cache: "no-store" })
     if (!res.ok) throw new Error(`API error: ${res.status}`)
     const data: CompromisoRow[] = await res.json()

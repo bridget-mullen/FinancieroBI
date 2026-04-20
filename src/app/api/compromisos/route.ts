@@ -87,8 +87,28 @@ export async function GET(request: NextRequest) {
 
     const yearsForVendedores = [2024, 2025, 2026]
     const pptoTable = `presupuestos_${year}_drive`
+    const lineaFilter = normalizeText(searchParams.get("linea"))
+    const gerenciaFilter = normalizeText(searchParams.get("gerencia"))
+
+    const catalogRows = await fetchAll(() =>
+      supabase
+        .from("catalogo_lineas_negocio_drive")
+        .select("LBussinesNombre, Gerencia, Linea")
+    )
+
+    const catPair = new Map<string, { linea: string; gerencia: string }>()
+    const catLB = new Map<string, { linea: string; gerencia: string }>()
+    for (const r of catalogRows) {
+      const lb = normalizeText(r.LBussinesNombre)
+      const g = normalizeText(r.Gerencia)
+      const linea = String(r.Linea || r.LBussinesNombre || "").trim()
+      const gerencia = String(r.Gerencia || "").trim()
+      if (lb && g) catPair.set(`${lb}|${g}`, { linea, gerencia })
+      if (lb && !catLB.has(lb)) catLB.set(lb, { linea, gerencia })
+    }
 
     const acc = new Map<string, { vendedor: string; meta: number; primaActual: number }>()
+    const vendorsPassingFilters = new Set<string>()
 
     const upsertVendor = (vendNombre: unknown): { key: string; row: { vendedor: string; meta: number; primaActual: number } } | null => {
       const nn = normalizeText(vendNombre)
@@ -105,15 +125,26 @@ export async function GET(request: NextRequest) {
       const effRows = await fetchAll(() =>
         supabase
           .from(effTable)
-          .select("VendNombre, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo")
+          .select("VendNombre, LBussinesNombre, GerenciaNombre, PrimaNeta, Descuento, TCPago, FLiquidacion, Periodo")
           .order("IDDocto", { ascending: true })
       )
 
       for (const r of effRows) {
         const m = monthFromDateLike(r.FLiquidacion) ?? parseNum(r.Periodo)
         if (!Number.isFinite(m) || !mesesSet.has(Number(m))) continue
+
+        const lb = normalizeText(r.LBussinesNombre)
+        const g = normalizeText(r.GerenciaNombre)
+        const rel = catPair.get(`${lb}|${g}`) || catLB.get(lb)
+        const lineaNorm = normalizeText(rel?.linea || r.LBussinesNombre)
+        const gerNorm = normalizeText(rel?.gerencia || r.GerenciaNombre)
+
+        if (lineaFilter && lineaNorm !== lineaFilter) continue
+        if (gerenciaFilter && gerNorm !== gerenciaFilter) continue
+
         const upsert = upsertVendor(r.VendNombre)
         if (!upsert) continue
+        vendorsPassingFilters.add(upsert.key)
         upsert.row.primaActual += (parseNum(r.PrimaNeta) - parseNum(r.Descuento)) * (parseNum(r.TCPago) || 1)
       }
     }
@@ -130,6 +161,7 @@ export async function GET(request: NextRequest) {
       if (!Number.isFinite(m) || !mesesSet.has(Number(m))) continue
       const upsert = upsertVendor(r.Vendedor)
       if (!upsert) continue
+      if ((lineaFilter || gerenciaFilter) && !vendorsPassingFilters.has(upsert.key)) continue
       upsert.row.meta += parseNum(r.Presupuesto)
     }
 
