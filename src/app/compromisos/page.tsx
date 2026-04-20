@@ -274,7 +274,7 @@ export default function CompromisosPage() {
               onChange={(e) => { setLineaFilter(e.target.value); setGerenciaFilter("") }}
               className="h-8 px-2.5 text-xs border border-gray-300 rounded-md outline-none focus:border-[#041224] bg-white"
             >
-              <option value="" disabled>Línea de negocio</option>
+              <option value="" disabled hidden>Línea de negocio</option>
               {filtros.lineas.map((l) => (
                 <option key={l} value={l}>{l}</option>
               ))}
@@ -284,7 +284,7 @@ export default function CompromisosPage() {
               onChange={(e) => setGerenciaFilter(e.target.value)}
               className="h-8 px-2.5 text-xs border border-gray-300 rounded-md outline-none focus:border-[#041224] bg-white"
             >
-              <option value="" disabled>Gerencia</option>
+              <option value="" disabled hidden>Gerencia</option>
               {gerenciasDisponibles.map((g) => (
                 <option key={g} value={g}>{g}</option>
               ))}
