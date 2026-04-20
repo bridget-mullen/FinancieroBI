@@ -28,22 +28,24 @@ export async function GET() {
     if (!supabaseUrl || !apiKey) return NextResponse.json({ lineas: [], gerenciasByLinea: {} }, { headers: { "Cache-Control": "no-store" } })
 
     const supabase = createClient(supabaseUrl, apiKey)
-    const rows = await fetchAll(() =>
-      supabase
-        .from("catalogo_lineas_negocio_drive")
-        .select("Linea, Gerencia")
-    )
-
     const lineasSet = new Set<string>()
     const gerByLinea = new Map<string, Set<string>>()
 
-    for (const r of rows) {
-      const linea = String(r.Linea || "").trim()
-      const gerencia = String(r.Gerencia || "").trim()
-      if (!linea) continue
-      lineasSet.add(linea)
-      if (!gerByLinea.has(linea)) gerByLinea.set(linea, new Set<string>())
-      if (gerencia) gerByLinea.get(linea)!.add(gerencia)
+    for (const y of [2024, 2025, 2026]) {
+      const rows = await fetchAll(() =>
+        supabase
+          .from(`efectuada_${y}_drive`)
+          .select("LBussinesNombre, GerenciaNombre")
+      )
+
+      for (const r of rows) {
+        const linea = String(r.LBussinesNombre || "").trim()
+        const gerencia = String(r.GerenciaNombre || "").trim()
+        if (!linea) continue
+        lineasSet.add(linea)
+        if (!gerByLinea.has(linea)) gerByLinea.set(linea, new Set<string>())
+        if (gerencia) gerByLinea.get(linea)!.add(gerencia)
+      }
     }
 
     const lineas = Array.from(lineasSet).sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }))

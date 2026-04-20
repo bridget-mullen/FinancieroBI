@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
         const lb = normalizeText(r.LBussinesNombre)
         const g = normalizeText(r.GerenciaNombre)
         const rel = catPair.get(`${lb}|${g}`) || catLB.get(lb)
-        const lineaNorm = normalizeText(rel?.linea || r.LBussinesNombre)
+        const lineaNorm = normalizeText(r.LBussinesNombre)
         const gerNorm = normalizeText(rel?.gerencia || r.GerenciaNombre)
 
         if (lineaFilter && lineaNorm !== lineaFilter) continue
